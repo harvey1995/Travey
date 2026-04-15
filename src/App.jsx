@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Upload, Download, Plus, Search, CheckCircle, Clock, DollarSign, 
   SunMedium, Smartphone, Monitor, Trash2, Pencil, Map, X, Sparkles,
@@ -46,7 +46,7 @@ const TOKYO_TRIP = [
   { date: "2026-01-02", id: "tokyo-7", city: "Tokyo", name: "银座", duration: 240, note: "新年大特卖「福袋」抢购，买伴手礼", cost: 20000, currency: "JPY", done: false, order: 2, transportMode: 'train', transitRoute: '' },
 ];
 
-const INITIAL_TRIPS = { "东京跨年三日游": TOKYO_TRIP };
+const INITIAL_TRIPS = { "东京跨年3日游": TOKYO_TRIP };
 
 const App = () => {
   // 1. 数据与缓存
@@ -61,28 +61,17 @@ const App = () => {
   const [activeTrip, setActiveTrip] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedActive = localStorage.getItem('travey_active_v1');
-      return savedActive && trips[savedActive] ? savedActive : Object.keys(trips)[0] || "东京跨年三日游";
+      return savedActive && trips[savedActive] ? savedActive : Object.keys(trips)[0] || "东京跨年3日游";
     }
-    return "东京跨年三日游";
+    return "东京跨年3日游";
   });
 
   // 2. 撤销/重做引擎
   const [past, setPast] = useState([]);
   const [future, setFuture] = useState([]);
-  const [historyMenu, setHistoryMenu] = useState(null);
-  const [pressTimer, setPressTimer] = useState(null);
 
-  const startPress = (type) => {
-    const timer = setTimeout(() => setHistoryMenu(type), 500);
-    setPressTimer(timer);
-  };
-  
-  const endPress = () => {
-    if (pressTimer) clearTimeout(pressTimer);
-  };
-
-  const updateTrips = (newTrips, action = '编辑') => {
-    setPast(p => [...p, { state: trips, action }].slice(-20)); // 最多保存20步历史
+  const updateTrips = (newTrips) => {
+    setPast(p => [...p, trips].slice(-20)); // 最多保存20步历史
     setFuture([]);
     setTrips(newTrips);
   };
@@ -91,16 +80,16 @@ const App = () => {
     if (past.length === 0) return;
     const previous = past[past.length - 1];
     setPast(p => p.slice(0, -1));
-    setFuture(f => [{ state: trips, action: previous.action }, ...f]);
-    setTrips(previous.state);
+    setFuture(f => [trips, ...f]);
+    setTrips(previous);
   };
 
   const handleRedo = () => {
     if (future.length === 0) return;
     const next = future[0];
     setFuture(f => f.slice(1));
-    setPast(p => [...p, { state: trips, action: next.action }]);
-    setTrips(next.state);
+    setPast(p => [...p, trips]);
+    setTrips(next);
   };
 
   useEffect(() => {
@@ -132,28 +121,6 @@ const App = () => {
   });
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const dragBarRef = useRef(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const totalScroll = document.documentElement.scrollTop || document.body.scrollTop;
-      const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      setScrollProgress(windowHeight > 0 ? totalScroll / windowHeight : 0);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const handleScrollDrag = (e) => {
-    if (!dragBarRef.current) return;
-    const rect = dragBarRef.current.getBoundingClientRect();
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    let percent = (clientY - rect.top) / rect.height;
-    percent = Math.max(0, Math.min(1, percent));
-    const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-    window.scrollTo({ top: percent * windowHeight, behavior: 'auto' });
-  };
 
   const showMessage = (msg, type = 'success') => {
     setToast({ show: true, message: msg, type });
@@ -267,9 +234,9 @@ const App = () => {
 
   const confirmImport = (mode) => {
     if (mode === 'overwrite') {
-      updateTrips({ ...trips, [activeTrip]: pendingImportData }, '新建');
+      updateTrips({ ...trips, [activeTrip]: pendingImportData });
     } else {
-      updateTrips({ ...trips, [activeTrip]: [...(currentTripData || []), ...pendingImportData] }, '新建');
+      updateTrips({ ...trips, [activeTrip]: [...(prev[activeTrip] || []), ...pendingImportData] });
     }
     setShowImportModal(false);
     setPendingImportData([]);
@@ -294,21 +261,21 @@ const App = () => {
 
   const handleUpdateTransport = (id, mode) => {
     const updated = currentTripData.map(item => item.id === id ? { ...item, transportMode: mode } : item);
-    updateTrips({ ...trips, [activeTrip]: updated }, '编辑');
+    updateTrips({ ...trips, [activeTrip]: updated });
   };
 
   const handleUpdateTransitRoute = (id, route) => {
     const updated = currentTripData.map(item => item.id === id ? { ...item, transitRoute: route } : item);
-    updateTrips({ ...trips, [activeTrip]: updated }, '编辑');
+    updateTrips({ ...trips, [activeTrip]: updated });
   };
 
   const toggleCheck = (id) => {
     const updated = currentTripData.map(item => item.id === id ? { ...item, done: !item.done } : item);
-    updateTrips({ ...trips, [activeTrip]: updated }, '打卡');
+    updateTrips({ ...trips, [activeTrip]: updated });
   };
 
   const handleDelete = (id) => {
-    updateTrips({ ...trips, [activeTrip]: currentTripData.filter(item => item.id !== id) }, '删除');
+    updateTrips({ ...trips, [activeTrip]: currentTripData.filter(item => item.id !== id) });
     showMessage("已保存", "error");
   };
 
@@ -324,11 +291,11 @@ const App = () => {
 
     if (modalMode === 'add') {
       const newItem = { ...payload, id: `manual-${Date.now()}`, done: false };
-      updateTrips({ ...trips, [activeTrip]: [...currentTripData, newItem] }, '新建');
+      updateTrips({ ...trips, [activeTrip]: [...currentTripData, newItem] });
       showMessage("已保存");
     } else {
       const updated = currentTripData.map(item => item.id === editingId ? { ...item, ...payload } : item);
-      updateTrips({ ...trips, [activeTrip]: updated }, '编辑');
+      updateTrips({ ...trips, [activeTrip]: updated });
       showMessage("已保存");
     }
     setShowModal(false);
@@ -352,7 +319,7 @@ const App = () => {
       const newTrips = { ...trips };
       newTrips[newTitle] = newTrips[activeTrip];
       delete newTrips[activeTrip];
-      updateTrips(newTrips, '重命名');
+      updateTrips(newTrips);
       setActiveTrip(newTitle);
       showMessage("已保存");
     }
@@ -387,50 +354,17 @@ const App = () => {
   const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
   
   const containerClasses = isMobileView 
-    ? `max-w-[430px] w-full mx-auto min-h-[100dvh] relative shadow-2xl transition-colors duration-500 ${containerColor}` 
-    : `w-full min-h-[100dvh] relative transition-colors duration-500 ${containerColor}`;
+    ? `max-w-[430px] w-full mx-auto min-h-screen relative shadow-2xl ${containerColor}` 
+    : `w-full min-h-screen relative ${containerColor}`;
 
   return (
-    <div className={`font-sans transition-colors duration-500 flex justify-center ${bodyColor}`}>
+    <div className={`font-sans transition-colors flex justify-center ${bodyColor}`}>
       <div className={containerClasses}>
         
         {toast.show && (
           <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-full bg-black/80 backdrop-blur text-white shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
             <CheckCircle className={`w-4 h-4 ${toast.type === 'error' ? 'text-red-500' : 'text-green-500'}`} />
             <span className="text-sm font-bold">{toast.message}</span>
-          </div>
-        )}
-
-        {/* 拖动条 */}
-        <div 
-          ref={dragBarRef}
-          onTouchMove={handleScrollDrag}
-          onMouseMove={(e) => { if (e.buttons === 1) handleScrollDrag(e); }}
-          onMouseDown={handleScrollDrag}
-          className="fixed right-1 sm:right-4 top-1/4 bottom-1/4 w-8 z-[90] flex justify-center py-2 cursor-pointer group"
-        >
-          <div className={`w-1.5 h-full rounded-full relative transition-all ${isDarkMode ? 'bg-white/5 group-hover:bg-white/10' : 'bg-gray-300 group-hover:bg-gray-400'}`}>
-             <div 
-                className="w-full h-12 absolute bg-blue-500 rounded-full shadow-md" 
-                style={{ top: `calc(${scrollProgress * 100}% - ${scrollProgress * 48}px)` }}
-             />
-          </div>
-        </div>
-
-        {/* 撤销重做记录弹窗 */}
-        {historyMenu && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setHistoryMenu(null)}>
-            <div className={`w-64 rounded-[2rem] p-6 shadow-xl animate-in zoom-in-95 ${isDarkMode ? 'bg-[#1a1d23] text-white border border-white/10' : 'bg-white text-black'}`}>
-              <h3 className="font-black mb-4 text-center">{historyMenu === 'undo' ? '撤销记录' : '重做记录'}</h3>
-              <div className="max-h-60 overflow-y-auto space-y-2 no-scrollbar">
-                {(historyMenu === 'undo' ? [...past].reverse().slice(0, 10) : future.slice(0, 10)).map((log, i) => (
-                   <div key={i} className={`py-2 px-4 rounded-xl text-sm font-bold text-center ${isDarkMode ? 'bg-white/5' : 'bg-gray-100'}`}>
-                     {historyMenu === 'undo' ? '撤销' : '重做'}{log.action}
-                   </div>
-                ))}
-                {(historyMenu === 'undo' ? past : future).length === 0 && <div className="text-center opacity-50 text-xs py-4 font-bold">无记录</div>}
-              </div>
-            </div>
           </div>
         )}
 
@@ -456,7 +390,7 @@ const App = () => {
           </div>
         )}
 
-        <div className="pb-32 min-h-[100dvh] flex flex-col relative">
+        <div className="no-scrollbar pb-32 w-full">
           
           <header className="px-6 py-4 space-y-4">
             <div className="flex justify-between items-center gap-2">
@@ -476,7 +410,7 @@ const App = () => {
                 </div>
               )}
 
-              <div className={`flex backdrop-blur-xl rounded-2xl p-1 shrink-0 border transition-colors duration-500 ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-200/50 border-gray-300'}`}>
+              <div className={`flex backdrop-blur-xl rounded-2xl p-1 shrink-0 border ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-200/50 border-gray-300'}`}>
                 <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
                   {isDarkMode ? <SunMedium className="w-4 h-4 text-yellow-400" /> : <SunMedium className="w-4 h-4 text-orange-500" />}
                 </button>
@@ -495,32 +429,22 @@ const App = () => {
                 <Download className="w-4 h-4" /> 导出
               </button>
               {/* 撤销重做按钮 */}
-              <button 
-                onClick={handleUndo} 
-                onTouchStart={() => startPress('undo')} onTouchEnd={endPress}
-                onMouseDown={() => startPress('undo')} onMouseUp={endPress} onMouseLeave={endPress}
-                disabled={past.length === 0} 
-                className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
-                <Undo2 className="w-4 h-4 pointer-events-none" />
+              <button onClick={handleUndo} disabled={past.length === 0} className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-white/5 text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
+                <Undo2 className="w-4 h-4" />
               </button>
-              <button 
-                onClick={handleRedo} 
-                onTouchStart={() => startPress('redo')} onTouchEnd={endPress}
-                onMouseDown={() => startPress('redo')} onMouseUp={endPress} onMouseLeave={endPress}
-                disabled={future.length === 0} 
-                className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
-                <Redo2 className="w-4 h-4 pointer-events-none" />
+              <button onClick={handleRedo} disabled={future.length === 0} className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-white/5 text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
+                <Redo2 className="w-4 h-4" />
               </button>
             </div>
           </header>
 
           <nav className="px-6 flex gap-2 overflow-x-auto no-scrollbar min-h-[60px] items-center shrink-0">
-            <button onClick={() => setActiveTab('Total')} className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-5 rounded-xl text-xs font-black transition-all ${activeTab === 'Total' ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-50 hover:opacity-100'}`}>全部</button>
+            <button onClick={() => setActiveTab('Total')} className={`relative flex items-center justify-center shrink-0 whitespace-nowrap h-[40px] px-5 rounded-xl text-xs font-black transition-all ${activeTab === 'Total' ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-50 hover:opacity-100'}`}>全部</button>
             {dates.map(date => (
-              <button key={date} onClick={() => setActiveTab(date)} className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-4 rounded-xl text-xs font-black transition-all ${activeTab === date ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-50 hover:opacity-100'}`}>
+              <button key={date} onClick={() => setActiveTab(date)} className={`relative flex items-center justify-center shrink-0 whitespace-nowrap h-[40px] px-4 rounded-xl text-xs font-black transition-all ${activeTab === date ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-50 hover:opacity-100'}`}>
                 {date.split('-').slice(1).join('/')}
                 {activeTab === date && (
-                   <span className="flex items-center text-blue-500 bg-blue-100/20 px-1 py-0.5 rounded text-[10px] ml-1 shrink-0">
+                   <span className="flex items-center text-blue-500 bg-blue-100/20 px-1 py-0.5 rounded text-[10px] ml-1">
                      <CloudRain className="w-3 h-3 mr-0.5"/> 12°
                    </span>
                 )}
@@ -536,10 +460,10 @@ const App = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="搜索" 
-                className={`w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-bold transition-all outline-none border ${isDarkMode ? 'bg-white/5 focus:bg-white/10 text-white border-transparent' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-200'}`}
+                className={`w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-bold transition-all border-none outline-none ${isDarkMode ? 'bg-white/5 focus:bg-white/10 text-white' : 'bg-white focus:bg-white shadow-sm text-gray-900 border border-gray-200'}`}
               />
             </div>
-            <button onClick={handleRefresh} className={`p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 text-white border-transparent' : 'bg-white shadow-sm text-gray-700 border-gray-200'}`}>
+            <button onClick={handleRefresh} className={`p-3 rounded-2xl transition-all ${isDarkMode ? 'bg-white/5 text-white' : 'bg-white shadow-sm text-gray-700 border border-gray-200'}`}>
               <RefreshCw className="w-4 h-4 opacity-50 hover:opacity-100" />
             </button>
           </div>
@@ -558,7 +482,7 @@ const App = () => {
                   <div className="px-2 mb-6">
                     <div className="flex items-center gap-3 mb-3">
                       <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{group.date}</span>
-                      <div className={`h-px flex-1 transition-colors duration-500 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
+                      <div className={`h-px flex-1 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
                     </div>
                     
                     <button onClick={() => toggleOverview(group.date)} className={`w-full flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
@@ -582,7 +506,7 @@ const App = () => {
                       <div key={item.id} className="relative mb-0">
                         
                         {idx < group.items.length - 1 && (
-                          <div className={`absolute left-[27px] top-[36px] bottom-0 w-[2px] z-0 transition-colors duration-500 ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`} />
+                          <div className={`absolute left-[27px] top-[36px] bottom-0 w-[2px] z-0 ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`} />
                         )}
 
                         <div className="relative flex gap-4 group z-10 pt-2">
@@ -630,8 +554,8 @@ const App = () => {
                             <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
                               <div className="flex gap-3 text-[10px] font-bold">
                                 {/* 停留时间亮色风格 */}
-                                <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><Clock className="w-3 h-3" /> {item.duration}m</div>
-                                {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'}`}><DollarSign className="w-3 h-3" /> {item.cost} {item.currency}</div>}
+                                <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><Clock className="w-3 h-3" /> {item.duration}m</div>
+                                {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'}`}><DollarSign className="w-3 h-3" /> {item.cost} {item.currency}</div>}
                               </div>
                               
                               <div className="flex gap-1.5">
@@ -663,7 +587,7 @@ const App = () => {
                               </div>
                               <div className="flex-1 flex justify-center items-center px-2">
                                  {item.transportMode === 'train' ? (
-                                   <input placeholder="输入线路..." className={`text-[10px] font-bold px-2 py-0.5 rounded-md w-full max-w-[120px] bg-transparent border-none text-center outline-none transition-colors focus:bg-white/5 ${isDarkMode ? 'text-gray-400 placeholder:opacity-20' : 'text-gray-600 placeholder:opacity-40'}`} value={item.transitRoute || ''} onChange={(e) => handleUpdateTransitRoute(item.id, e.target.value)} />
+                                   <input placeholder="输入线路..." className={`text-[10px] font-bold px-2 py-0.5 rounded-md w-full max-w-[120px] bg-transparent border-none text-center outline-none focus:bg-white/5 ${isDarkMode ? 'text-gray-400 placeholder:opacity-20' : 'text-gray-600 placeholder:opacity-40'}`} value={item.transitRoute || ''} onChange={(e) => handleUpdateTransitRoute(item.id, e.target.value)} />
                                  ) : <div className="w-full h-px opacity-0" />}
                               </div>
                               <div className="flex items-center gap-2 text-right shrink-0">
@@ -682,15 +606,15 @@ const App = () => {
               );
             })}
           </main>
+        </div>
 
-          <div className="sticky bottom-20 sm:bottom-12 w-full flex justify-end px-6 pointer-events-none z-[60] mt-auto">
-            <button 
-              onClick={handleOpenAddModal} 
-              className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
-            >
-              <Plus className="w-6 h-6" />
-            </button>
-          </div>
+        <div className={`fixed bottom-24 sm:bottom-20 z-[60] pointer-events-none ${isMobileView ? 'max-w-[430px] w-full left-1/2 -translate-x-1/2' : 'w-full left-0'}`}>
+          <button 
+            onClick={handleOpenAddModal} 
+            className="absolute right-6 w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center pointer-events-auto hover:scale-105 active:scale-95 transition-all"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
         </div>
 
         {showModal && (
@@ -719,7 +643,7 @@ const App = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-[1.2fr_1fr] gap-4">
                   <div className="flex flex-col gap-1.5 min-w-0">
                     <label className={`text-[10px] font-black uppercase ml-1 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>日期</label>
                     {/* 利用 onFocus/onBlur 切换 Type 的核心黑科技，解决 iOS Safari 原生日期拉宽的问题 */}
@@ -728,8 +652,8 @@ const App = () => {
                       required 
                       onInvalid={e => e.target.setCustomValidity('请填写')}
                       onInput={e => e.target.setCustomValidity('')}
-                      className={`w-full min-w-0 h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                      value={formData.date} onChange={e => setFormData({...formData, date: sanitizeDate(e.target.value)})} />
+                      className={`w-full min-w-0 h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                      value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
                   </div>
                   <div className="flex flex-col gap-1.5 min-w-0">
                     <label className={`text-[10px] font-black uppercase ml-1 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>城市</label>
@@ -809,6 +733,7 @@ const App = () => {
         )}
 
         <style>{`
+          .no-scrollbar::-webkit-scrollbar { display: none; }
           * { -webkit-tap-highlight-color: transparent; }
           input:invalid { box-shadow: none; }
           input[type="date"] {
