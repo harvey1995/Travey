@@ -70,26 +70,48 @@ const App = () => {
   const [past, setPast] = useState([]);
   const [future, setFuture] = useState([]);
 
-  const updateTrips = (newTrips) => {
-    setPast(p => [...p, trips].slice(-20)); // 最多保存20步历史
+  const updateTrips = (newTrips, newActiveTrip = activeTrip) => {
+    setPast(p => [...p, { trips, activeTrip }].slice(-20)); // 最多保存20步历史，同时保存正在展示的行程
     setFuture([]);
     setTrips(newTrips);
+    if (newActiveTrip !== activeTrip) {
+      setActiveTrip(newActiveTrip);
+    }
   };
 
   const handleUndo = () => {
     if (past.length === 0) return;
     const previous = past[past.length - 1];
     setPast(p => p.slice(0, -1));
-    setFuture(f => [trips, ...f]);
-    setTrips(previous);
+    setFuture(f => [{ trips, activeTrip }, ...f]);
+    setTrips(previous.trips);
+    setActiveTrip(previous.activeTrip);
   };
 
   const handleRedo = () => {
     if (future.length === 0) return;
     const next = future[0];
     setFuture(f => f.slice(1));
-    setPast(p => [...p, trips]);
-    setTrips(next);
+    setPast(p => [...p, { trips, activeTrip }]);
+    setTrips(next.trips);
+    setActiveTrip(next.activeTrip);
+  };
+
+  // 自动恢复原有比例
+  const restoreZoom = () => {
+    if (typeof document !== 'undefined') {
+      let meta = document.querySelector('meta[name="viewport"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.name = 'viewport';
+        document.head.appendChild(meta);
+      }
+      const originalContent = meta.content;
+      meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+      setTimeout(() => {
+        meta.content = originalContent || 'width=device-width, initial-scale=1.0';
+      }, 300);
+    }
   };
 
   useEffect(() => {
@@ -134,8 +156,8 @@ const App = () => {
 
   const handleThemeToggle = () => {
     setIsSwitchingTheme(true);
+    setIsDarkMode(!isDarkMode);
     setTimeout(() => {
-      setIsDarkMode(!isDarkMode);
       setIsSwitchingTheme(false);
     }, 500);
   };
@@ -303,11 +325,41 @@ const App = () => {
       updateTrips({ ...trips, [activeTrip]: [...currentTripData, newItem] });
       showMessage("已保存");
     } else {
-      const updated = currentTripData.map(item => item.id === editingId ? { ...item, ...payload } : item);
-      updateTrips({ ...trips, [activeTrip]: updated });
+      const originalItem = currentTripData.find(item => item.id === editingId);
+      const targetDate = sanitizeDate(formData.date);
+      const m = payload.order;
+      let updatedData = [...currentTripData];
+
+      if (originalItem && (m !== originalItem.order || targetDate !== sanitizeDate(originalItem.date))) {
+        let dayItems = currentTripData.filter(item => sanitizeDate(item.date) === targetDate && item.id !== editingId);
+        let lessItems = dayItems.filter(item => item.order < m).sort((a,b) => a.order - b.order);
+        let greaterItems = dayItems.filter(item => item.order >= m).sort((a,b) => a.order - b.order);
+        
+        let n1 = lessItems.length;
+        let newOrders = {};
+        
+        let currentOrderCounter = 1;
+        lessItems.forEach(item => { newOrders[item.id] = currentOrderCounter++; });
+        
+        payload.order = n1 + 1;
+        
+        currentOrderCounter = n1 + 2;
+        greaterItems.forEach(item => { newOrders[item.id] = currentOrderCounter++; });
+
+        updatedData = currentTripData.map(item => {
+          if (item.id === editingId) return { ...item, ...payload };
+          if (newOrders[item.id] !== undefined) return { ...item, order: newOrders[item.id] };
+          return item;
+        });
+      } else {
+        updatedData = currentTripData.map(item => item.id === editingId ? { ...item, ...payload } : item);
+      }
+      
+      updateTrips({ ...trips, [activeTrip]: updatedData });
       showMessage("已保存");
     }
     setShowModal(false);
+    restoreZoom();
   };
 
   const openEditModal = (item) => {
@@ -328,11 +380,11 @@ const App = () => {
       const newTrips = { ...trips };
       newTrips[newTitle] = newTrips[activeTrip];
       delete newTrips[activeTrip];
-      updateTrips(newTrips);
-      setActiveTrip(newTitle);
+      updateTrips(newTrips, newTitle);
       showMessage("已保存");
     }
     setIsEditingTitle(false);
+    restoreZoom();
   };
 
   const openInGoogleMaps = (name, city) => {
@@ -521,7 +573,7 @@ const App = () => {
                           <div key={item.id} className="relative mb-0">
                             
                             {idx < group.items.length - 1 && (
-                              <div className={`absolute left-[27px] top-[36px] bottom-0 w-[2px] z-0 transition-colors duration-500 ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`} />
+                              <div className={`absolute left-[27px] top-[36px] -bottom-[40px] w-[2px] z-0 transition-colors duration-500 ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`} />
                             )}
 
                             <div className="relative flex gap-4 group z-10 pt-2">
@@ -637,7 +689,7 @@ const App = () => {
                 <form onSubmit={handleSubmitForm} className={`w-full max-w-md max-h-[90%] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                   <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
                     <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
-                    <button type="button" onClick={() => setShowModal(false)} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
+                    <button type="button" onClick={() => { setShowModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
                   </div>
                   
                   <div className="space-y-4">
