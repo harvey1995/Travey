@@ -510,7 +510,7 @@ const App = () => {
 
                 <div className={`flex backdrop-blur-xl rounded-2xl p-1 shrink-0 border transition-colors duration-500 ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-200/50 border-gray-300'}`}>
                   <button onClick={handleThemeToggle} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
-                    {isDarkMode ? <Moon className="w-4 h-4 text-yellow-400" fill="currentColor" /> : <SunMedium className="w-4 h-4 text-orange-500" />}
+                    {isDarkMode ? <Moon className="w-4 h-4 text-yellow-400" /> : <SunMedium className="w-4 h-4 text-orange-500" />}
                   </button>
                   <button onClick={() => setViewMode(isMobileView ? 'web' : 'mobile')} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
                     {isMobileView ? <Monitor className="w-4 h-4 text-gray-400" /> : <Smartphone className="w-4 h-4 text-gray-400" />}
@@ -545,7 +545,7 @@ const App = () => {
               ))}
             </nav>
 
-            <div className="px-6 mt-2 flex gap-2">
+            <div className="pl-6 pr-10 mt-2 flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" />
                 <input 
@@ -573,7 +573,7 @@ const App = () => {
                 return (
                   <div key={group.date} className="mb-10">
                     <div className="px-2 mb-6">
-                      <div className="flex items-center mb-3">
+                      <div className="flex items-center mb-3 pr-6">
                         <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{group.date}</span>
                         <div className={`h-px flex-1 mx-3 transition-colors duration-500 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
                         {weatherData[group.date] && (
@@ -722,7 +722,7 @@ const App = () => {
               })}
             </main>
 
-            <div className="sticky bottom-[104px] sm:bottom-20 w-full flex justify-end px-6 pointer-events-none z-[60] mt-auto">
+            <div className={`fixed bottom-[104px] sm:bottom-20 flex justify-end px-6 pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
               <button 
                 onClick={handleOpenAddModal} 
                 className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
