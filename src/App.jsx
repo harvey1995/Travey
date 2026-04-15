@@ -236,7 +236,7 @@ const App = () => {
     if (mode === 'overwrite') {
       updateTrips({ ...trips, [activeTrip]: pendingImportData });
     } else {
-      updateTrips({ ...trips, [activeTrip]: [...(prev[activeTrip] || []), ...pendingImportData] });
+      updateTrips({ ...trips, [activeTrip]: [...(currentTripData || []), ...pendingImportData] });
     }
     setShowImportModal(false);
     setPendingImportData([]);
@@ -354,11 +354,11 @@ const App = () => {
   const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
   
   const containerClasses = isMobileView 
-    ? `max-w-[430px] w-full mx-auto min-h-screen relative shadow-2xl ${containerColor}` 
-    : `w-full min-h-screen relative ${containerColor}`;
+    ? `max-w-[430px] w-full mx-auto min-h-[100dvh] relative shadow-2xl transition-colors duration-500 overflow-hidden ${containerColor}` 
+    : `w-full min-h-[100dvh] relative transition-colors duration-500 overflow-hidden ${containerColor}`;
 
   return (
-    <div className={`font-sans transition-colors flex justify-center ${bodyColor}`}>
+    <div className={`font-sans transition-colors duration-500 flex justify-center ${bodyColor}`}>
       <div className={containerClasses}>
         
         {toast.show && (
@@ -372,7 +372,7 @@ const App = () => {
         {previewIframeUrl && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPreviewIframeUrl(null)}></div>
-             <div className={`relative w-full max-w-sm aspect-square rounded-[2rem] overflow-hidden border-4 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+             <div className={`relative w-full max-w-sm aspect-square rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                 <button onClick={() => setPreviewIframeUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                   <X className="w-5 h-5" />
                 </button>
@@ -390,14 +390,14 @@ const App = () => {
           </div>
         )}
 
-        <div className="no-scrollbar pb-32 w-full">
+        <div className="pb-32 min-h-[100dvh] flex flex-col relative">
           
           <header className="px-6 py-4 space-y-4">
             <div className="flex justify-between items-center gap-2">
               {isEditingTitle ? (
                 <input 
                   autoFocus
-                  className={`w-1/2 min-w-0 flex-1 bg-transparent border-b border-blue-500 outline-none text-2xl font-black truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+                  className={`w-1/2 min-w-0 flex-1 bg-transparent border-b border-blue-500 outline-none text-2xl font-black truncate transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   onBlur={renameTrip}
@@ -410,7 +410,7 @@ const App = () => {
                 </div>
               )}
 
-              <div className={`flex backdrop-blur-xl rounded-2xl p-1 shrink-0 border ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-200/50 border-gray-300'}`}>
+              <div className={`flex backdrop-blur-xl rounded-2xl p-1 shrink-0 border transition-colors duration-500 ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-200/50 border-gray-300'}`}>
                 <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
                   {isDarkMode ? <SunMedium className="w-4 h-4 text-yellow-400" /> : <SunMedium className="w-4 h-4 text-orange-500" />}
                 </button>
@@ -429,22 +429,22 @@ const App = () => {
                 <Download className="w-4 h-4" /> 导出
               </button>
               {/* 撤销重做按钮 */}
-              <button onClick={handleUndo} disabled={past.length === 0} className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-white/5 text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
+              <button onClick={handleUndo} disabled={past.length === 0} className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
                 <Undo2 className="w-4 h-4" />
               </button>
-              <button onClick={handleRedo} disabled={future.length === 0} className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-white/5 text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
+              <button onClick={handleRedo} disabled={future.length === 0} className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
                 <Redo2 className="w-4 h-4" />
               </button>
             </div>
           </header>
 
           <nav className="px-6 flex gap-2 overflow-x-auto no-scrollbar min-h-[60px] items-center shrink-0">
-            <button onClick={() => setActiveTab('Total')} className={`relative flex items-center justify-center shrink-0 whitespace-nowrap h-[40px] px-5 rounded-xl text-xs font-black transition-all ${activeTab === 'Total' ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-50 hover:opacity-100'}`}>全部</button>
+            <button onClick={() => setActiveTab('Total')} className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-5 rounded-xl text-xs font-black transition-all ${activeTab === 'Total' ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-50 hover:opacity-100'}`}>全部</button>
             {dates.map(date => (
-              <button key={date} onClick={() => setActiveTab(date)} className={`relative flex items-center justify-center shrink-0 whitespace-nowrap h-[40px] px-4 rounded-xl text-xs font-black transition-all ${activeTab === date ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-50 hover:opacity-100'}`}>
+              <button key={date} onClick={() => setActiveTab(date)} className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-4 rounded-xl text-xs font-black transition-all ${activeTab === date ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-50 hover:opacity-100'}`}>
                 {date.split('-').slice(1).join('/')}
                 {activeTab === date && (
-                   <span className="flex items-center text-blue-500 bg-blue-100/20 px-1 py-0.5 rounded text-[10px] ml-1">
+                   <span className="flex items-center text-blue-500 bg-blue-100/20 px-1 py-0.5 rounded text-[10px] ml-1 shrink-0">
                      <CloudRain className="w-3 h-3 mr-0.5"/> 12°
                    </span>
                 )}
@@ -460,10 +460,10 @@ const App = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="搜索" 
-                className={`w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-bold transition-all border-none outline-none ${isDarkMode ? 'bg-white/5 focus:bg-white/10 text-white' : 'bg-white focus:bg-white shadow-sm text-gray-900 border border-gray-200'}`}
+                className={`w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-bold transition-all outline-none border ${isDarkMode ? 'bg-white/5 focus:bg-white/10 text-white border-transparent' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-200'}`}
               />
             </div>
-            <button onClick={handleRefresh} className={`p-3 rounded-2xl transition-all ${isDarkMode ? 'bg-white/5 text-white' : 'bg-white shadow-sm text-gray-700 border border-gray-200'}`}>
+            <button onClick={handleRefresh} className={`p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 text-white border-transparent' : 'bg-white shadow-sm text-gray-700 border-gray-200'}`}>
               <RefreshCw className="w-4 h-4 opacity-50 hover:opacity-100" />
             </button>
           </div>
@@ -482,7 +482,7 @@ const App = () => {
                   <div className="px-2 mb-6">
                     <div className="flex items-center gap-3 mb-3">
                       <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{group.date}</span>
-                      <div className={`h-px flex-1 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
+                      <div className={`h-px flex-1 transition-colors duration-500 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
                     </div>
                     
                     <button onClick={() => toggleOverview(group.date)} className={`w-full flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
@@ -506,7 +506,7 @@ const App = () => {
                       <div key={item.id} className="relative mb-0">
                         
                         {idx < group.items.length - 1 && (
-                          <div className={`absolute left-[27px] top-[36px] bottom-0 w-[2px] z-0 ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`} />
+                          <div className={`absolute left-[27px] top-[36px] bottom-0 w-[2px] z-0 transition-colors duration-500 ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`} />
                         )}
 
                         <div className="relative flex gap-4 group z-10 pt-2">
@@ -554,8 +554,8 @@ const App = () => {
                             <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
                               <div className="flex gap-3 text-[10px] font-bold">
                                 {/* 停留时间亮色风格 */}
-                                <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><Clock className="w-3 h-3" /> {item.duration}m</div>
-                                {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'}`}><DollarSign className="w-3 h-3" /> {item.cost} {item.currency}</div>}
+                                <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><Clock className="w-3 h-3" /> {item.duration}m</div>
+                                {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'}`}><DollarSign className="w-3 h-3" /> {item.cost} {item.currency}</div>}
                               </div>
                               
                               <div className="flex gap-1.5">
@@ -587,7 +587,7 @@ const App = () => {
                               </div>
                               <div className="flex-1 flex justify-center items-center px-2">
                                  {item.transportMode === 'train' ? (
-                                   <input placeholder="输入线路..." className={`text-[10px] font-bold px-2 py-0.5 rounded-md w-full max-w-[120px] bg-transparent border-none text-center outline-none focus:bg-white/5 ${isDarkMode ? 'text-gray-400 placeholder:opacity-20' : 'text-gray-600 placeholder:opacity-40'}`} value={item.transitRoute || ''} onChange={(e) => handleUpdateTransitRoute(item.id, e.target.value)} />
+                                   <input placeholder="输入线路..." className={`text-[10px] font-bold px-2 py-0.5 rounded-md w-full max-w-[120px] bg-transparent border-none text-center outline-none transition-colors focus:bg-white/5 ${isDarkMode ? 'text-gray-400 placeholder:opacity-20' : 'text-gray-600 placeholder:opacity-40'}`} value={item.transitRoute || ''} onChange={(e) => handleUpdateTransitRoute(item.id, e.target.value)} />
                                  ) : <div className="w-full h-px opacity-0" />}
                               </div>
                               <div className="flex items-center gap-2 text-right shrink-0">
@@ -606,84 +606,84 @@ const App = () => {
               );
             })}
           </main>
-        </div>
 
-        <div className={`fixed bottom-24 sm:bottom-20 z-[60] pointer-events-none ${isMobileView ? 'max-w-[430px] w-full left-1/2 -translate-x-1/2' : 'w-full left-0'}`}>
-          <button 
-            onClick={handleOpenAddModal} 
-            className="absolute right-6 w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center pointer-events-auto hover:scale-105 active:scale-95 transition-all"
-          >
-            <Plus className="w-6 h-6" />
-          </button>
+          <div className="sticky bottom-[104px] sm:bottom-20 w-full flex justify-end px-6 pointer-events-none z-[60] mt-auto">
+            <button 
+              onClick={handleOpenAddModal} 
+              className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
+            >
+              <Plus className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {showModal && (
           <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
-            <form onSubmit={handleSubmitForm} className={`w-full max-w-md max-h-[90%] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+            <form onSubmit={handleSubmitForm} className={`w-full max-w-md max-h-[90%] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
               <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
-                <h2 className={`text-xl font-black ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
-                <button type="button" onClick={() => setShowModal(false)} className={`p-2 rounded-full ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 ${isDarkMode ? 'opacity-60' : 'text-gray-600'}`} /></button>
+                <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
+                <button type="button" onClick={() => setShowModal(false)} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-60' : 'text-gray-600'}`} /></button>
               </div>
               
               <div className="space-y-4">
                 <div className="grid grid-cols-[1fr_80px] gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className={`text-[10px] font-black uppercase ml-1 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>地点名称</label>
+                    <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>地点名称</label>
                     <input required 
                       onInvalid={e => e.target.setCustomValidity('请填写')}
                       onInput={e => e.target.setCustomValidity('')}
-                      className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                      className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                       value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={`text-[10px] font-black uppercase ml-1 text-center block ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>序号</label>
+                    <label className={`text-[10px] font-black uppercase ml-1 text-center block transition-colors duration-500 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>序号</label>
                     <input type="text" inputMode="numeric" pattern="[0-9]*" 
-                      className={`w-full h-12 px-2 rounded-2xl text-base font-black outline-none focus:ring-2 focus:ring-blue-500 text-center box-border border ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                      className={`w-full h-12 px-2 rounded-2xl text-base font-black outline-none focus:ring-2 focus:ring-blue-500 text-center box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                       value={formData.order} onChange={e => setFormData({...formData, order: e.target.value.replace(/[^0-9]/g, '')})} />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-[1.2fr_1fr] gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5 min-w-0">
-                    <label className={`text-[10px] font-black uppercase ml-1 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>日期</label>
-                    {/* 利用 onFocus/onBlur 切换 Type 的核心黑科技，解决 iOS Safari 原生日期拉宽的问题 */}
+                    <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>日期</label>
+                    {/* 利用 type="date" 配合 appearance-none 与 min-w-0 限制了最大宽度，解决 iOS Safari 原生日期拉宽的问题 */}
                     <input 
                       type="date" 
                       required 
                       onInvalid={e => e.target.setCustomValidity('请填写')}
                       onInput={e => e.target.setCustomValidity('')}
-                      className={`w-full min-w-0 h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                      value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+                      className={`w-full min-w-0 h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-500 [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                      value={formData.date} onChange={e => setFormData({...formData, date: sanitizeDate(e.target.value)})} />
                   </div>
                   <div className="flex flex-col gap-1.5 min-w-0">
-                    <label className={`text-[10px] font-black uppercase ml-1 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>城市</label>
-                    <input className={`w-full min-w-0 h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                    <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>城市</label>
+                    <input className={`w-full min-w-0 h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                       value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
                   <div className="flex flex-col gap-1.5">
-                     <label className={`text-[10px] font-black uppercase ml-1 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>停留时间(分)</label>
+                     <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>停留时间(分)</label>
                      <input type="text" inputMode="numeric" pattern="[0-9]*" 
-                      className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                      className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                       value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value.replace(/[^0-9]/g, '')})} />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={`text-[10px] font-black uppercase ml-1 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>花销</label>
+                    <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>花销</label>
                     <input 
                       type="text" 
                       inputMode="decimal"
                       required
                       onInvalid={e => e.target.setCustomValidity('请填写数字')}
                       onInput={e => e.target.setCustomValidity('')}
-                      className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                      className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                       value={formData.cost} onChange={e => setFormData({...formData, cost: e.target.value.replace(/[^0-9.]/g, '')})} />
                   </div>
                   <div className="flex flex-col gap-1.5 relative">
-                    <label className={`text-[10px] font-black uppercase ml-1 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>币种</label>
+                    <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>币种</label>
                     <div className="relative h-12">
-                      <select className={`w-full h-full px-4 pr-8 rounded-2xl text-base font-medium outline-none appearance-none focus:ring-2 focus:ring-blue-500 box-border border ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                      <select className={`w-full h-full px-4 pr-8 rounded-2xl text-base font-medium outline-none appearance-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                         value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})}>
                         <option value="USD">USD</option>
                         <option value="GBP">GBP</option>
@@ -697,11 +697,11 @@ const App = () => {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className={`text-[10px] font-black uppercase ml-1 flex justify-between ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>
+                  <label className={`text-[10px] font-black uppercase ml-1 flex justify-between transition-colors duration-500 ${isDarkMode ? 'opacity-40 text-white' : 'text-gray-500'}`}>
                     <span>备注</span>
                     <span className="text-blue-500 font-normal opacity-100">(支持文本/链接)</span>
                   </label>
-                  <textarea className={`w-full p-4 rounded-2xl text-base font-medium min-h-[100px] outline-none resize-none focus:ring-2 focus:ring-blue-500 box-border border ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                  <textarea className={`w-full p-4 rounded-2xl text-base font-medium min-h-[100px] outline-none resize-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                     placeholder="例如：住宿、交通、门票、营业时间等信息"
                     value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} />
                 </div>
@@ -716,11 +716,11 @@ const App = () => {
 
         {showImportModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
-            <div className={`w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl ${isDarkMode ? 'bg-[#1a1d23] border border-white/5' : 'bg-white text-black'}`}>
+            <div className={`w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border border-white/5' : 'bg-white text-black'}`}>
               <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Upload className="w-8 h-8 text-blue-500" />
               </div>
-              <h2 className={`text-xl font-black mb-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>识别到 {pendingImportData.length} 个地点</h2>
+              <h2 className={`text-xl font-black mb-1 transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-black'}`}>识别到 {pendingImportData.length} 个地点</h2>
               <p className="text-[11px] opacity-50 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{activeTrip}</span></p>
               
               <div className="grid gap-3">
