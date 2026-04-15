@@ -46,7 +46,7 @@ const TOKYO_TRIP = [
   { date: "2026-01-02", id: "tokyo-7", city: "Tokyo", name: "银座", duration: 240, note: "新年大特卖「福袋」抢购，买伴手礼", cost: 20000, currency: "JPY", done: false, order: 2, transportMode: 'train', transitRoute: '' },
 ];
 
-const INITIAL_TRIPS = { "东京跨年3日游": TOKYO_TRIP };
+const INITIAL_TRIPS = { "东京跨年三日游": TOKYO_TRIP };
 
 const App = () => {
   // 1. 数据与缓存
@@ -61,9 +61,9 @@ const App = () => {
   const [activeTrip, setActiveTrip] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedActive = localStorage.getItem('travey_active_v1');
-      return savedActive && trips[savedActive] ? savedActive : Object.keys(trips)[0] || "东京跨年3日游";
+      return savedActive && trips[savedActive] ? savedActive : Object.keys(trips)[0] || "东京跨年三日游";
     }
-    return "东京跨年3日游";
+    return "东京跨年三日游";
   });
 
   // 2. 撤销/重做引擎
