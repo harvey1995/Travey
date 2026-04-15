@@ -339,7 +339,7 @@ const App = () => {
 
   const handleDelete = (id) => {
     updateTrips({ ...trips, [activeTrip]: currentTripData.filter(item => item.id !== id) });
-    showMessage("已保存", "error");
+    showMessage("已删除", "error");
   };
 
   const handleSubmitForm = (e) => {
@@ -545,7 +545,7 @@ const App = () => {
               ))}
             </nav>
 
-            <div className="pl-6 pr-10 mt-2 flex gap-2">
+            <div className="px-6 mt-2 flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" />
                 <input 
@@ -561,7 +561,7 @@ const App = () => {
               </button>
             </div>
 
-            <main className="px-4 py-6">
+            <main className="px-6 py-6">
               {groupedDataWithTime.length === 0 ? (
                 <div className="py-20 text-center opacity-60 flex flex-col items-center gap-4">
                    <Sparkles className="w-12 h-12" />
@@ -572,12 +572,12 @@ const App = () => {
                 
                 return (
                   <div key={group.date} className="mb-10">
-                    <div className="px-2 mb-6">
-                      <div className="flex items-center mb-3 pr-6">
+                    <div className="mb-6">
+                      <div className="flex items-center mb-3">
                         <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{group.date}</span>
                         <div className={`h-px flex-1 mx-3 transition-colors duration-500 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
                         {weatherData[group.date] && (
-                          <span className="text-[10px] font-bold text-gray-500 whitespace-nowrap">{weatherData[group.date]}</span>
+                          <span className="text-xs font-black text-gray-800 dark:text-gray-200 whitespace-nowrap">{weatherData[group.date]}</span>
                         )}
                       </div>
                       
@@ -609,7 +609,7 @@ const App = () => {
                       )}
                     </div>
 
-                    <div className="relative space-y-0 pr-4">
+                    <div className="relative space-y-0">
                       {group.items.map((item, idx) => (
                         <div key={item.id} className="relative mb-0">
                           
@@ -722,7 +722,7 @@ const App = () => {
               })}
             </main>
 
-            <div className={`fixed bottom-[104px] sm:bottom-20 flex justify-end px-6 pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
+            <div className={`fixed bottom-[20px] sm:bottom-0 flex justify-end px-6 pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
               <button 
                 onClick={handleOpenAddModal} 
                 className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
