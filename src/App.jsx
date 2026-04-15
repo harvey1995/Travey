@@ -144,6 +144,7 @@ const App = () => {
   });
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [weatherData, setWeatherData] = useState({});
 
   const showMessage = (msg, type = 'success') => {
     setToast({ show: true, message: msg, type });
@@ -223,6 +224,37 @@ const App = () => {
     }
     return result;
   }, [sanitizedTripData, activeTab, searchQuery]);
+
+  // 天气获取 API 逻辑
+  useEffect(() => {
+    let isMounted = true;
+    const fetchWeather = async () => {
+      const updates = {};
+      let hasNew = false;
+      for (const g of groupedDataWithTime) {
+        if (weatherData[g.date] === undefined && g.items[0]?.city) {
+          hasNew = true;
+          try {
+            const res = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=9421165d458f483f88d15158261504&q=${g.items[0].city}&dt=${g.date}&lang=zh`);
+            const data = await res.json();
+            if (data?.forecast?.forecastday?.[0]) {
+              const day = data.forecast.forecastday[0].day;
+              updates[g.date] = `${day.condition.text} ${day.maxtemp_c}℃~${day.mintemp_c}℃`;
+            } else {
+              updates[g.date] = "-";
+            }
+          } catch {
+            updates[g.date] = "-";
+          }
+        }
+      }
+      if (hasNew && isMounted) {
+        setWeatherData(prev => ({ ...prev, ...updates }));
+      }
+    };
+    fetchWeather();
+    return () => { isMounted = false; };
+  }, [groupedDataWithTime]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -320,44 +352,43 @@ const App = () => {
     };
     setLastSelectedCurrency(formData.currency);
 
+    const targetDate = sanitizeDate(formData.date);
+    const m = payload.order;
+    let updatedData = [...currentTripData];
+
+    let dayItems = currentTripData.filter(item => sanitizeDate(item.date) === targetDate && item.id !== (modalMode === 'edit' ? editingId : null));
+    
+    // i. 除了手动新建、编辑为m的地点之外、所有此前小于m的序号，计数为n1，从1开始顺序生成到n1
+    let lessItems = dayItems.filter(item => item.order < m).sort((a,b) => a.order - b.order);
+    let greaterItems = dayItems.filter(item => item.order >= m).sort((a,b) => a.order - b.order);
+    
+    let n1 = lessItems.length;
+    let newOrders = {};
+    
+    let currentOrderCounter = 1;
+    lessItems.forEach(item => { newOrders[item.id] = currentOrderCounter++; });
+    
+    // ii. 手动新建、编辑为m的地点序号为n1+1
+    payload.order = n1 + 1;
+    
+    // iii. 除了手动新建、编辑为m的地点之外、所有此前大于等于m的序号，计数为n2，从n1+2开始顺序生成到n1+1+n2
+    currentOrderCounter = n1 + 2;
+    greaterItems.forEach(item => { newOrders[item.id] = currentOrderCounter++; });
+
     if (modalMode === 'add') {
       const newItem = { ...payload, id: `manual-${Date.now()}`, done: false };
-      updateTrips({ ...trips, [activeTrip]: [...currentTripData, newItem] });
-      showMessage("已保存");
+      updatedData = updatedData.map(item => newOrders[item.id] !== undefined ? { ...item, order: newOrders[item.id] } : item);
+      updatedData.push(newItem);
     } else {
-      const originalItem = currentTripData.find(item => item.id === editingId);
-      const targetDate = sanitizeDate(formData.date);
-      const m = payload.order;
-      let updatedData = [...currentTripData];
-
-      if (originalItem && (m !== originalItem.order || targetDate !== sanitizeDate(originalItem.date))) {
-        let dayItems = currentTripData.filter(item => sanitizeDate(item.date) === targetDate && item.id !== editingId);
-        let lessItems = dayItems.filter(item => item.order < m).sort((a,b) => a.order - b.order);
-        let greaterItems = dayItems.filter(item => item.order >= m).sort((a,b) => a.order - b.order);
-        
-        let n1 = lessItems.length;
-        let newOrders = {};
-        
-        let currentOrderCounter = 1;
-        lessItems.forEach(item => { newOrders[item.id] = currentOrderCounter++; });
-        
-        payload.order = n1 + 1;
-        
-        currentOrderCounter = n1 + 2;
-        greaterItems.forEach(item => { newOrders[item.id] = currentOrderCounter++; });
-
-        updatedData = currentTripData.map(item => {
-          if (item.id === editingId) return { ...item, ...payload };
-          if (newOrders[item.id] !== undefined) return { ...item, order: newOrders[item.id] };
-          return item;
-        });
-      } else {
-        updatedData = currentTripData.map(item => item.id === editingId ? { ...item, ...payload } : item);
-      }
-      
-      updateTrips({ ...trips, [activeTrip]: updatedData });
-      showMessage("已保存");
+      updatedData = updatedData.map(item => {
+        if (item.id === editingId) return { ...item, ...payload };
+        if (newOrders[item.id] !== undefined) return { ...item, order: newOrders[item.id] };
+        return item;
+      });
     }
+    
+    updateTrips({ ...trips, [activeTrip]: updatedData });
+    showMessage("已保存");
     setShowModal(false);
     restoreZoom();
   };
@@ -448,8 +479,7 @@ const App = () => {
                       width="100%" 
                       height="100%" 
                       frameBorder="0" 
-                      // 深色模式地图增强亮度与对比度
-                      style={{ border: 0, filter: (isDarkMode && previewIframeUrl.includes('maps.google')) ? 'invert(90%) hue-rotate(180deg) brightness(1.4) contrast(1.7)' : 'none' }} 
+                      style={{ border: 0 }} 
                       src={previewIframeUrl} 
                       allowFullScreen>
                     </iframe>
@@ -510,11 +540,6 @@ const App = () => {
                 {dates.map(date => (
                   <button key={date} onClick={() => setActiveTab(date)} className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-4 rounded-xl text-xs font-black transition-all ${activeTab === date ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-70 hover:opacity-100'}`}>
                     {date.split('-').slice(1).join('/')}
-                    {activeTab === date && (
-                       <span className="flex items-center text-blue-500 bg-blue-100/20 px-1 py-0.5 rounded text-[10px] ml-1 shrink-0">
-                         <CloudRain className="w-3 h-3 mr-0.5"/> 12°
-                       </span>
-                    )}
                   </button>
                 ))}
               </nav>
@@ -547,9 +572,12 @@ const App = () => {
                   return (
                     <div key={group.date} className="mb-10">
                       <div className="px-2 mb-6">
-                        <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center mb-3">
                           <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{group.date}</span>
-                          <div className={`h-px flex-1 transition-colors duration-500 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
+                          <div className={`h-px flex-1 mx-3 transition-colors duration-500 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
+                          {weatherData[group.date] && (
+                            <span className="text-[10px] font-bold text-gray-500 whitespace-nowrap">{weatherData[group.date]}</span>
+                          )}
                         </div>
                         
                         <button onClick={() => toggleOverview(group.date)} className={`w-full flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
@@ -559,6 +587,18 @@ const App = () => {
                         
                         {isOverviewExpanded && (
                           <div className={`mt-2 p-4 rounded-2xl text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
+                            {group.items.length >= 2 && (
+                              <div className="w-full aspect-video rounded-xl overflow-hidden mb-2 border border-white/10">
+                                <iframe 
+                                  title="Daily Route"
+                                  width="100%" 
+                                  height="100%" 
+                                  frameBorder="0" 
+                                  src={`https://maps.google.com/maps?saddr=${encodeURIComponent(group.items[0].name + ' ' + (group.items[0].city || ''))}&daddr=${encodeURIComponent(group.items.slice(1).map(i => i.name + ' ' + (i.city || '')).join(' to:'))}&output=embed`} 
+                                  allowFullScreen
+                                ></iframe>
+                              </div>
+                            )}
                             {group.items.map((i, idx) => (
                                <span key={idx} className={`block ${i.done ? 'line-through opacity-40' : ''}`}>
                                  {i.order}. {i.name} ({i.startTimeStr} - {i.endTimeStr})
@@ -652,18 +692,23 @@ const App = () => {
                                       );
                                     })}
                                   </div>
+                                  
                                   <button 
                                     onClick={() => {
-                                      const nextItem = group.items[idx + 1];
-                                      const origin = encodeURIComponent(`${item.name} ${item.city || ''}`.trim());
-                                      const destination = encodeURIComponent(`${nextItem.name} ${nextItem.city || ''}`.trim());
-                                      const mapModes = { walk: 'walking', car: 'driving', train: 'transit' };
-                                      const travelMode = mapModes[item.transportMode || 'train'];
-                                      window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=${travelMode}`, '_blank');
+                                      const endItem = group.items[idx+1];
+                                      const origin = encodeURIComponent(`${item.name} ${item.city || ''}`);
+                                      const dest = encodeURIComponent(`${endItem.name} ${endItem.city || ''}`);
+                                      const dirflgMap = { walk: 'w', car: 'd', train: 'r' };
+                                      const dirflg = dirflgMap[item.transportMode || 'train'];
+                                      setPreviewIframeUrl(`https://maps.google.com/maps?saddr=${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
                                     }}
-                                    className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all ${isDarkMode ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}
+                                    className={`px-4 py-1.5 rounded-lg text-[11px] font-black transition-all ${
+                                      item.transportMode === 'walk' ? (isDarkMode ? 'bg-orange-400/20 text-orange-400' : 'bg-orange-100 text-orange-600') :
+                                      item.transportMode === 'car' ? (isDarkMode ? 'bg-blue-400/20 text-blue-400' : 'bg-blue-100 text-blue-600') :
+                                      (isDarkMode ? 'bg-green-400/20 text-green-400' : 'bg-green-100 text-green-600')
+                                    }`}
                                   >
-                                    出行
+                                    路线
                                   </button>
                                 </div>
                               </div>
