@@ -4,7 +4,7 @@ import {
   SunMedium, Smartphone, Monitor, Trash2, Pencil, Map, X, Sparkles,
   MapPin, Footprints, Car, Train, ChevronRight, RefreshCw, 
   ChevronDown, ChevronUp, Edit2, AlertTriangle, CloudRain, ZoomIn,
-  Undo2, Redo2
+  Undo2, Redo2, Moon
 } from 'lucide-react';
 
 // --- 工具函数 ---
@@ -140,7 +140,7 @@ const App = () => {
   const [lastSelectedCurrency, setLastSelectedCurrency] = useState('USD');
 
   const [formData, setFormData] = useState({ 
-    name: '', date: getTodayDate(), duration: '60', city: '', note: '', cost: '0', currency: lastSelectedCurrency, order: '1', transportMode: 'train', transitRoute: '' 
+    name: '', date: getTodayDate(), duration: '60', city: '', note: '', cost: '0', currency: lastSelectedCurrency, order: '1', transportMode: 'car', transitRoute: '' 
   });
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -276,7 +276,7 @@ const App = () => {
             note: values[5] || "",
             cost: parseFloat(values[6]) || 0,
             currency: values[7] || "USD",
-            transportMode: 'train',
+            transportMode: 'car',
             transitRoute: '',
             done: false
           };
@@ -435,7 +435,7 @@ const App = () => {
   const handleOpenAddModal = () => {
     setModalMode('add'); 
     const dateToUse = activeTab !== 'Total' ? activeTab : getTodayDate();
-    setFormData({ name: '', date: dateToUse, duration: '60', city: '', note: '', cost: '0', currency: lastSelectedCurrency, order: '1', transportMode: 'train', transitRoute: '' }); 
+    setFormData({ name: '', date: dateToUse, duration: '60', city: '', note: '', cost: '0', currency: lastSelectedCurrency, order: '1', transportMode: 'car', transitRoute: '' }); 
     setShowModal(true); 
   };
 
@@ -510,10 +510,10 @@ const App = () => {
 
                 <div className={`flex backdrop-blur-xl rounded-2xl p-1 shrink-0 border transition-colors duration-500 ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-200/50 border-gray-300'}`}>
                   <button onClick={handleThemeToggle} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
-                    {isDarkMode ? <SunMedium className="w-4 h-4 text-yellow-400" /> : <SunMedium className="w-4 h-4 text-orange-500" />}
+                    {isDarkMode ? <Moon className="w-4 h-4 text-yellow-400" fill="currentColor" /> : <SunMedium className="w-4 h-4 text-orange-500" />}
                   </button>
                   <button onClick={() => setViewMode(isMobileView ? 'web' : 'mobile')} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
-                    {isMobileView ? <Monitor className="w-4 h-4 text-gray-400" /> : <Smartphone className="w-4 h-4 text-blue-500" />}
+                    {isMobileView ? <Monitor className="w-4 h-4 text-gray-400" /> : <Smartphone className="w-4 h-4 text-gray-400" />}
                   </button>
                 </div>
               </div>
@@ -609,7 +609,7 @@ const App = () => {
                       )}
                     </div>
 
-                    <div className="relative space-y-0 px-2">
+                    <div className="relative space-y-0 pr-4">
                       {group.items.map((item, idx) => (
                         <div key={item.id} className="relative mb-0">
                           
