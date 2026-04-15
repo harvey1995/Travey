@@ -652,17 +652,19 @@ const App = () => {
                                       );
                                     })}
                                   </div>
-                                  <div className="flex-1 flex justify-center items-center px-2">
-                                     {item.transportMode === 'train' ? (
-                                       <input placeholder="输入线路..." className={`text-[10px] font-bold px-2 py-0.5 rounded-md w-full max-w-[120px] bg-transparent border-none text-center outline-none transition-colors focus:bg-white/5 ${isDarkMode ? 'text-gray-300 placeholder:opacity-50' : 'text-gray-700 placeholder:opacity-60'}`} value={item.transitRoute || ''} onChange={(e) => handleUpdateTransitRoute(item.id, e.target.value)} />
-                                     ) : <div className="w-full h-px opacity-0" />}
-                                  </div>
-                                  <div className="flex items-center gap-2 text-right shrink-0">
-                                     {TRANSPORT_ESTIMATES[item.transportMode || 'train'].alert && (
-                                       <span className="text-[8px] flex items-center text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded"><AlertTriangle className="w-2 h-2 mr-0.5"/>拥堵</span>
-                                     )}
-                                     <span className={`text-[11px] font-black tabular-nums ${TRANSPORT_ESTIMATES[item.transportMode || 'train'].color}`}>~? 分</span>
-                                  </div>
+                                  <button 
+                                    onClick={() => {
+                                      const nextItem = group.items[idx + 1];
+                                      const origin = encodeURIComponent(`${item.name} ${item.city || ''}`.trim());
+                                      const destination = encodeURIComponent(`${nextItem.name} ${nextItem.city || ''}`.trim());
+                                      const mapModes = { walk: 'walking', car: 'driving', train: 'transit' };
+                                      const travelMode = mapModes[item.transportMode || 'train'];
+                                      window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=${travelMode}`, '_blank');
+                                    }}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all ${isDarkMode ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}
+                                  >
+                                    出行
+                                  </button>
                                 </div>
                               </div>
                             )}
