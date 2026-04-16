@@ -578,10 +578,14 @@ const App = () => {
                         <div className={`h-px flex-1 mx-3 transition-colors duration-500 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
                         {weatherData[group.date] && (
                           <div 
-                            className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => setPreviewIframeUrl(`https://gemini.google.com/app?q=${encodeURIComponent(`请告诉我${group.items[0]?.city || ''}在${group.date}的天气`)}`)}
+                            className="flex items-center gap-1 cursor-pointer transition-opacity hover:opacity-80"
+                            onClick={() => {
+                              if (group.items[0]?.city) {
+                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + '天气')}&igu=1`);
+                              }
+                            }}
                           >
-                            <Star className="w-3.5 h-3.5 text-yellow-500" />
+                            <Star className="w-3.5 h-3.5 text-purple-300 fill-purple-300" />
                             <span className="text-xs font-black text-gray-800 dark:text-gray-200 whitespace-nowrap">{weatherData[group.date]}</span>
                           </div>
                         )}
@@ -715,7 +719,7 @@ const App = () => {
                                     (isDarkMode ? 'bg-green-400/20 text-green-400' : 'bg-green-100 text-green-600')
                                   }`}
                                 >
-                                  <Map className="w-3 h-3" />
+                                  <Map className="w-3.5 h-3.5" />
                                   路线
                                 </button>
                               </div>
