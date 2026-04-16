@@ -4,7 +4,7 @@ import {
   SunMedium, Smartphone, Monitor, Trash2, Pencil, Map, X, Sparkles,
   MapPin, Footprints, Car, Train, ChevronRight, RefreshCw, 
   ChevronDown, ChevronUp, Edit2, AlertTriangle, CloudRain, ZoomIn,
-  Undo2, Redo2, Moon
+  Undo2, Redo2, Moon, Star
 } from 'lucide-react';
 
 // --- 工具函数 ---
@@ -471,7 +471,7 @@ const App = () => {
           {previewIframeUrl && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPreviewIframeUrl(null)}></div>
-               <div className={`relative w-full max-w-sm aspect-square rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+               <div className={`relative w-[95vw] h-[75vh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setPreviewIframeUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
@@ -577,7 +577,13 @@ const App = () => {
                         <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{group.date}</span>
                         <div className={`h-px flex-1 mx-3 transition-colors duration-500 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
                         {weatherData[group.date] && (
-                          <span className="text-xs font-black text-gray-800 dark:text-gray-200 whitespace-nowrap">{weatherData[group.date]}</span>
+                          <div 
+                            className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => setPreviewIframeUrl(`https://gemini.google.com/app?q=${encodeURIComponent(`请告诉我${group.items[0]?.city || ''}在${group.date}的天气`)}`)}
+                          >
+                            <Star className="w-3.5 h-3.5 text-yellow-500" />
+                            <span className="text-xs font-black text-gray-800 dark:text-gray-200 whitespace-nowrap">{weatherData[group.date]}</span>
+                          </div>
                         )}
                       </div>
                       
@@ -703,12 +709,13 @@ const App = () => {
                                     const dirflg = dirflgMap[item.transportMode || 'train'];
                                     setPreviewIframeUrl(`https://maps.google.com/maps?saddr=${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
                                   }}
-                                  className={`px-4 py-1.5 rounded-lg text-[11px] font-black transition-all ${
+                                  className={`px-4 py-1.5 rounded-lg text-[11px] font-black transition-all flex items-center gap-1 ${
                                     item.transportMode === 'walk' ? (isDarkMode ? 'bg-orange-400/20 text-orange-400' : 'bg-orange-100 text-orange-600') :
                                     item.transportMode === 'car' ? (isDarkMode ? 'bg-blue-400/20 text-blue-400' : 'bg-blue-100 text-blue-600') :
                                     (isDarkMode ? 'bg-green-400/20 text-green-400' : 'bg-green-100 text-green-600')
                                   }`}
                                 >
+                                  <Map className="w-3 h-3" />
                                   路线
                                 </button>
                               </div>
