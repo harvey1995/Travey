@@ -71,7 +71,7 @@ const App = () => {
   const [future, setFuture] = useState([]);
 
   const updateTrips = (newTrips, newActiveTrip = activeTrip) => {
-    setPast(p => [...p, { trips, activeTrip }].slice(-20)); // 最多保存20步历史，同时保存正在展示的行程
+    setPast(p => [...p, { trips, activeTrip }].slice(-20));
     setFuture([]);
     setTrips(newTrips);
     if (newActiveTrip !== activeTrip) {
@@ -97,7 +97,6 @@ const App = () => {
     setActiveTrip(next.activeTrip);
   };
 
-  // 自动恢复原有比例
   const restoreZoom = () => {
     if (typeof document !== 'undefined') {
       let meta = document.querySelector('meta[name="viewport"]');
@@ -254,7 +253,6 @@ const App = () => {
     };
     fetchWeather();
     return () => { isMounted = false; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   useEffect(() => {
@@ -451,12 +449,12 @@ const App = () => {
 
   const openInGoogleMaps = (name, city) => {
     const query = encodeURIComponent(`${name} ${city}`);
-    window.open(`https://maps.google.com/?q=${query}`, '_blank');
+    window.open(`https://maps.google.com/?q=$${query}`, '_blank');
   };
 
   const openMapPreview = (name, city) => {
     const query = encodeURIComponent(`${name} ${city}`);
-    setPreviewIframeUrl(`https://maps.google.com/maps?q=${query}&output=embed`);
+    setPreviewIframeUrl(`https://maps.google.com/maps?q=$${query}&output=embed`);
   };
 
   const toggleOverview = (date) => {
@@ -472,7 +470,6 @@ const App = () => {
 
   const isMobileView = viewMode === 'mobile';
   
-  // 浅色模式调整为浅土黄色/暖沙色
   const bodyColor = isDarkMode ? 'bg-[#000000] text-white' : 'bg-[#e8e4d9] text-[#2c241b]';
   const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
   
@@ -507,6 +504,7 @@ const App = () => {
                     <X className="w-5 h-5" />
                   </button>
                   <iframe 
+                    key={previewIframeUrl}
                     title="Preview"
                     width="100%" 
                     height="100%" 
@@ -638,7 +636,7 @@ const App = () => {
                                 width="100%" 
                                 height="100%" 
                                 frameBorder="0" 
-                                src={`https://maps.google.com/maps?saddr=${encodeURIComponent(group.items[0].name + ' ' + (group.items[0].city || ''))}&daddr=${encodeURIComponent(group.items.slice(1).map(i => i.name + ' ' + (i.city || '')).join(' to:'))}&output=embed`} 
+                                src={`https://maps.google.com/maps?saddr=$${encodeURIComponent(group.items[0].name + ' ' + (group.items[0].city || ''))}&daddr=${encodeURIComponent(group.items.slice(1).map(i => i.name + ' ' + (i.city || '')).join(' to:'))}&output=embed`} 
                                 allowFullScreen
                               ></iframe>
                             </div>
@@ -744,7 +742,7 @@ const App = () => {
                                     const dest = encodeURIComponent(`${endItem.name} ${endItem.city || ''}`);
                                     const dirflgMap = { walk: 'w', car: 'd', train: 'r' };
                                     const dirflg = dirflgMap[item.transportMode || 'train'];
-                                    setPreviewIframeUrl(`https://maps.google.com/maps?saddr=${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
+                                    setPreviewIframeUrl(`https://maps.google.com/maps?saddr=$${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
                                   }}
                                   className={`px-4 py-1.5 rounded-lg text-[11px] font-black transition-all flex items-center gap-1 ${
                                     item.transportMode === 'walk' ? (isDarkMode ? 'bg-orange-400/20 text-orange-400' : 'bg-orange-100 text-orange-600') :
