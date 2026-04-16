@@ -4,7 +4,7 @@ import {
   SunMedium, Smartphone, Monitor, Trash2, Pencil, Map, X, Sparkles,
   MapPin, Footprints, Car, Train, ChevronRight, RefreshCw, 
   ChevronDown, ChevronUp, Edit2, AlertTriangle, CloudRain, ZoomIn,
-  Undo2, Redo2, Moon, Star, Share
+  Undo2, Redo2, Moon, Star, ExternalLink
 } from 'lucide-react';
 
 // --- 工具函数 ---
@@ -241,10 +241,10 @@ const App = () => {
               const day = data.forecast.forecastday[0].day;
               updates[g.date] = `${day.condition.text} ${day.maxtemp_c}℃~${day.mintemp_c}℃`;
             } else {
-              updates[g.date] = "暂无天气预报";
+              updates[g.date] = "暂无当日预报";
             }
           } catch {
-            updates[g.date] = "暂无天气预报";
+            updates[g.date] = "暂无当日预报";
           }
         }
       }
@@ -585,14 +585,14 @@ const App = () => {
                               }
                             }}
                           >
-                            <Share className="w-3.5 h-3.5" />
+                            <ExternalLink className="w-3.5 h-3.5" />
                             <span className="text-xs font-black whitespace-nowrap">{weatherData[group.date]}</span>
                           </div>
                         )}
                       </div>
                       
                       <button onClick={() => toggleOverview(group.date)} className={`w-full flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
-                         <span className="text-xs font-black opacity-80">当天线路总览 ({group.items.length}个地点)</span>
+                         <span className="text-xs font-black opacity-80">当日线路总览 ({group.items.length}个地点)</span>
                          {isOverviewExpanded ? <ChevronUp className="w-4 h-4 opacity-60"/> : <ChevronDown className="w-4 h-4 opacity-60"/>}
                       </button>
                       
