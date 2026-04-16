@@ -131,15 +131,6 @@ const App = () => {
   const [expandedDates, setExpandedDates] = useState({});
   const [previewIframeUrl, setPreviewIframeUrl] = useState(null);
 
-  useEffect(() => {
-    if (previewIframeUrl) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [previewIframeUrl]);
-
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [editingId, setEditingId] = useState(null);
@@ -264,6 +255,21 @@ const App = () => {
     fetchWeather();
     return () => { isMounted = false; };
   }, [groupedDataWithTime]);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (previewIframeUrl) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = '';
+      }
+    };
+  }, [previewIframeUrl]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -478,7 +484,7 @@ const App = () => {
 
           {/* Iframe 气泡 */}
           {previewIframeUrl && (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300 overscroll-contain">
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPreviewIframeUrl(null)}></div>
                <div className={`relative w-[95vw] h-[75vh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setPreviewIframeUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
@@ -489,7 +495,11 @@ const App = () => {
                     width="100%" 
                     height="100%" 
                     frameBorder="0" 
-                    style={{ border: 0 }} 
+                    style={{ 
+                      border: 0,
+                      colorScheme: isDarkMode ? 'dark' : 'light',
+                      filter: isDarkMode && previewIframeUrl?.includes('google.com/search') ? 'invert(1) hue-rotate(180deg)' : 'none'
+                    }} 
                     src={previewIframeUrl} 
                     allowFullScreen>
                   </iframe>
@@ -590,7 +600,7 @@ const App = () => {
                             className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
                             onClick={() => {
                               if (group.items[0]?.city) {
-                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + '天气')}&igu=1&cs=${isDarkMode ? '1' : '0'}`);
+                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + '天气')}&igu=1`);
                               }
                             }}
                           >
