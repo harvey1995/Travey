@@ -7,7 +7,6 @@ import {
   Undo2, Redo2, Moon, Star, ExternalLink
 } from 'lucide-react';
 
-// --- 工具函数 ---
 const getTodayDate = () => new Date().toISOString().split('T')[0];
 
 const sanitizeDate = (dateStr) => {
@@ -49,7 +48,6 @@ const TOKYO_TRIP = [
 const INITIAL_TRIPS = { "东京跨年三日游": TOKYO_TRIP };
 
 const App = () => {
-  // 1. 数据与缓存
   const [trips, setTrips] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('travey_data_v1');
@@ -66,12 +64,11 @@ const App = () => {
     return "东京跨年三日游";
   });
 
-  // 2. 撤销/重做引擎
   const [past, setPast] = useState([]);
   const [future, setFuture] = useState([]);
 
   const updateTrips = (newTrips, newActiveTrip = activeTrip) => {
-    setPast(p => [...p, { trips, activeTrip }].slice(-20)); // 最多保存20步历史，同时保存正在展示的行程
+    setPast(p => [...p, { trips, activeTrip }].slice(-20)); 
     setFuture([]);
     setTrips(newTrips);
     if (newActiveTrip !== activeTrip) {
@@ -97,7 +94,6 @@ const App = () => {
     setActiveTrip(next.activeTrip);
   };
 
-  // 自动恢复原有比例
   const restoreZoom = () => {
     if (typeof document !== 'undefined') {
       let meta = document.querySelector('meta[name="viewport"]');
@@ -225,7 +221,6 @@ const App = () => {
     return result;
   }, [sanitizedTripData, activeTab, searchQuery]);
 
-  // 天气获取 API 逻辑
   useEffect(() => {
     let isMounted = true;
     const fetchWeather = async () => {
@@ -270,6 +265,13 @@ const App = () => {
       }
     };
   }, [previewIframeUrl]);
+
+  useEffect(() => {
+    if (previewIframeUrl && previewIframeUrl.includes('google.com/search')) {
+      const baseUrl = previewIframeUrl.split('&theme=')[0];
+      setPreviewIframeUrl(`${baseUrl}&theme=${isDarkMode ? 'dark' : 'light'}`);
+    }
+  }, [isDarkMode]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -373,7 +375,6 @@ const App = () => {
 
     let dayItems = currentTripData.filter(item => sanitizeDate(item.date) === targetDate && item.id !== (modalMode === 'edit' ? editingId : null));
     
-    // i. 除了手动新建、编辑为m的地点之外、所有此前小于m的序号，计数为n1，从1开始顺序生成到n1
     let lessItems = dayItems.filter(item => item.order < m).sort((a,b) => a.order - b.order);
     let greaterItems = dayItems.filter(item => item.order >= m).sort((a,b) => a.order - b.order);
     
@@ -383,10 +384,8 @@ const App = () => {
     let currentOrderCounter = 1;
     lessItems.forEach(item => { newOrders[item.id] = currentOrderCounter++; });
     
-    // ii. 手动新建、编辑为m的地点序号为n1+1
     payload.order = n1 + 1;
     
-    // iii. 除了手动新建、编辑为m的地点之外、所有此前大于等于m的序号，计数为n2，从n1+2开始顺序生成到n1+1+n2
     currentOrderCounter = n1 + 2;
     greaterItems.forEach(item => { newOrders[item.id] = currentOrderCounter++; });
 
@@ -456,7 +455,6 @@ const App = () => {
 
   const isMobileView = viewMode === 'mobile';
   
-  // 浅色模式调整为浅土黄色/暖沙色
   const bodyColor = isDarkMode ? 'bg-[#000000] text-white' : 'bg-[#e8e4d9] text-[#2c241b]';
   const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
   
@@ -482,14 +480,10 @@ const App = () => {
             </div>
           )}
 
-          {/* Iframe 气泡 */}
           {previewIframeUrl && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPreviewIframeUrl(null)}></div>
-               <div 
-                 className={`relative w-[95vw] h-[75vh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}
-                 style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
-               >
+               <div className={`relative w-[95vw] h-[75vh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setPreviewIframeUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
@@ -500,9 +494,10 @@ const App = () => {
                     frameBorder="0" 
                     style={{ 
                       border: 0,
-                      colorScheme: isDarkMode ? 'dark' : 'light'
+                      colorScheme: isDarkMode ? 'dark' : 'light',
+                      filter: isDarkMode && previewIframeUrl?.includes('google.com/search') ? 'invert(1) hue-rotate(180deg)' : 'none'
                     }} 
-                    src={previewIframeUrl?.includes('google.com/search') ? `${previewIframeUrl}${isDarkMode ? '&cs=1&theme=dark' : '&cs=0&theme=light'}` : previewIframeUrl} 
+                    src={previewIframeUrl} 
                     allowFullScreen>
                   </iframe>
                </div>
@@ -547,7 +542,6 @@ const App = () => {
                 <button onClick={handleExport} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500/10 text-green-600 dark:text-green-500 border border-green-500/20 text-xs font-black hover:bg-green-500/20 transition-all">
                   <Download className="w-4 h-4" /> 导出
                 </button>
-                {/* 撤销重做按钮 */}
                 <button onClick={handleUndo} disabled={past.length === 0} className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
                   <Undo2 className="w-4 h-4" />
                 </button>
@@ -602,7 +596,7 @@ const App = () => {
                             className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
                             onClick={() => {
                               if (group.items[0]?.city) {
-                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + '天气')}&igu=1`);
+                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + '天气')}&igu=1&theme=${isDarkMode ? 'dark' : 'light'}`);
                               }
                             }}
                           >
@@ -692,7 +686,6 @@ const App = () => {
                               
                               <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
                                 <div className="flex gap-3 text-[10px] font-bold">
-                                  {/* 停留时间亮色风格 */}
                                   <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><Clock className="w-3 h-3" /> {item.duration}m</div>
                                   {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'}`}><DollarSign className="w-3 h-3" /> {item.cost} {item.currency}</div>}
                                 </div>
@@ -793,7 +786,6 @@ const App = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5 min-w-0">
                       <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>日期</label>
-                      {/* 利用 type="date" 配合 appearance-none 与 min-w-0 限制了最大宽度，解决 iOS Safari 原生日期拉宽的问题 */}
                       <input 
                         type="date" 
                         required 
