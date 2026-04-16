@@ -506,6 +506,7 @@ const App = () => {
                     <X className="w-5 h-5" />
                   </button>
                   <iframe 
+                    key={previewIframeUrl}
                     title="Preview"
                     width="100%" 
                     height="100%" 
