@@ -71,7 +71,7 @@ const App = () => {
   const [future, setFuture] = useState([]);
 
   const updateTrips = (newTrips, newActiveTrip = activeTrip) => {
-    setPast(p => [...p, { trips, activeTrip }].slice(-20));
+    setPast(p => [...p, { trips, activeTrip }].slice(-20)); // 最多保存20步历史，同时保存正在展示的行程
     setFuture([]);
     setTrips(newTrips);
     if (newActiveTrip !== activeTrip) {
@@ -472,6 +472,7 @@ const App = () => {
 
   const isMobileView = viewMode === 'mobile';
   
+  // 浅色模式调整为浅土黄色/暖沙色
   const bodyColor = isDarkMode ? 'bg-[#000000] text-white' : 'bg-[#e8e4d9] text-[#2c241b]';
   const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
   
