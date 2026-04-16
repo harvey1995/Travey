@@ -486,7 +486,10 @@ const App = () => {
           {previewIframeUrl && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPreviewIframeUrl(null)}></div>
-               <div className={`relative w-[95vw] h-[75vh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+               <div 
+                 className={`relative w-[95vw] h-[75vh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}
+                 style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
+               >
                   <button onClick={() => setPreviewIframeUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
@@ -497,10 +500,9 @@ const App = () => {
                     frameBorder="0" 
                     style={{ 
                       border: 0,
-                      colorScheme: isDarkMode ? 'dark' : 'light',
-                      filter: isDarkMode && previewIframeUrl?.includes('google.com/search') ? 'invert(1) hue-rotate(180deg)' : 'none'
+                      colorScheme: isDarkMode ? 'dark' : 'light'
                     }} 
-                    src={previewIframeUrl} 
+                    src={previewIframeUrl?.includes('google.com/search') ? `${previewIframeUrl}${isDarkMode ? '&cs=1&theme=dark' : '&cs=0&theme=light'}` : previewIframeUrl} 
                     allowFullScreen>
                   </iframe>
                </div>
