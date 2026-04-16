@@ -4,7 +4,7 @@ import {
   SunMedium, Smartphone, Monitor, Trash2, Pencil, Map, X, Sparkles,
   MapPin, Footprints, Car, Train, ChevronRight, RefreshCw, 
   ChevronDown, ChevronUp, Edit2, AlertTriangle, CloudRain, ZoomIn,
-  Undo2, Redo2, Moon, Star
+  Undo2, Redo2, Moon, Star, Share
 } from 'lucide-react';
 
 // --- 工具函数 ---
@@ -578,15 +578,15 @@ const App = () => {
                         <div className={`h-px flex-1 mx-3 transition-colors duration-500 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
                         {weatherData[group.date] && (
                           <div 
-                            className="flex items-center gap-1 cursor-pointer transition-opacity hover:opacity-80"
+                            className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
                             onClick={() => {
                               if (group.items[0]?.city) {
                                 setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + '天气')}&igu=1`);
                               }
                             }}
                           >
-                            <Star className="w-3.5 h-3.5 text-purple-300 fill-purple-300" />
-                            <span className="text-xs font-black text-gray-800 dark:text-gray-200 whitespace-nowrap">{weatherData[group.date]}</span>
+                            <Share className="w-3.5 h-3.5" />
+                            <span className="text-xs font-black whitespace-nowrap">{weatherData[group.date]}</span>
                           </div>
                         )}
                       </div>
