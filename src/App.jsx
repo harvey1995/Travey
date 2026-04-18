@@ -162,7 +162,7 @@ const App = () => {
     name: '', date: getTodayDate(), duration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'walk', transitRoute: '' 
   });
 
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success', id: 0 });
   const [weatherData, setWeatherData] = useState({});
 
   const [dailyStartTimes, setDailyStartTimes] = useState(() => {
@@ -185,7 +185,7 @@ const App = () => {
   }, [dailyStartTimes]);
 
   const showMessage = (msg, type = 'success') => {
-    setToast({ show: true, message: msg, type });
+    setToast({ show: true, message: msg, type, id: Date.now() });
   };
 
   useEffect(() => {
@@ -195,7 +195,7 @@ const App = () => {
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [toast.show, toast.message, toast.type]);
+  }, [toast.show, toast.id]);
 
   const handleRefresh = () => {
     showMessage("已刷新", "refresh");
@@ -1096,175 +1096,182 @@ const App = () => {
                 );
               })}
             </main>
+          </div>
 
-            <div className={`fixed bottom-[12px] sm:bottom-[24px] flex justify-end ${isMobileView ? 'px-3' : 'px-6'} pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
-              <button 
-                onClick={handleOpenAddModal} 
-                className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
-              >
-                <Plus className="w-6 h-6" />
-              </button>
-            </div>
+          {/* 将悬浮按钮包裹层从包含 overflow-hidden 的 containerClasses 内部，移至其同级元素，防止其光效投影被裁减 */}
+          <div className={`fixed bottom-0 sm:bottom-[24px] flex justify-end ${isMobileView ? 'px-3' : 'px-6'} pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
+            <button 
+              onClick={handleOpenAddModal} 
+              className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all mb-3 sm:mb-0"
+            >
+              <Plus className="w-6 h-6" />
+            </button>
           </div>
 
           {showModal && (
             <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
-              <div className={`absolute -bottom-[50vh] left-0 right-0 h-[50vh] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
-              <form onSubmit={handleSubmitForm} className={`w-full max-w-md max-h-[90%] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
-                <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
-                  <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
-                  <button type="button" onClick={() => { setShowModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="grid grid-cols-[1fr_80px] gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>地点名称</label>
-                      <input required 
-                        onInvalid={e => e.target.setCustomValidity('请填写')}
-                        onInput={e => e.target.setCustomValidity('')}
-                        className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                        value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>序号</label>
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" 
-                        className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                        value={formData.order} onChange={e => setFormData({...formData, order: e.target.value.replace(/[^0-9]/g, '')})} />
-                    </div>
+              <div className="w-full max-w-md relative">
+                <div className={`absolute top-1/2 bottom-[-50vh] left-0 right-0 ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
+                <form onSubmit={handleSubmitForm} className={`relative z-10 w-full max-h-[90vh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                  <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
+                    <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
+                    <button type="button" onClick={() => { setShowModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1.5 min-w-0">
-                      <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>日期</label>
-                      <input 
-                        type="date" 
-                        required 
-                        onInvalid={e => e.target.setCustomValidity('请填写')}
-                        onInput={e => e.target.setCustomValidity('')}
-                        className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-500 [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                        value={formData.date} onChange={e => setFormData({...formData, date: sanitizeDate(e.target.value)})} />
-                    </div>
-                    <div className="flex flex-col gap-1.5 min-w-0">
-                      <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>城市</label>
-                      <input className={`w-full min-w-0 h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                        value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex flex-col gap-1.5">
-                       <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间（分）</label>
-                       <input type="text" inputMode="numeric" pattern="[0-9]*" 
-                        className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                        value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value.replace(/[^0-9]/g, '')})} />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>花销</label>
-                      <input 
-                        type="text" 
-                        inputMode="decimal"
-                        className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                        value={formData.cost} onChange={e => setFormData({...formData, cost: e.target.value.replace(/[^0-9.]/g, '')})} />
-                    </div>
-                    <div className="flex flex-col gap-1.5 relative">
-                      <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>币种</label>
-                      <div className="relative h-12">
-                        <select 
-                          required={parseFloat(formData.cost) > 0}
+                  
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-[1fr_80px] gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>地点名称</label>
+                        <input required 
                           onInvalid={e => e.target.setCustomValidity('请填写')}
                           onInput={e => e.target.setCustomValidity('')}
-                          className={`w-full h-full px-4 pr-8 rounded-2xl text-base font-medium outline-none appearance-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                          value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})}>
-                          <option value=""></option>
-                          <option value="USD">USD</option>
-                          <option value="GBP">GBP</option>
-                          <option value="EUR">EUR</option>
-                          <option value="JPY">JPY</option>
-                          <option value="CNY">CNY</option>
-                        </select>
-                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 opacity-60 pointer-events-none" />
+                          className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                          value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                       </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>序号</label>
+                        <input type="text" inputMode="numeric" pattern="[0-9]*" 
+                          className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                          value={formData.order} onChange={e => setFormData({...formData, order: e.target.value.replace(/[^0-9]/g, '')})} />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>日期</label>
+                        <input 
+                          type="date" 
+                          required 
+                          onInvalid={e => e.target.setCustomValidity('请填写')}
+                          onInput={e => e.target.setCustomValidity('')}
+                          className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-500 [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                          value={formData.date} onChange={e => setFormData({...formData, date: sanitizeDate(e.target.value)})} />
+                      </div>
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>城市</label>
+                        <input className={`w-full min-w-0 h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                          value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                         <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间（分）</label>
+                         <input type="text" inputMode="numeric" pattern="[0-9]*" 
+                          className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                          value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value.replace(/[^0-9]/g, '')})} />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>花销</label>
+                        <input 
+                          type="text" 
+                          inputMode="decimal"
+                          className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                          value={formData.cost} onChange={e => setFormData({...formData, cost: e.target.value.replace(/[^0-9.]/g, '')})} />
+                      </div>
+                      <div className="flex flex-col gap-1.5 relative">
+                        <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>币种</label>
+                        <div className="relative h-12">
+                          <select 
+                            required={parseFloat(formData.cost) > 0}
+                            onInvalid={e => e.target.setCustomValidity('请填写')}
+                            onInput={e => e.target.setCustomValidity('')}
+                            className={`w-full h-full px-4 pr-8 rounded-2xl text-base font-medium outline-none appearance-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                            value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})}>
+                            <option value=""></option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="EUR">EUR</option>
+                            <option value="JPY">JPY</option>
+                            <option value="CNY">CNY</option>
+                          </select>
+                          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 opacity-60 pointer-events-none" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className={`text-[10px] font-black uppercase ml-1 flex justify-between transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>
+                        <span>备注</span>
+                        <span className="text-blue-500 font-normal opacity-100">（支持文本/链接）</span>
+                      </label>
+                      <textarea className={`w-full p-4 rounded-2xl text-base font-medium min-h-[100px] outline-none resize-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                        placeholder="例如：住宿、交通、门票、营业时间等信息"
+                        value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} />
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className={`text-[10px] font-black uppercase ml-1 flex justify-between transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>
-                      <span>备注</span>
-                      <span className="text-blue-500 font-normal opacity-100">（支持文本/链接）</span>
-                    </label>
-                    <textarea className={`w-full p-4 rounded-2xl text-base font-medium min-h-[100px] outline-none resize-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                      placeholder="例如：住宿、交通、门票、营业时间等信息"
-                      value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} />
-                  </div>
-                </div>
-
-                <button type="submit" className="w-full mt-6 h-14 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/20 active:scale-95 transition-all box-border">
-                  保存
-                </button>
-              </form>
+                  <button type="submit" className="w-full mt-6 h-14 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/20 active:scale-95 transition-all box-border">
+                    保存
+                  </button>
+                </form>
+              </div>
             </div>
           )}
 
           {showTimeModal && (
             <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
-              <div className={`absolute -bottom-[50vh] left-0 right-0 h-[50vh] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                setDailyStartTimes(prev => ({
-                  ...prev,
-                  [activeTrip]: { ...(prev[activeTrip] || {}), [timeEditData.date]: timeEditData.time }
-                }));
-                setShowTimeModal(false);
-                restoreZoom();
-              }} className={`w-full max-w-md max-h-[90%] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
-                <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
-                  <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑时间</h2>
-                  <button type="button" onClick={() => { setShowTimeModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1.5 min-w-0">
-                    <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>当日出发时间</label>
-                    <input 
-                      type="time" 
-                      required 
-                      onInvalid={e => e.target.setCustomValidity('请填写')}
-                      onInput={e => e.target.setCustomValidity('')}
-                      className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-500 [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                      value={timeEditData.time} onChange={e => setTimeEditData({...timeEditData, time: e.target.value})} />
+              <div className="w-full max-w-md relative">
+                <div className={`absolute top-1/2 bottom-[-50vh] left-0 right-0 ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  setDailyStartTimes(prev => ({
+                    ...prev,
+                    [activeTrip]: { ...(prev[activeTrip] || {}), [timeEditData.date]: timeEditData.time }
+                  }));
+                  setShowTimeModal(false);
+                  restoreZoom();
+                }} className={`relative z-10 w-full max-h-[90vh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                  <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
+                    <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑时间</h2>
+                    <button type="button" onClick={() => { setShowTimeModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
                   </div>
-                </div>
+                  
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1.5 min-w-0">
+                      <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>当日出发时间</label>
+                      <input 
+                        type="time" 
+                        required 
+                        onInvalid={e => e.target.setCustomValidity('请填写')}
+                        onInput={e => e.target.setCustomValidity('')}
+                        className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-500 [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                        value={timeEditData.time} onChange={e => setTimeEditData({...timeEditData, time: e.target.value})} />
+                    </div>
+                  </div>
 
-                <button type="submit" className="w-full mt-6 h-14 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/20 active:scale-95 transition-all box-border">
-                  保存
-                </button>
-              </form>
+                  <button type="submit" className="w-full mt-6 h-14 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/20 active:scale-95 transition-all box-border">
+                    保存
+                  </button>
+                </form>
+              </div>
             </div>
           )}
 
           {showTransportModal && (
             <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
-              <div className={`absolute -bottom-[50vh] left-0 right-0 h-[50vh] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
-              <form onSubmit={handleSaveTransportDuration} className={`w-full max-w-md max-h-[90%] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
-                <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
-                  <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑交通</h2>
-                  <button type="button" onClick={() => { setShowTransportModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1.5">
-                     <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间（分）</label>
-                     <input type="text" inputMode="numeric" pattern="[0-9]*" 
-                      className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                      value={transportEditDuration} onChange={e => setTransportEditDuration(e.target.value.replace(/[^0-9]/g, ''))} />
+              <div className="w-full max-w-md relative">
+                <div className={`absolute top-1/2 bottom-[-50vh] left-0 right-0 ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
+                <form onSubmit={handleSaveTransportDuration} className={`relative z-10 w-full max-h-[90vh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                  <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
+                    <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑交通</h2>
+                    <button type="button" onClick={() => { setShowTransportModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
                   </div>
-                </div>
+                  
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1.5">
+                       <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间（分）</label>
+                       <input type="text" inputMode="numeric" pattern="[0-9]*" 
+                        className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                        value={transportEditDuration} onChange={e => setTransportEditDuration(e.target.value.replace(/[^0-9]/g, ''))} />
+                    </div>
+                  </div>
 
-                <button type="submit" className="w-full mt-6 h-14 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/20 active:scale-95 transition-all box-border">
-                  保存
-                </button>
-              </form>
+                  <button type="submit" className="w-full mt-6 h-14 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/20 active:scale-95 transition-all box-border">
+                    保存
+                  </button>
+                </form>
+              </div>
             </div>
           )}
 
