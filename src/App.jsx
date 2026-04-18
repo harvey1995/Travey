@@ -32,7 +32,7 @@ const isUrl = (str) => {
 
 const TRANSPORT_ESTIMATES = {
   car: { label: '打车', icon: Car, lightClass: 'text-orange-600 bg-orange-100 hover:bg-orange-200', darkClass: 'text-orange-400 bg-orange-500/10 hover:bg-orange-500/20', alert: '可能拥堵' },
-  train: { label: '公交', icon: Train, lightClass: 'text-red-600 bg-red-100 hover:bg-red-200', darkClass: 'text-red-500 bg-red-500/10 hover:bg-red-500/20', alert: null },
+  train: { label: '公交', icon: Train, lightClass: 'text-red-600 bg-red-100 hover:bg-red-200', darkClass: 'text-red-400 bg-red-500/10 hover:bg-red-500/20', alert: null },
   walk: { label: '步行', icon: Footprints, lightClass: 'text-blue-600 bg-blue-100 hover:bg-blue-200', darkClass: 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20', alert: null }
 };
 
@@ -289,18 +289,33 @@ const App = () => {
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      if (previewIframeUrl) {
+      const isModalOpen = previewIframeUrl || showModal || showTimeModal || showTransportModal || showImportModal;
+      if (isModalOpen) {
+        const currentScrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.top = `-${currentScrollY}px`;
         document.body.style.overflow = 'hidden';
       } else {
+        const scrollY = document.body.style.top;
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
         document.body.style.overflow = '';
+        if (scrollY) {
+          window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        }
       }
     }
     return () => {
       if (typeof document !== 'undefined') {
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
         document.body.style.overflow = '';
       }
     };
-  }, [previewIframeUrl]);
+  }, [previewIframeUrl, showModal, showTimeModal, showTransportModal, showImportModal]);
 
   useEffect(() => {
     setPreviewIframeUrl(prev => {
@@ -385,7 +400,7 @@ const App = () => {
   };
 
   const handleExport = () => {
-    const headers = ["日期", "序号", "城市/交通", "地点名称/出行方式", "时间(分)", "备注", "费用", "币种"];
+    const headers = ["日期", "序号", "城市/交通", "地点名称/出行方式", "时间（分）", "备注", "费用", "币种"];
     
     const exportGroups = {};
     sanitizedTripData.sort((a,b) => new Date(a.date) - new Date(b.date) || a.order - b.order).forEach(item => {
@@ -727,7 +742,7 @@ const App = () => {
                       
                       <div className="flex gap-2">
                         <button onClick={() => toggleOverview(group.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
-                           <span className="text-xs font-black opacity-80">当日线路总览 ({group.items.length}个地点)</span>
+                           <span className="text-xs font-black opacity-80">当日线路总览（{group.items.length}个地点）</span>
                            {isOverviewExpanded ? <ChevronUp className="w-4 h-4 opacity-60"/> : <ChevronDown className="w-4 h-4 opacity-60"/>}
                         </button>
                         <button onClick={() => { setTimeEditData({ date: group.date, time: dailyStartTimes[activeTrip]?.[group.date] || "08:00" }); setShowTimeModal(true); }} className={`px-3 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed transition-all shrink-0 ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
@@ -778,11 +793,11 @@ const App = () => {
                             <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border transition-all ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200 shadow-sm'} ${item.done ? 'opacity-50' : ''}`}>
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1 min-w-0 pr-2">
-                                  <h3 className={`font-black text-sm leading-snug ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
+                                  <h3 className={`font-bold text-sm leading-snug ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
                                   {item.city && (
                                     <div className="flex items-center gap-1 mt-1 opacity-80">
                                       <MapPin className="w-3 h-3" />
-                                      <span className="text-[9px] font-bold uppercase">{item.city}</span>
+                                      <span className="text-[9px] font-normal uppercase">{item.city}</span>
                                     </div>
                                   )}
                                 </div>
@@ -833,10 +848,10 @@ const App = () => {
                                 </div>
                                 
                                 <div className="flex gap-1.5">
-                                  <button onClick={() => openEditModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition-all ${isDarkMode ? 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
+                                  <button onClick={() => openEditModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition-all ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
                                     <Pencil className="w-3.5 h-3.5" />
                                   </button>
-                                  <button onClick={() => handleDelete(item.id)} className={`p-1.5 rounded-lg hover:scale-105 transition-all ${isDarkMode ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>
+                                  <button onClick={() => handleDelete(item.id)} className={`p-1.5 rounded-lg hover:scale-105 transition-all ${isDarkMode ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
@@ -861,7 +876,7 @@ const App = () => {
                                   </div>
                                 </div>
                                 <div className={`flex items-center shrink-0 ${isMobileView ? 'gap-2' : 'gap-3'}`}>
-                                  <button onClick={() => openTransportModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition ${isDarkMode ? 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
+                                  <button onClick={() => openTransportModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
                                     <Pencil className="w-3.5 h-3.5" />
                                   </button>
                                   <div className="flex gap-1 shrink-0">
@@ -916,6 +931,7 @@ const App = () => {
 
           {showModal && (
             <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
+              <div className={`absolute -bottom-[50vh] left-0 right-0 h-[50vh] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
               <form onSubmit={handleSubmitForm} className={`w-full max-w-md max-h-[90%] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                 <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
                   <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
@@ -960,7 +976,7 @@ const App = () => {
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="flex flex-col gap-1.5">
-                       <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间(分)</label>
+                       <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间（分）</label>
                        <input type="text" inputMode="numeric" pattern="[0-9]*" 
                         className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                         value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value.replace(/[^0-9]/g, '')})} />
@@ -1010,6 +1026,7 @@ const App = () => {
 
           {showTimeModal && (
             <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
+              <div className={`absolute -bottom-[50vh] left-0 right-0 h-[50vh] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
               <form onSubmit={(e) => {
                 e.preventDefault();
                 setDailyStartTimes(prev => ({
@@ -1046,6 +1063,7 @@ const App = () => {
 
           {showTransportModal && (
             <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
+              <div className={`absolute -bottom-[50vh] left-0 right-0 h-[50vh] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
               <form onSubmit={handleSaveTransportDuration} className={`w-full max-w-md max-h-[90%] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                 <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
                   <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑交通</h2>
@@ -1054,7 +1072,7 @@ const App = () => {
                 
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1.5">
-                     <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间(分)</label>
+                     <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间（分）</label>
                      <input type="text" inputMode="numeric" pattern="[0-9]*" 
                       className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                       value={transportEditDuration} onChange={e => setTransportEditDuration(e.target.value.replace(/[^0-9]/g, ''))} />
@@ -1091,6 +1109,9 @@ const App = () => {
           body {
             background-color: ${isDarkMode ? '#000000' : '#e8e4d9'};
             transition: background-color 0.5s;
+          }
+          .transition-colors {
+            transition-property: background-color, border-color, text-decoration-color, fill, stroke !important;
           }
           .no-scrollbar::-webkit-scrollbar { display: none; }
           * { -webkit-tap-highlight-color: transparent; }
