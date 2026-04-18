@@ -940,7 +940,7 @@ const App = () => {
                       {isOverviewExpanded && (
                         <div className={`mt-2 p-4 rounded-2xl text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
                           {group.items.length >= 2 && (
-                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75vh]'} rounded-[2rem] overflow-hidden mb-2 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75vh]'} rounded-xl overflow-hidden mb-2 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                               <iframe 
                                 title="Daily Route"
                                 width="100%" 
