@@ -922,7 +922,7 @@ const App = () => {
                 
                 return (
                   <div key={group.date} className="mb-[18px]">
-                    <div className="mb-[20px]">
+                    <div className="mb-[12px]">
                       <div className="flex items-center mb-[20px]">
                         <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{group.date}</span>
                         <div className={`h-px flex-1 mx-3 transition-colors duration-500 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
@@ -1121,10 +1121,10 @@ const App = () => {
             </main>
           </div>
 
-          <div className={`fixed bottom-[12px] sm:bottom-6 flex justify-end ${isMobileView ? 'px-3' : 'px-6'} pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
+          <div className={`fixed bottom-[20px] sm:bottom-6 flex justify-end ${isMobileView ? 'px-3' : 'px-6'} pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
             <button 
               onClick={handleOpenAddModal} 
-              className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_4px_15px_rgb(37,99,235,0.4)] sm:shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
+              className={`pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_4px_15px_rgb(37,99,235,0.4)] sm:shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all ${isMobileView ? 'mr-3' : 'mr-6'}`}
             >
               <Plus className="w-6 h-6" />
             </button>
@@ -1225,7 +1225,7 @@ const App = () => {
                       </div>
                     </div>
 
-                    <button type="submit" className="w-full mt-6 h-14 rounded-2xl bg-blue-600 text-white font-black shadow-[0_0_10px_rgba(37,99,235,0.4)] sm:shadow-[0_0_20px_rgba(37,99,235,0.4)] active:scale-95 transition-all box-border">
+                    <button type="submit" className="w-full mt-6 h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all">
                       保存
                     </button>
                   </form>
@@ -1267,7 +1267,7 @@ const App = () => {
                       </div>
                     </div>
 
-                    <button type="submit" className="w-full mt-6 h-14 rounded-2xl bg-blue-600 text-white font-black shadow-[0_0_10px_rgba(37,99,235,0.4)] sm:shadow-[0_0_20px_rgba(37,99,235,0.4)] active:scale-95 transition-all box-border">
+                    <button type="submit" className="w-full mt-6 h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all">
                       保存
                     </button>
                   </form>
@@ -1297,7 +1297,7 @@ const App = () => {
                       </div>
                     </div>
 
-                    <button type="submit" className="w-full mt-6 h-14 rounded-2xl bg-blue-600 text-white font-black shadow-[0_0_10px_rgba(37,99,235,0.4)] sm:shadow-[0_0_20px_rgba(37,99,235,0.4)] active:scale-95 transition-all box-border">
+                    <button type="submit" className="w-full mt-6 h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all">
                       保存
                     </button>
                   </form>
