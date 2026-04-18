@@ -4,7 +4,8 @@ import {
   SunMedium, Smartphone, Monitor, Trash2, Pencil, Map, X, Sparkles,
   MapPin, Footprints, Car, Train, ChevronRight, RefreshCw, 
   ChevronDown, ChevronUp, Edit2, AlertTriangle, CloudRain, ZoomIn,
-  Undo2, Redo2, Moon, Star, ExternalLink, Locate
+  Undo2, Redo2, Moon, Star, ExternalLink, Locate, SquarePen, NotebookPen,
+  MapPinCheckInside, MapPinXInside, MapPinMinus, MapPinPlus
 } from 'lucide-react';
 
 // --- 工具函数 ---
@@ -86,6 +87,7 @@ const App = () => {
     setFuture(f => [{ trips, activeTrip }, ...f]);
     setTrips(previous.trips);
     setActiveTrip(previous.activeTrip);
+    showMessage("已撤销", "undo");
   };
 
   const handleRedo = () => {
@@ -95,6 +97,7 @@ const App = () => {
     setPast(p => [...p, { trips, activeTrip }]);
     setTrips(next.trips);
     setActiveTrip(next.activeTrip);
+    showMessage("已重做", "redo");
   };
 
   const restoreZoom = () => {
@@ -171,22 +174,66 @@ const App = () => {
   };
 
   const handleRefresh = () => {
-    showMessage("已刷新");
+    showMessage("已刷新", "refresh");
   };
 
   const handleLocate = () => {
-    for (const group of groupedDataWithTime) {
+    const getAllGroupedData = (tabName) => {
+      const sorted = [...(trips[activeTrip] || [])].map(item => ({ ...item, date: sanitizeDate(item.date) })).sort((a, b) => {
+        if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
+        return (a.order || 0) - (b.order || 0);
+      });
+      const groups = {};
+      sorted.forEach(item => {
+        if (!groups[item.date]) groups[item.date] = { date: item.date, items: [] };
+        groups[item.date].items.push(item);
+      });
+      let result = Object.values(groups).sort((a, b) => new Date(a.date) - new Date(b.date));
+      if (tabName !== "Total") result = result.filter(g => g.date === tabName);
+      return result;
+    };
+
+    const currentTabGroups = getAllGroupedData(activeTab);
+    for (const group of currentTabGroups) {
       for (const [idx, item] of group.items.entries()) {
-        if (!item.done || (idx < group.items.length - 1 && !item.transportDone)) {
-          const el = document.getElementById(`card-${item.id}`);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-          }
+        if (!item.done) {
+          scrollToElement(`card-${item.id}`);
+          return;
+        }
+        if (idx < group.items.length - 1 && !item.transportDone) {
+          scrollToElement(`transport-${item.id}`);
+          return;
         }
       }
     }
-    showMessage("已全部打卡");
+
+    const allGroups = getAllGroupedData("Total");
+    for (const group of allGroups) {
+      for (const [idx, item] of group.items.entries()) {
+        if (!item.done) {
+          setActiveTab(group.date);
+          setTimeout(() => scrollToElement(`card-${item.id}`), 100);
+          return;
+        }
+        if (idx < group.items.length - 1 && !item.transportDone) {
+          setActiveTab(group.date);
+          setTimeout(() => scrollToElement(`transport-${item.id}`), 100);
+          return;
+        }
+      }
+    }
+
+    showMessage("已全部打卡", "allDone");
+  };
+
+  const scrollToElement = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const targetY = rect.top + scrollTop - (window.innerHeight * 0.3);
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    }
   };
 
   const handleThemeToggle = () => {
@@ -350,48 +397,97 @@ const App = () => {
       try {
         const text = new TextDecoder('utf-8').decode(new Uint8Array(event.target.result));
         const rows = text.split(/\r?\n/).filter(row => row.trim());
-        const importedData = [];
+        const headerRow = rows[0].split(',').map(h => h.trim());
         
+        const colMap = {
+          date: headerRow.indexOf("日期"),
+          order: headerRow.indexOf("序号"),
+          city: headerRow.indexOf("城市/交通"),
+          name: headerRow.indexOf("地点名称/出行方式"),
+          duration: headerRow.indexOf("时间（分）"),
+          note: headerRow.indexOf("备注"),
+          cost: headerRow.indexOf("费用"),
+          currency: headerRow.indexOf("币种"),
+          status: headerRow.indexOf("打卡状态")
+        };
+
+        const missing = [];
+        if (colMap.date === -1) missing.push("日期");
+        if (colMap.name === -1) missing.push("地点名称");
+        if (missing.length > 0) {
+          showMessage(`缺少${missing.join('、')}`, "error");
+          return;
+        }
+
+        const rawImported = [];
         rows.slice(1).forEach((row, index) => {
           const values = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
-          const orderVal = parseInt(values[1]);
+          const getVal = (col) => col !== -1 ? (values[col] || "") : "";
           
-          if (orderVal === 0) {
-            if (importedData.length > 0) {
-              const lastItem = importedData[importedData.length - 1];
-              const nameVal = values[3] || "";
-              if (nameVal.includes("步行")) lastItem.transportMode = 'walk';
-              else if (nameVal.includes("公交")) lastItem.transportMode = 'train';
-              else if (nameVal.includes("打车")) lastItem.transportMode = 'car';
-              lastItem.transportDuration = parseInt(values[4]) || 0;
+          rawImported.push({
+            date: sanitizeDate(getVal(colMap.date)),
+            order: parseInt(getVal(colMap.order)),
+            city: getVal(colMap.city),
+            name: getVal(colMap.name),
+            duration: getVal(colMap.duration) === "" ? null : (parseInt(getVal(colMap.duration)) || 0),
+            note: getVal(colMap.note) || null,
+            cost: getVal(colMap.cost) === "" ? null : (parseFloat(getVal(colMap.cost)) || 0),
+            currency: getVal(colMap.currency) || null,
+            done: getVal(colMap.status) === "是"
+          });
+        });
+
+        const finalData = [];
+        const dataByDate = {};
+        rawImported.forEach(item => {
+          if (!dataByDate[item.date]) dataByDate[item.date] = [];
+          dataByDate[item.date].push(item);
+        });
+
+        Object.keys(dataByDate).forEach(date => {
+          const dayItems = dataByDate[date];
+          let locationCounter = 1;
+          dayItems.forEach((row, idx) => {
+            const isTransport = row.city === "交通" || (row.name && (row.name.includes("步行") || row.name.includes("公交") || row.name.includes("打车")));
+            
+            if (isTransport) {
+              if (finalData.length > 0) {
+                const last = finalData[finalData.length - 1];
+                if (row.name.includes("打车")) last.transportMode = 'car';
+                else if (row.name.includes("公交")) last.transportMode = 'train';
+                else last.transportMode = 'walk';
+                last.transportDuration = row.duration || 0;
+              }
+            } else {
+              if (finalData.length > 0) {
+                const last = finalData[finalData.length - 1];
+                if (last.date === row.date && last.transportDuration === undefined) {
+                  last.transportMode = 'walk';
+                  last.transportDuration = 0;
+                }
+              }
+              finalData.push({
+                ...row,
+                id: `imported-${Date.now()}-${idx}`,
+                order: locationCounter++,
+                duration: row.duration === null ? 0 : row.duration,
+                transportMode: 'walk',
+                transportDuration: 0,
+                transitRoute: '',
+                done: row.done || false
+              });
             }
-          } else {
-            importedData.push({
-              date: sanitizeDate(values[0]),
-              id: `imported-${Date.now()}-${index}`, 
-              order: isNaN(orderVal) ? (index + 1) : orderVal,
-              city: values[2] || "",
-              name: values[3] || "未命名地点",
-              duration: parseInt(values[4]) || 60,
-              note: values[5] || "",
-              cost: parseFloat(values[6]) || 0,
-              currency: values[7] || "USD",
-              transportMode: 'walk',
-              transportDuration: 0,
-              transitRoute: '',
-              done: false
-            });
-          }
+          });
         });
         
-        if (importedData.length > 0) {
-          setPendingImportData(importedData);
+        if (finalData.length > 0) {
+          setPendingImportData(finalData);
           setShowImportModal(true); 
         } else {
-          showMessage("无有效地点", "error");
+          showMessage("无有效地点", "emptyImport");
         }
       } catch (err) {
-        showMessage(`格式解析失败`, "error");
+        showMessage(`格式解析失败`, "importError");
       }
     };
     reader.readAsArrayBuffer(file);
@@ -406,11 +502,11 @@ const App = () => {
     }
     setShowImportModal(false);
     setPendingImportData([]);
-    showMessage("已保存");
+    showMessage("导入成功", "import");
   };
 
   const handleExport = () => {
-    const headers = ["日期", "序号", "城市/交通", "地点名称/出行方式", "时间（分）", "备注", "费用", "币种"];
+    const headers = ["日期", "序号", "城市/交通", "地点名称/出行方式", "时间（分）", "备注", "费用", "币种", "打卡状态"];
     
     const exportGroups = {};
     sanitizedTripData.sort((a,b) => new Date(a.date) - new Date(b.date) || a.order - b.order).forEach(item => {
@@ -422,12 +518,12 @@ const App = () => {
     Object.values(exportGroups).forEach(groupItems => {
        groupItems.forEach((item, idx) => {
           exportRows.push([
-            item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.duration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : ""
+            item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.duration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : "", item.done ? "是" : "否"
           ].join(','));
           if (idx < groupItems.length - 1) {
             const modeLabel = TRANSPORT_ESTIMATES[item.transportMode || 'walk'].label;
             exportRows.push([
-              item.date, 0, "交通", modeLabel, item.transportDuration || 0, '""', "", ""
+              item.date, 0, "交通", modeLabel, item.transportDuration || 0, '""', "", "", item.transportDone ? "是" : "否"
             ].join(','));
           }
        });
@@ -443,7 +539,7 @@ const App = () => {
     link.href = URL.createObjectURL(blob);
     link.download = `${activeTrip}_${getTodayDate()}.csv`;
     link.click();
-    showMessage("已保存");
+    showMessage("导出成功", "export");
   };
 
   const handleUpdateTransport = (id, mode) => {
@@ -469,6 +565,13 @@ const App = () => {
       const next = sameDay[subIdx + 1];
       if (prev && prev.done) updated = updated.map(i => i.id === prev.id ? { ...i, transportDone: true } : i);
       if (next && next.done) updated = updated.map(i => i.id === item.id ? { ...i, transportDone: true } : i);
+    } else {
+      const item = updated[idx];
+      const sameDay = updated.filter(i => i.date === item.date).sort((a,b) => (a.order||0) - (b.order||0));
+      const subIdx = sameDay.findIndex(i => i.id === id);
+      const prev = sameDay[subIdx - 1];
+      if (prev) updated = updated.map(i => i.id === prev.id ? { ...i, transportDone: false } : i);
+      updated = updated.map(i => i.id === item.id ? { ...i, transportDone: false } : i);
     }
     updateTrips({ ...trips, [activeTrip]: updated });
   };
@@ -498,14 +601,14 @@ const App = () => {
     });
     
     updateTrips({ ...trips, [activeTrip]: remainingItems });
-    showMessage("已删除", "error");
+    showMessage("已删除", "delete");
   };
 
   const handleSubmitForm = (e) => {
     e.preventDefault();
     const payload = {
       ...formData,
-      duration: parseInt(formData.duration) || 60,
+      duration: formData.duration === "" ? 0 : (parseInt(formData.duration) || 0),
       cost: parseFloat(formData.cost) || 0,
       order: parseInt(formData.order) || 1,
     };
@@ -535,16 +638,17 @@ const App = () => {
       const newItem = { ...payload, id: `manual-${Date.now()}`, done: false };
       updatedData = updatedData.map(item => newOrders[item.id] !== undefined ? { ...item, order: newOrders[item.id] } : item);
       updatedData.push(newItem);
+      showMessage("已添加", "add");
     } else {
       updatedData = updatedData.map(item => {
         if (item.id === editingId) return { ...item, ...payload };
         if (newOrders[item.id] !== undefined) return { ...item, order: newOrders[item.id] };
         return item;
       });
+      showMessage("已保存", "edit");
     }
     
     updateTrips({ ...trips, [activeTrip]: updatedData });
-    showMessage("已保存");
     setShowModal(false);
     restoreZoom();
   };
@@ -580,7 +684,7 @@ const App = () => {
     updateTrips({ ...trips, [activeTrip]: updatedData });
     setShowTransportModal(false);
     restoreZoom();
-    showMessage("已保存");
+    showMessage("已保存", "edit");
   };
 
   const renameTrip = () => {
@@ -589,7 +693,7 @@ const App = () => {
       newTrips[newTitle] = newTrips[activeTrip];
       delete newTrips[activeTrip];
       updateTrips(newTrips, newTitle);
-      showMessage("已保存");
+      showMessage("已保存", "rename");
     }
     setIsEditingTitle(false);
     restoreZoom();
@@ -638,7 +742,26 @@ const App = () => {
         <div className={isSwitchingTheme ? 'opacity-0 pointer-events-none' : ''}>
           {toast.show && (
             <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-full bg-black/80 backdrop-blur text-white shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
-              <CheckCircle className={`w-4 h-4 ${toast.type === 'error' ? 'text-red-500' : 'text-green-500'}`} />
+              {(() => {
+                const IconMap = {
+                  export: { icon: Upload, color: 'text-blue-500' },
+                  import: { icon: Download, color: 'text-blue-500' },
+                  undo: { icon: Undo2, color: 'text-green-500' },
+                  redo: { icon: Redo2, color: 'text-green-500' },
+                  allDone: { icon: MapPinCheckInside, color: 'text-yellow-500' },
+                  importError: { icon: MapPinXInside, color: 'text-red-500' },
+                  emptyImport: { icon: MapPinXInside, color: 'text-red-500' },
+                  delete: { icon: MapPinMinus, color: 'text-red-500' },
+                  add: { icon: MapPinPlus, color: 'text-green-500' },
+                  edit: { icon: SquarePen, color: 'text-green-500' },
+                  rename: { icon: NotebookPen, color: 'text-green-500' },
+                  refresh: { icon: RefreshCw, color: 'text-yellow-500' },
+                  error: { icon: MapPinXInside, color: 'text-red-500' }
+                };
+                const config = IconMap[toast.type] || { icon: CheckCircle, color: 'text-green-500' };
+                const Icon = config.icon;
+                return <Icon className={`w-4 h-4 ${config.color}`} />;
+              })()}
               <span className="text-sm font-bold">{toast.message}</span>
             </div>
           )}
@@ -682,7 +805,7 @@ const App = () => {
                 ) : (
                   <div className="flex items-center gap-2 flex-1 min-w-0 group cursor-pointer" onClick={() => { setNewTitle(activeTrip); setIsEditingTitle(true); }}>
                     <h1 className="text-2xl font-black tracking-tighter truncate">{activeTrip}</h1>
-                    <Edit2 className={`w-4 h-4 opacity-0 group-hover:opacity-70 transition-opacity shrink-0 ${isDarkMode ? 'text-white' : 'text-gray-600'}`} />
+                    <NotebookPen className={`w-4 h-4 opacity-0 group-hover:opacity-70 transition-opacity shrink-0 ${isDarkMode ? 'text-white' : 'text-gray-600'}`} />
                   </div>
                 )}
 
@@ -698,11 +821,11 @@ const App = () => {
 
               <div className="flex gap-2">
                 <label className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500/10 text-blue-500 border border-blue-500/20 text-xs font-black cursor-pointer hover:bg-blue-500/20 transition-all">
-                  <Upload className="w-4 h-4" /> 导入
+                  <Download className="w-4 h-4" /> 导入
                   <input type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
                 </label>
                 <button onClick={handleExport} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500/10 text-green-600 dark:text-green-500 border border-green-500/20 text-xs font-black hover:bg-green-500/20 transition-all">
-                  <Download className="w-4 h-4" /> 导出
+                  <Upload className="w-4 h-4" /> 导出
                 </button>
                 <button onClick={handleUndo} disabled={past.length === 0} className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
                   <Undo2 className="w-4 h-4" />
@@ -880,7 +1003,7 @@ const App = () => {
                                 
                                 <div className="flex gap-1.5">
                                   <button onClick={() => openEditModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition-all ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
-                                    <Pencil className="w-3.5 h-3.5" />
+                                    <SquarePen className="w-3.5 h-3.5" />
                                   </button>
                                   <button onClick={() => handleDelete(item.id)} className={`p-1.5 rounded-lg hover:scale-105 transition-all ${isDarkMode ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -891,7 +1014,7 @@ const App = () => {
                           </div>
 
                           {idx < group.items.length - 1 && (
-                            <div className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-3 items-center relative z-10`}>
+                            <div key={`transport-${item.id}`} id={`transport-${item.id}`} className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-3 items-center relative z-10`}>
                               <div className="w-14 shrink-0 bg-transparent flex flex-col items-center justify-center relative z-20 -translate-y-5">
                                 <button onClick={() => toggleTransportCheck(item.id)} className={`w-6 h-6 rounded-full z-20 border-[3px] flex items-center justify-center transition shadow-lg hover:scale-110 ${item.transportDone ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')}`}>
                                   {item.transportDone && <CheckCircle className="w-4 h-4"/>}
@@ -908,7 +1031,7 @@ const App = () => {
                                 </div>
                                 <div className={`flex items-center shrink-0 ${isMobileView ? 'gap-2' : 'gap-3'}`}>
                                   <button onClick={() => openTransportModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
-                                    <Pencil className="w-3.5 h-3.5" />
+                                    <SquarePen className="w-3.5 h-3.5" />
                                   </button>
                                   <div className="flex gap-1 shrink-0">
                                     {Object.entries(TRANSPORT_ESTIMATES).map(([mode, config]) => {
@@ -1040,7 +1163,7 @@ const App = () => {
                   <div className="flex flex-col gap-1.5">
                     <label className={`text-[10px] font-black uppercase ml-1 flex justify-between transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>
                       <span>备注</span>
-                      <span className="text-blue-500 font-normal opacity-100">(支持文本/链接)</span>
+                      <span className="text-blue-500 font-normal opacity-100">（支持文本/链接）</span>
                     </label>
                     <textarea className={`w-full p-4 rounded-2xl text-base font-medium min-h-[100px] outline-none resize-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                       placeholder="例如：住宿、交通、门票、营业时间等信息"
@@ -1121,7 +1244,7 @@ const App = () => {
             <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
               <div className={`w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border border-white/5' : 'bg-white text-black'}`}>
                 <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Upload className="w-8 h-8 text-blue-500" />
+                  <Download className="w-8 h-8 text-blue-500" />
                 </div>
                 <h2 className={`text-xl font-black mb-1 transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-black'}`}>识别到 {pendingImportData.length} 个地点</h2>
                 <p className="text-[11px] opacity-80 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{activeTrip}</span></p>
