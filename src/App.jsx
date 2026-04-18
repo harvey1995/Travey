@@ -141,9 +141,21 @@ const App = () => {
   const [newTitle, setNewTitle] = useState("");
 
   const [activeTab, setActiveTab] = useState("Total"); 
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('travey_theme_v1');
+      if (saved !== null) return JSON.parse(saved);
+    }
+    return true;
+  });
   const [isSwitchingTheme, setIsSwitchingTheme] = useState(false);
-  const [viewMode, setViewMode] = useState('web'); 
+  const [viewMode, setViewMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('travey_view_v1');
+      if (saved) return saved;
+    }
+    return 'web';
+  }); 
   const [isNarrow, setIsNarrow] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -183,6 +195,14 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('travey_start_times_v1', JSON.stringify(dailyStartTimes));
   }, [dailyStartTimes]);
+
+  useEffect(() => {
+    localStorage.setItem('travey_theme_v1', JSON.stringify(isDarkMode));
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    localStorage.setItem('travey_view_v1', viewMode);
+  }, [viewMode]);
 
   const showMessage = (msg, type = 'success') => {
     setToast({ show: true, message: msg, type, id: Date.now() });
@@ -274,8 +294,11 @@ const App = () => {
       handleResize();
       window.addEventListener('resize', handleResize);
       
-      const isMobile = window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      setViewMode(isMobile ? 'mobile' : 'web');
+      const savedView = localStorage.getItem('travey_view_v1');
+      if (!savedView) {
+        const isMobile = window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        setViewMode(isMobile ? 'mobile' : 'web');
+      }
       
       return () => window.removeEventListener('resize', handleResize);
     }
@@ -750,11 +773,11 @@ const App = () => {
   const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
   
   const containerClasses = isMobileView 
-    ? `max-w-[430px] w-full mx-auto min-h-[100vh] relative shadow-2xl transition-colors duration-500 overflow-hidden ${containerColor}` 
-    : `w-full min-h-[100vh] relative transition-colors duration-500 overflow-hidden ${containerColor}`;
+    ? `max-w-[430px] w-full mx-auto min-h-[100dvh] relative shadow-2xl transition-colors duration-500 overflow-hidden ${containerColor}` 
+    : `w-full min-h-[100dvh] relative transition-colors duration-500 overflow-hidden ${containerColor}`;
 
   return (
-    <div className={`font-sans transition-colors duration-500 flex justify-center ${bodyColor}`}>
+    <div className={`font-sans transition-colors duration-500 flex justify-center select-none ${bodyColor}`}>
       <div className={containerClasses}>
         
         {isSwitchingTheme && (
@@ -813,7 +836,7 @@ const App = () => {
             </div>
           )}
 
-          <div className="pb-20 sm:pb-16 [padding-bottom:calc(5rem+env(safe-area-inset-bottom))] min-h-[100vh] flex flex-col relative">
+          <div className="pb-20 sm:pb-16 [padding-bottom:calc(5rem+env(safe-area-inset-bottom))] min-h-[100dvh] flex flex-col relative">
             
             <header className={`${isMobileView ? 'px-3' : 'px-6'} py-4 space-y-4`}>
               <div className="flex justify-between items-center gap-2">
@@ -944,7 +967,7 @@ const App = () => {
                             </div>
                           )}
                           {group.items.map((i, idx) => (
-                             <span key={idx} className={`block ${i.done ? 'line-through opacity-40' : ''}`}>
+                             <span key={idx} className={`block select-text ${i.done ? 'line-through opacity-40' : ''}`}>
                                {i.order}. {i.name}（{i.startTimeStr} - {i.endTimeStr}）
                              </span>
                           ))}
@@ -971,7 +994,7 @@ const App = () => {
                             <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border transition-all ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200 shadow-sm'} ${item.done ? 'opacity-50' : ''}`}>
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1 min-w-0 pr-2">
-                                  <h3 className={`font-bold text-sm leading-snug ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
+                                  <h3 className={`font-bold text-sm leading-snug select-text ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
                                   {item.city && (
                                     <div className="flex items-center gap-1 mt-1 opacity-80">
                                       <MapPin className="w-3 h-3" />
@@ -995,7 +1018,7 @@ const App = () => {
                                 const urls = item.note.match(urlRegex);
                                 if (!urls) {
                                   return (
-                                    <div className={`mt-3 mb-3 text-[11px] p-3 rounded-xl whitespace-pre-wrap break-words leading-relaxed border-l-2 ${isDarkMode ? 'text-gray-300 bg-black/20 border-white/10' : 'text-gray-700 bg-gray-50 border-gray-300'}`}>
+                                    <div className={`mt-3 mb-3 text-[11px] p-3 rounded-xl whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-black/20 border-white/10' : 'text-gray-700 bg-gray-50 border-gray-300'}`}>
                                       {item.note}
                                     </div>
                                   );
@@ -1006,12 +1029,12 @@ const App = () => {
                                 return (
                                   <div className="mt-3 mb-3 flex flex-col gap-2 items-start w-full min-w-0">
                                     {textPart && (
-                                      <div className={`w-full text-[11px] p-3 rounded-xl whitespace-pre-wrap break-words leading-relaxed border-l-2 ${isDarkMode ? 'text-gray-300 bg-black/20 border-white/10' : 'text-gray-700 bg-gray-50 border-gray-300'}`}>
+                                      <div className={`w-full text-[11px] p-3 rounded-xl whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-black/20 border-white/10' : 'text-gray-700 bg-gray-50 border-gray-300'}`}>
                                         {textPart}
                                       </div>
                                     )}
                                     {urls.map((url, i) => (
-                                      <div key={i} onClick={() => setPreviewIframeUrl(url)} className={`text-[12px] font-bold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate w-full block ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
+                                      <div key={i} onClick={() => setPreviewIframeUrl(url)} className={`text-[12px] font-bold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate w-full block select-text ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
                                         {url.length > 28 ? url.substring(0, 20) + '...' + url.slice(-8) : url}
                                       </div>
                                     ))}
@@ -1098,7 +1121,6 @@ const App = () => {
             </main>
           </div>
 
-          {/* 将悬浮按钮包裹层从包含 overflow-hidden 的 containerClasses 内部，移至其同级元素，防止其光效投影被裁减 */}
           <div className={`fixed bottom-0 sm:bottom-[24px] flex justify-end ${isMobileView ? 'px-3' : 'px-6'} pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
             <button 
               onClick={handleOpenAddModal} 
@@ -1295,7 +1317,7 @@ const App = () => {
         </div>
 
         <style>{`
-          body {
+          html, body {
             background-color: ${isDarkMode ? '#000000' : '#e8e4d9'};
             transition: background-color 0.5s;
           }
