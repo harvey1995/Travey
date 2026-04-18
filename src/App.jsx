@@ -402,24 +402,47 @@ const App = () => {
     const isModalOpen = previewIframeUrl || showModal || showTimeModal || showTransportModal || showImportModal;
     
     if (isModalOpen) {
-      const currentScrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.top = `-${currentScrollY}px`;
       document.body.style.overflow = 'hidden';
       
       return () => {
-        const scrollY = document.body.style.top;
-        document.body.style.position = '';
-        document.body.style.width = '';
-        document.body.style.top = '';
         document.body.style.overflow = '';
-        if (scrollY) {
-          window.scrollTo(0, parseInt(scrollY || '0') * -1);
-        }
       };
     }
   }, [previewIframeUrl, showModal, showTimeModal, showTransportModal, showImportModal]);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const currentIsMobile = viewMode === 'mobile' || isNarrow;
+      let metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (!metaTheme) {
+        metaTheme = document.createElement('meta');
+        metaTheme.name = 'theme-color';
+        document.head.appendChild(metaTheme);
+      }
+      metaTheme.content = currentIsMobile ? (isDarkMode ? '#0f1115' : '#fdfbf7') : (isDarkMode ? '#000000' : '#e8e4d9');
+    }
+  }, [isDarkMode, viewMode, isNarrow]);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const handleSelectionChange = () => {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+        const range = sel.getRangeAt(0);
+        const getSelectTextNode = (node) => {
+          if (!node) return null;
+          return node.nodeType === Node.TEXT_NODE ? node.parentElement?.closest('.select-text') : node.closest?.('.select-text');
+        };
+        const startNode = getSelectTextNode(range.startContainer);
+        const endNode = getSelectTextNode(range.endContainer);
+        if (startNode && endNode && startNode !== endNode) {
+          sel.removeAllRanges();
+        }
+      };
+      document.addEventListener('selectionchange', handleSelectionChange);
+      return () => document.removeEventListener('selectionchange', handleSelectionChange);
+    }
+  }, []);
 
   useEffect(() => {
     setPreviewIframeUrl(prev => {
@@ -1318,7 +1341,7 @@ const App = () => {
 
         <style>{`
           html, body {
-            background-color: ${isDarkMode ? '#000000' : '#e8e4d9'};
+            background-color: ${isMobileView ? (isDarkMode ? '#0f1115' : '#fdfbf7') : (isDarkMode ? '#000000' : '#e8e4d9')};
             transition: background-color 0.5s;
           }
           .transition-colors {
