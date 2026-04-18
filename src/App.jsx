@@ -125,6 +125,7 @@ const App = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isSwitchingTheme, setIsSwitchingTheme] = useState(false);
   const [viewMode, setViewMode] = useState('web'); 
+  const [isNarrow, setIsNarrow] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
   const [expandedDates, setExpandedDates] = useState({});
@@ -183,8 +184,14 @@ const App = () => {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const handleResize = () => setIsNarrow(window.innerWidth < 768);
+      handleResize();
+      window.addEventListener('resize', handleResize);
+      
       const isMobile = window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       setViewMode(isMobile ? 'mobile' : 'web');
+      
+      return () => window.removeEventListener('resize', handleResize);
     }
   }, []);
 
@@ -566,7 +573,7 @@ const App = () => {
     setShowModal(true); 
   };
 
-  const isMobileView = viewMode === 'mobile';
+  const isMobileView = viewMode === 'mobile' || isNarrow;
   
   const bodyColor = isDarkMode ? 'bg-[#000000] text-white' : 'bg-[#e8e4d9] text-[#2c241b]';
   const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
@@ -821,8 +828,8 @@ const App = () => {
                               
                               <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
                                 <div className="flex gap-3 text-[10px] font-bold">
-                                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}><Clock className="w-3 h-3" /> {item.duration >= 1000 ? '999m+' : item.duration + 'm'}</div>
-                                  {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><DollarSign className="w-3 h-3" /> {item.cost >= 1000 ? '999+' : item.cost} {item.currency}</div>}
+                                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}><Clock className="w-3 h-3" /> {item.duration >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : item.duration + 'm'}</div>
+                                  {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><DollarSign className="w-3 h-3" /> {item.cost >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999+' : '999999+') : item.cost} {item.currency}</div>}
                                 </div>
                                 
                                 <div className="flex gap-1.5">
@@ -840,21 +847,21 @@ const App = () => {
                           {idx < group.items.length - 1 && (
                             <div className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-3 items-center relative z-10`}>
                               <div className="w-14 shrink-0 bg-transparent flex flex-col items-center justify-center relative z-20 -translate-y-5">
-                                <button onClick={() => toggleTransportCheck(item.id)} className={`w-6 h-6 rounded-full z-20 border-[3px] flex items-center justify-center transition-all shadow-lg hover:scale-110 ${item.transportDone ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')}`}>
+                                <button onClick={() => toggleTransportCheck(item.id)} className={`w-6 h-6 rounded-full z-20 border-[3px] flex items-center justify-center transition shadow-lg hover:scale-110 ${item.transportDone ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')}`}>
                                   {item.transportDone && <CheckCircle className="w-4 h-4"/>}
                                 </button>
                                 <div className="mt-2 text-[10px] font-black opacity-80 tabular-nums bg-transparent">
                                   {item.endTimeStr}
                                 </div>
                               </div>
-                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.02] border-white/10' : 'bg-white shadow-sm border-gray-300'} ${item.transportDone ? 'opacity-50' : ''}`}>
+                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed transition ${isDarkMode ? 'bg-white/[0.02] border-white/10' : 'bg-white shadow-sm border-gray-300'} ${item.transportDone ? 'opacity-50' : ''}`}>
                                 <div className="flex items-center min-w-0">
                                   <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
-                                    <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= 1000 ? '999m+' : (item.transportDuration || 0) + 'm'}
+                                    <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : (item.transportDuration || 0) + 'm'}
                                   </div>
                                 </div>
                                 <div className={`flex items-center shrink-0 ${isMobileView ? 'gap-2' : 'gap-3'}`}>
-                                  <button onClick={() => openTransportModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition-all ${isDarkMode ? 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
+                                  <button onClick={() => openTransportModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition ${isDarkMode ? 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
                                     <Pencil className="w-3.5 h-3.5" />
                                   </button>
                                   <div className="flex gap-1 shrink-0">
@@ -862,7 +869,7 @@ const App = () => {
                                       const isActive = item.transportMode === mode;
                                       const Icon = config.icon;
                                       return (
-                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition-all transform-gpu ${isActive ? `${config.color} ${isDarkMode ? 'bg-white/10' : 'bg-gray-100'} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
+                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition transform-gpu ${isActive ? `${config.color} ${isDarkMode ? 'bg-white/10' : 'bg-gray-100'} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
                                           <Icon className="w-3.5 h-3.5" />
                                         </button>
                                       );
@@ -878,7 +885,7 @@ const App = () => {
                                       const dirflg = dirflgMap[item.transportMode || 'train'];
                                       setPreviewIframeUrl(`https://maps.google.com/maps?saddr=$${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
                                     }}
-                                    className={`px-4 py-1.5 rounded-lg text-[11px] font-black transition-all flex items-center gap-1 shrink-0 ${
+                                    className={`${isMobileView ? 'px-2.5' : 'px-4'} py-1.5 rounded-lg text-[11px] font-black transition flex items-center gap-1 shrink-0 ${
                                       item.transportMode === 'walk' ? (isDarkMode ? 'bg-orange-400/20 text-orange-400' : 'bg-orange-100 text-orange-600') :
                                       item.transportMode === 'car' ? (isDarkMode ? 'bg-blue-400/20 text-blue-400' : 'bg-blue-100 text-blue-600') :
                                       (isDarkMode ? 'bg-green-400/20 text-green-400' : 'bg-green-100 text-green-600')
