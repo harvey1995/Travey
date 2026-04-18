@@ -421,21 +421,6 @@ const App = () => {
     }
   }, [previewIframeUrl, showModal, showTimeModal, showTransportModal, showImportModal]);
 
-  useEffect(() => {
-    setPreviewIframeUrl(prev => {
-      if (prev && prev.includes('google.com/search')) {
-        try {
-          const urlObj = new URL(prev);
-          urlObj.searchParams.set('cs', isDarkMode ? '1' : '0');
-          return urlObj.toString();
-        } catch (e) {
-          return prev;
-        }
-      }
-      return prev;
-    });
-  }, [isDarkMode]);
-
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -931,7 +916,7 @@ const App = () => {
                             className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
                             onClick={() => {
                               if (group.items[0]?.city) {
-                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + '天气')}&igu=1&cs=${isDarkMode ? '1' : '0'}`);
+                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + '天气')}&igu=1`);
                               }
                             }}
                           >
@@ -955,7 +940,7 @@ const App = () => {
                       {isOverviewExpanded && (
                         <div className={`mt-2 p-4 rounded-2xl text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
                           {group.items.length >= 2 && (
-                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75vh]'} rounded-xl overflow-hidden mb-2 border border-white/10`}>
+                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75vh]'} rounded-[2rem] overflow-hidden mb-2 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                               <iframe 
                                 title="Daily Route"
                                 width="100%" 
