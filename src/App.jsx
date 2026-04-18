@@ -771,17 +771,34 @@ const App = () => {
                                 </div>
                               </div>
 
-                              {item.note && (
-                                isUrl(item.note) ? (
-                                  <div onClick={() => setPreviewIframeUrl(item.note)} className={`mt-3 mb-3 text-[12px] font-bold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate max-w-[200px] inline-block ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
-                                    {item.note.length > 28 ? item.note.substring(0, 20) + '...' + item.note.slice(-8) : item.note}
+                              {item.note && (() => {
+                                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                                const urls = item.note.match(urlRegex);
+                                if (!urls) {
+                                  return (
+                                    <div className={`mt-3 mb-3 text-[11px] p-3 rounded-xl whitespace-pre-wrap break-words leading-relaxed border-l-2 ${isDarkMode ? 'text-gray-300 bg-black/20 border-white/10' : 'text-gray-700 bg-gray-50 border-gray-300'}`}>
+                                      {item.note}
+                                    </div>
+                                  );
+                                }
+                                
+                                const textPart = item.note.replace(urlRegex, '\n').split('\n').map(s => s.trim()).filter(Boolean).join('\n');
+                                
+                                return (
+                                  <div className="mt-3 mb-3 flex flex-col gap-2 items-start w-full min-w-0">
+                                    {textPart && (
+                                      <div className={`w-full text-[11px] p-3 rounded-xl whitespace-pre-wrap break-words leading-relaxed border-l-2 ${isDarkMode ? 'text-gray-300 bg-black/20 border-white/10' : 'text-gray-700 bg-gray-50 border-gray-300'}`}>
+                                        {textPart}
+                                      </div>
+                                    )}
+                                    {urls.map((url, i) => (
+                                      <div key={i} onClick={() => setPreviewIframeUrl(url)} className={`text-[12px] font-bold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate w-full block ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
+                                        {url.length > 28 ? url.substring(0, 20) + '...' + url.slice(-8) : url}
+                                      </div>
+                                    ))}
                                   </div>
-                                ) : (
-                                  <div className={`mt-3 mb-3 text-[11px] p-3 rounded-xl whitespace-pre-wrap leading-relaxed border-l-2 ${isDarkMode ? 'text-gray-300 bg-black/20 border-white/10' : 'text-gray-700 bg-gray-50 border-gray-300'}`}>
-                                    {item.note}
-                                  </div>
-                                )
-                              )}
+                                );
+                              })()}
                               
                               <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
                                 <div className="flex gap-3 text-[10px] font-bold">
