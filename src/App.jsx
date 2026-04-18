@@ -773,8 +773,8 @@ const App = () => {
   const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
   
   const containerClasses = isMobileView 
-    ? `max-w-[430px] w-full mx-auto min-h-[100vh] relative shadow-2xl transition-colors duration-500 ${containerColor}` 
-    : `w-full min-h-[100vh] relative transition-colors duration-500 ${containerColor}`;
+    ? `max-w-[430px] w-full mx-auto min-h-[100dvh] relative shadow-2xl transition-colors duration-500 overflow-hidden ${containerColor}` 
+    : `w-full min-h-[100dvh] relative transition-colors duration-500 overflow-hidden ${containerColor}`;
 
   return (
     <div className={`font-sans transition-colors duration-500 flex justify-center select-none ${bodyColor}`}>
@@ -836,7 +836,7 @@ const App = () => {
             </div>
           )}
 
-          <div className="pb-20 sm:pb-16 [padding-bottom:calc(5rem+env(safe-area-inset-bottom))] min-h-[100vh] flex flex-col relative">
+          <div className="pb-32 min-h-[100dvh] flex flex-col relative">
             
             <header className={`${isMobileView ? 'px-3' : 'px-6'} py-4 space-y-4`}>
               <div className="flex justify-between items-center gap-2">
@@ -921,7 +921,7 @@ const App = () => {
                 const isOverviewExpanded = expandedDates[group.date]; 
                 
                 return (
-                  <div key={group.date} className="mb-10">
+                  <div key={group.date} className="mb-6">
                     <div className="mb-4">
                       <div className="flex items-center mb-4">
                         <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{group.date}</span>
@@ -1121,10 +1121,10 @@ const App = () => {
             </main>
           </div>
 
-          <div className={`fixed bottom-0 sm:bottom-[24px] flex justify-end ${isMobileView ? 'px-3' : 'px-6'} pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
+          <div className={`fixed bottom-[20px] sm:bottom-0 flex justify-end ${isMobileView ? 'px-3' : 'px-6'} pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
             <button 
               onClick={handleOpenAddModal} 
-              className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all mb-3 sm:mb-0"
+              className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
             >
               <Plus className="w-6 h-6" />
             </button>
