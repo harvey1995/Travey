@@ -289,7 +289,7 @@ const App = () => {
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      if (previewIframeUrl) {
+      if (previewIframeUrl || showModal || showTimeModal || showTransportModal || showImportModal) {
         document.body.style.overflow = 'hidden';
       } else {
         document.body.style.overflow = '';
@@ -300,7 +300,7 @@ const App = () => {
         document.body.style.overflow = '';
       }
     };
-  }, [previewIframeUrl]);
+  }, [previewIframeUrl, showModal, showTimeModal, showTransportModal, showImportModal]);
 
   useEffect(() => {
     setPreviewIframeUrl(prev => {
@@ -573,7 +573,7 @@ const App = () => {
     setShowModal(true); 
   };
 
-  const isMobileView = viewMode === 'mobile' || isNarrow;
+  const isMobileView = viewMode === 'mobile';
   
   const bodyColor = isDarkMode ? 'bg-[#000000] text-white' : 'bg-[#e8e4d9] text-[#2c241b]';
   const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
