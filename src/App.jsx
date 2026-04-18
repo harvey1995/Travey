@@ -1,11 +1,27 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  Upload, Download, Plus, Search, CheckCircle, Clock, DollarSign, 
-  SunMedium, Smartphone, Monitor, Trash2, Pencil, Map, X, Sparkles,
-  MapPin, Footprints, Car, Train, ChevronRight, RefreshCw, 
-  ChevronDown, ChevronUp, Edit2, AlertTriangle, CloudRain, ZoomIn,
-  Undo2, Redo2, Moon, Star, ExternalLink, Locate, SquarePen, NotebookPen,
-  MapPinCheckInside, MapPinXInside, MapPinMinus, MapPinPlus
+  // 1. 地图与位置
+  Map, MapPin, Locate, ZoomIn, 
+  MapPinCheckInside, MapPinPlusInside, MapPinXInside, Route,
+
+  // 2. 出行方式
+  Car, Train, Footprints,
+
+  // 3. 交互与操作
+  Plus, X, CheckCircle, ChevronDown, ChevronUp, 
+  Search, RefreshCw, Sparkles, ExternalLink,
+
+  // 4. 数据属性
+  Clock, Wallet,
+
+  // 5. 编辑与历史
+  SquarePen, NotebookPen, Trash2, Undo2, Redo2,
+
+  // 6. 输入与输出
+  Download, Upload,
+
+  // 7. 视图与主题
+  Moon, Sun, Monitor, Smartphone
 } from 'lucide-react';
 
 // --- 工具函数 ---
@@ -32,7 +48,7 @@ const isUrl = (str) => {
 };
 
 const TRANSPORT_ESTIMATES = {
-  car: { label: '打车', icon: Car, lightClass: 'text-orange-600 bg-orange-100 hover:bg-orange-200', darkClass: 'text-orange-400 bg-orange-500/10 hover:bg-orange-500/20', alert: '可能拥堵' },
+  car: { label: '打车', icon: Car, lightClass: 'text-orange-600 bg-orange-100 hover:bg-orange-200', darkClass: 'text-orange-400 bg-orange-500/10 hover:bg-orange-500/20', alert: null },
   train: { label: '公交', icon: Train, lightClass: 'text-red-600 bg-red-100 hover:bg-red-200', darkClass: 'text-red-400 bg-red-500/10 hover:bg-red-500/20', alert: null },
   walk: { label: '步行', icon: Footprints, lightClass: 'text-blue-600 bg-blue-100 hover:bg-blue-200', darkClass: 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20', alert: null }
 };
@@ -67,7 +83,7 @@ const App = () => {
     return "东京跨年三日游";
   });
 
-  // 2. 撤销/重做引擎
+  // 2. 撤销与重做
   const [past, setPast] = useState([]);
   const [future, setFuture] = useState([]);
 
@@ -170,8 +186,16 @@ const App = () => {
 
   const showMessage = (msg, type = 'success') => {
     setToast({ show: true, message: msg, type });
-    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
   };
+
+  useEffect(() => {
+    if (toast.show) {
+      const timer = setTimeout(() => {
+        setToast(prev => ({ ...prev, show: false }));
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.show, toast.message, toast.type]);
 
   const handleRefresh = () => {
     showMessage("已刷新", "refresh");
@@ -487,7 +511,7 @@ const App = () => {
           showMessage("无有效地点", "emptyImport");
         }
       } catch (err) {
-        showMessage(`格式解析失败`, "importError");
+        showMessage("格式解析失败", "importError");
       }
     };
     reader.readAsArrayBuffer(file);
@@ -751,14 +775,14 @@ const App = () => {
                   allDone: { icon: MapPinCheckInside, color: 'text-yellow-500' },
                   importError: { icon: MapPinXInside, color: 'text-red-500' },
                   emptyImport: { icon: MapPinXInside, color: 'text-red-500' },
-                  delete: { icon: MapPinMinus, color: 'text-red-500' },
-                  add: { icon: MapPinPlus, color: 'text-green-500' },
+                  delete: { icon: Trash2, color: 'text-red-500' },
+                  add: { icon: MapPinPlusInside, color: 'text-green-500' },
                   edit: { icon: SquarePen, color: 'text-green-500' },
                   rename: { icon: NotebookPen, color: 'text-green-500' },
                   refresh: { icon: RefreshCw, color: 'text-yellow-500' },
                   error: { icon: MapPinXInside, color: 'text-red-500' }
                 };
-                const config = IconMap[toast.type] || { icon: CheckCircle, color: 'text-green-500' };
+                const config = IconMap[toast.type] || { icon: Sparkles, color: 'text-yellow-500' };
                 const Icon = config.icon;
                 return <Icon className={`w-4 h-4 ${config.color}`} />;
               })()}
@@ -789,7 +813,7 @@ const App = () => {
             </div>
           )}
 
-          <div className="pb-32 min-h-[100vh] flex flex-col relative">
+          <div className="pb-20 sm:pb-16 [padding-bottom:calc(5rem+env(safe-area-inset-bottom))] min-h-[100vh] flex flex-col relative">
             
             <header className={`${isMobileView ? 'px-3' : 'px-6'} py-4 space-y-4`}>
               <div className="flex justify-between items-center gap-2">
@@ -811,7 +835,7 @@ const App = () => {
 
                 <div className={`flex backdrop-blur-xl rounded-2xl p-1 shrink-0 border transition-colors duration-500 ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-200/50 border-gray-300'}`}>
                   <button onClick={handleThemeToggle} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
-                    {isDarkMode ? <Moon className="w-4 h-4 text-yellow-400" /> : <SunMedium className="w-4 h-4 text-orange-500" />}
+                    {isDarkMode ? <Moon className="w-4 h-4 text-yellow-400" /> : <Sun className="w-4 h-4 text-orange-500" />}
                   </button>
                   <button onClick={() => setViewMode(viewMode === 'mobile' ? 'web' : 'mobile')} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
                     {viewMode === 'mobile' ? <Monitor className="w-4 h-4 text-gray-400" /> : <Smartphone className="w-4 h-4 text-gray-400" />}
@@ -998,7 +1022,7 @@ const App = () => {
                               <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
                                 <div className="flex gap-3 text-[10px] font-bold">
                                   <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}><Clock className="w-3 h-3" /> {item.duration >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : item.duration + 'm'}</div>
-                                  {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><DollarSign className="w-3 h-3" /> {item.cost >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999+' : '999999+') : item.cost} {item.currency}</div>}
+                                  {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><Wallet className="w-3 h-3" /> {item.cost >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999+' : '999999+') : item.cost} {item.currency}</div>}
                                 </div>
                                 
                                 <div className="flex gap-1.5">
@@ -1058,7 +1082,7 @@ const App = () => {
                                       isDarkMode ? TRANSPORT_ESTIMATES[item.transportMode || 'walk'].darkClass : TRANSPORT_ESTIMATES[item.transportMode || 'walk'].lightClass
                                     }`}
                                   >
-                                    <Map className="w-3.5 h-3.5" />
+                                    <Route className="w-3.5 h-3.5" />
                                     路线
                                   </button>
                                 </div>
@@ -1073,7 +1097,7 @@ const App = () => {
               })}
             </main>
 
-            <div className={`fixed bottom-[20px] sm:bottom-0 flex justify-end ${isMobileView ? 'px-3' : 'px-6'} pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
+            <div className={`fixed bottom-[12px] sm:bottom-[24px] flex justify-end ${isMobileView ? 'px-3' : 'px-6'} pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
               <button 
                 onClick={handleOpenAddModal} 
                 className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
@@ -1146,7 +1170,11 @@ const App = () => {
                     <div className="flex flex-col gap-1.5 relative">
                       <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>币种</label>
                       <div className="relative h-12">
-                        <select className={`w-full h-full px-4 pr-8 rounded-2xl text-base font-medium outline-none appearance-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                        <select 
+                          required={parseFloat(formData.cost) > 0}
+                          onInvalid={e => e.target.setCustomValidity('请填写')}
+                          onInput={e => e.target.setCustomValidity('')}
+                          className={`w-full h-full px-4 pr-8 rounded-2xl text-base font-medium outline-none appearance-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                           value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})}>
                           <option value=""></option>
                           <option value="USD">USD</option>
