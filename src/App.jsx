@@ -31,9 +31,9 @@ const isUrl = (str) => {
 };
 
 const TRANSPORT_ESTIMATES = {
-  car: { label: '打车', icon: Car, color: 'text-orange-400', alert: '可能拥堵' },
-  train: { label: '公交', icon: Train, color: 'text-red-400', alert: null },
-  walk: { label: '步行', icon: Footprints, color: 'text-blue-400', alert: null }
+  car: { label: '打车', icon: Car, lightClass: 'text-orange-600 bg-orange-100 hover:bg-orange-200', darkClass: 'text-orange-400 bg-orange-500/10 hover:bg-orange-500/20', alert: '可能拥堵' },
+  train: { label: '公交', icon: Train, lightClass: 'text-red-600 bg-red-100 hover:bg-red-200', darkClass: 'text-red-500 bg-red-500/10 hover:bg-red-500/20', alert: null },
+  walk: { label: '步行', icon: Footprints, lightClass: 'text-blue-600 bg-blue-100 hover:bg-blue-200', darkClass: 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20', alert: null }
 };
 
 const TOKYO_TRIP = [
@@ -234,14 +234,14 @@ const App = () => {
         const travelTime = prevItem.transportDuration || 0; 
         const [h, m] = prevItem.endTimeStr.split(':').map(Number);
         const date = new Date(2000, 0, 1, h, m + travelTime);
-        arrivalTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+        arrivalTime = isNaN(date.getTime()) ? '--:--' : `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
         prevItem.nextTravelTime = "?";
       }
 
       const [hours, minutes] = arrivalTime.split(':').map(Number);
       const startDate = new Date(2000, 0, 1, hours, minutes);
       const endDate = new Date(startDate.getTime() + (item.duration || 0) * 60000);
-      const endTimeStr = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+      const endTimeStr = isNaN(endDate.getTime()) ? '--:--' : `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
       
       dayItems.push({ ...item, startTimeStr: arrivalTime, endTimeStr });
     });
@@ -869,7 +869,7 @@ const App = () => {
                                       const isActive = item.transportMode === mode;
                                       const Icon = config.icon;
                                       return (
-                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition transform-gpu ${isActive ? `${config.color} ${isDarkMode ? 'bg-white/10' : 'bg-gray-100'} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
+                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition transform-gpu ${isActive ? `${isDarkMode ? config.darkClass : config.lightClass} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
                                           <Icon className="w-3.5 h-3.5" />
                                         </button>
                                       );
@@ -886,9 +886,7 @@ const App = () => {
                                       setPreviewIframeUrl(`https://maps.google.com/maps?saddr=$${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
                                     }}
                                     className={`${isMobileView ? 'px-2.5' : 'px-4'} py-1.5 rounded-lg text-[11px] font-black transition flex items-center gap-1 shrink-0 ${
-                                      item.transportMode === 'car' ? (isDarkMode ? 'bg-orange-400/20 text-orange-400' : 'bg-orange-100 text-orange-600') :
-                                      item.transportMode === 'train' ? (isDarkMode ? 'bg-red-400/20 text-red-400' : 'bg-red-100 text-red-600') :
-                                      (isDarkMode ? 'bg-blue-400/20 text-blue-400' : 'bg-blue-100 text-blue-600')
+                                      isDarkMode ? TRANSPORT_ESTIMATES[item.transportMode || 'walk'].darkClass : TRANSPORT_ESTIMATES[item.transportMode || 'walk'].lightClass
                                     }`}
                                   >
                                     <Map className="w-3.5 h-3.5" />
