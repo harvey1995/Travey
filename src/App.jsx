@@ -4,7 +4,7 @@ import {
   SunMedium, Smartphone, Monitor, Trash2, Pencil, Map, X, Sparkles,
   MapPin, Footprints, Car, Train, ChevronRight, RefreshCw, 
   ChevronDown, ChevronUp, Edit2, AlertTriangle, CloudRain, ZoomIn,
-  Undo2, Redo2, Moon, Star, ExternalLink
+  Undo2, Redo2, Moon, Star, ExternalLink, Locate
 } from 'lucide-react';
 
 // --- 工具函数 ---
@@ -172,6 +172,21 @@ const App = () => {
 
   const handleRefresh = () => {
     showMessage("已刷新");
+  };
+
+  const handleLocate = () => {
+    for (const group of groupedDataWithTime) {
+      for (const [idx, item] of group.items.entries()) {
+        if (!item.done || (idx < group.items.length - 1 && !item.transportDone)) {
+          const el = document.getElementById(`card-${item.id}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+        }
+      }
+    }
+    showMessage("已全部打卡");
   };
 
   const handleThemeToggle = () => {
@@ -721,6 +736,9 @@ const App = () => {
               <button onClick={handleRefresh} className={`p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 text-white border-transparent' : 'bg-white shadow-sm text-gray-700 border-gray-200'}`}>
                 <RefreshCw className="w-4 h-4 opacity-50 hover:opacity-100" />
               </button>
+              <button onClick={handleLocate} className={`p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 text-white border-transparent' : 'bg-white shadow-sm text-gray-700 border-gray-200'}`}>
+                <Locate className="w-4 h-4 opacity-50 hover:opacity-100" />
+              </button>
             </div>
 
             <main className={`${isMobileView ? 'px-3' : 'px-6'} py-6`}>
@@ -789,7 +807,7 @@ const App = () => {
 
                     <div className="relative space-y-0">
                       {group.items.map((item, idx) => (
-                        <div key={item.id} className="relative mb-0">
+                        <div key={item.id} id={`card-${item.id}`} className="relative mb-0">
                           
                           {idx < group.items.length - 1 && (
                             <div className={`absolute left-[27px] top-[36px] -bottom-[40px] w-[2px] z-0 transition-colors duration-500 ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`} />
@@ -882,7 +900,7 @@ const App = () => {
                                   {item.endTimeStr}
                                 </div>
                               </div>
-                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed transition ${isDarkMode ? 'bg-white/[0.02] border-white/10' : 'bg-white shadow-sm border-gray-300'} ${item.transportDone ? 'opacity-50' : ''}`}>
+                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed transition ${isDarkMode ? 'bg-white/[0.02] border-white/5' : 'bg-white/60 shadow-sm border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
                                 <div className="flex items-center min-w-0">
                                   <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
                                     <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : (item.transportDuration || 0) + 'm'}
