@@ -288,15 +288,18 @@ const App = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const isModalOpen = previewIframeUrl || showModal || showTimeModal || showTransportModal || showImportModal;
-      if (isModalOpen) {
-        const currentScrollY = window.scrollY;
-        document.body.style.position = 'fixed';
-        document.body.style.width = '100%';
-        document.body.style.top = `-${currentScrollY}px`;
-        document.body.style.overflow = 'hidden';
-      } else {
+    if (typeof document === 'undefined') return;
+    
+    const isModalOpen = previewIframeUrl || showModal || showTimeModal || showTransportModal || showImportModal;
+    
+    if (isModalOpen) {
+      const currentScrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${currentScrollY}px`;
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
         const scrollY = document.body.style.top;
         document.body.style.position = '';
         document.body.style.width = '';
@@ -305,16 +308,8 @@ const App = () => {
         if (scrollY) {
           window.scrollTo(0, parseInt(scrollY || '0') * -1);
         }
-      }
+      };
     }
-    return () => {
-      if (typeof document !== 'undefined') {
-        document.body.style.position = '';
-        document.body.style.width = '';
-        document.body.style.top = '';
-        document.body.style.overflow = '';
-      }
-    };
   }, [previewIframeUrl, showModal, showTimeModal, showTransportModal, showImportModal]);
 
   useEffect(() => {
@@ -469,7 +464,25 @@ const App = () => {
   };
 
   const handleDelete = (id) => {
-    updateTrips({ ...trips, [activeTrip]: currentTripData.filter(item => item.id !== id) });
+    const remainingItems = currentTripData.filter(item => item.id !== id).map(item => ({...item}));
+    
+    const groupedByDate = {};
+    remainingItems.forEach(item => {
+      if (!groupedByDate[item.date]) groupedByDate[item.date] = [];
+      groupedByDate[item.date].push(item);
+    });
+    
+    Object.keys(groupedByDate).forEach(date => {
+      groupedByDate[date].sort((a, b) => parseInt(a.order || 0) - parseInt(b.order || 0));
+      let counter = 1;
+      groupedByDate[date].forEach(item => {
+        if (parseInt(item.order) !== 0) {
+          item.order = counter++;
+        }
+      });
+    });
+    
+    updateTrips({ ...trips, [activeTrip]: remainingItems });
     showMessage("已删除", "error");
   };
 
@@ -767,7 +780,7 @@ const App = () => {
                           )}
                           {group.items.map((i, idx) => (
                              <span key={idx} className={`block ${i.done ? 'line-through opacity-40' : ''}`}>
-                               {i.order}. {i.name} ({i.startTimeStr} - {i.endTimeStr})
+                               {i.order}. {i.name}（{i.startTimeStr} - {i.endTimeStr}）
                              </span>
                           ))}
                         </div>
@@ -797,7 +810,7 @@ const App = () => {
                                   {item.city && (
                                     <div className="flex items-center gap-1 mt-1 opacity-80">
                                       <MapPin className="w-3 h-3" />
-                                      <span className="text-[9px] font-normal uppercase">{item.city}</span>
+                                      <span className="text-[9px] font-normal uppercase translate-y-[1px]">{item.city}</span>
                                     </div>
                                   )}
                                 </div>
