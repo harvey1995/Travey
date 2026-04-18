@@ -955,7 +955,7 @@ const App = () => {
                       {isOverviewExpanded && (
                         <div className={`mt-2 p-4 rounded-2xl text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
                           {group.items.length >= 2 && (
-                            <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-2 border border-white/10">
+                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75vh]'} rounded-xl overflow-hidden mb-2 border border-white/10`}>
                               <iframe 
                                 title="Daily Route"
                                 width="100%" 
