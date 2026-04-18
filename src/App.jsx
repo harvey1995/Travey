@@ -921,9 +921,9 @@ const App = () => {
                 const isOverviewExpanded = expandedDates[group.date]; 
                 
                 return (
-                  <div key={group.date} className="mb-6">
-                    <div className="mb-4">
-                      <div className="flex items-center mb-4">
+                  <div key={group.date} className="mb-5">
+                    <div className="mb-1">
+                      <div className="flex items-center mb-3">
                         <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{group.date}</span>
                         <div className={`h-px flex-1 mx-3 transition-colors duration-500 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
                         {weatherData[group.date] && (
@@ -1133,8 +1133,7 @@ const App = () => {
           {showModal && (
             <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
               <div className="w-full max-w-md relative">
-                <div className={`absolute top-1/2 -bottom-[500px] left-0 right-0 ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
-                <form onSubmit={handleSubmitForm} className={`relative z-10 w-full max-h-[90dvh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                <form onSubmit={handleSubmitForm} className={`relative z-10 w-full max-h-[90dvh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-32 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                   <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
                     <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
                     <button type="button" onClick={() => { setShowModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
@@ -1234,7 +1233,6 @@ const App = () => {
           {showTimeModal && (
             <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
               <div className="w-full max-w-md relative">
-                <div className={`absolute top-1/2 -bottom-[500px] left-0 right-0 ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
                 <form onSubmit={(e) => {
                   e.preventDefault();
                   setDailyStartTimes(prev => ({
@@ -1243,7 +1241,7 @@ const App = () => {
                   }));
                   setShowTimeModal(false);
                   restoreZoom();
-                }} className={`relative z-10 w-full max-h-[90dvh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                }} className={`relative z-10 w-full max-h-[90dvh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-32 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                   <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
                     <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑时间</h2>
                     <button type="button" onClick={() => { setShowTimeModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
@@ -1273,8 +1271,7 @@ const App = () => {
           {showTransportModal && (
             <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
               <div className="w-full max-w-md relative">
-                <div className={`absolute top-1/2 -bottom-[500px] left-0 right-0 ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
-                <form onSubmit={handleSaveTransportDuration} className={`relative z-10 w-full max-h-[90dvh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                <form onSubmit={handleSaveTransportDuration} className={`relative z-10 w-full max-h-[90dvh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-32 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                   <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
                     <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑交通</h2>
                     <button type="button" onClick={() => { setShowTransportModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
