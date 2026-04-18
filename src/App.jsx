@@ -402,47 +402,24 @@ const App = () => {
     const isModalOpen = previewIframeUrl || showModal || showTimeModal || showTransportModal || showImportModal;
     
     if (isModalOpen) {
+      const currentScrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${currentScrollY}px`;
       document.body.style.overflow = 'hidden';
       
       return () => {
+        const scrollY = document.body.style.top;
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
         document.body.style.overflow = '';
+        if (scrollY) {
+          window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        }
       };
     }
   }, [previewIframeUrl, showModal, showTimeModal, showTransportModal, showImportModal]);
-
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const currentIsMobile = viewMode === 'mobile' || isNarrow;
-      let metaTheme = document.querySelector('meta[name="theme-color"]');
-      if (!metaTheme) {
-        metaTheme = document.createElement('meta');
-        metaTheme.name = 'theme-color';
-        document.head.appendChild(metaTheme);
-      }
-      metaTheme.content = currentIsMobile ? (isDarkMode ? '#0f1115' : '#fdfbf7') : (isDarkMode ? '#000000' : '#e8e4d9');
-    }
-  }, [isDarkMode, viewMode, isNarrow]);
-
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const handleSelectionChange = () => {
-        const sel = window.getSelection();
-        if (!sel || sel.rangeCount === 0) return;
-        const range = sel.getRangeAt(0);
-        const getSelectTextNode = (node) => {
-          if (!node) return null;
-          return node.nodeType === Node.TEXT_NODE ? node.parentElement?.closest('.select-text') : node.closest?.('.select-text');
-        };
-        const startNode = getSelectTextNode(range.startContainer);
-        const endNode = getSelectTextNode(range.endContainer);
-        if (startNode && endNode && startNode !== endNode) {
-          sel.removeAllRanges();
-        }
-      };
-      document.addEventListener('selectionchange', handleSelectionChange);
-      return () => document.removeEventListener('selectionchange', handleSelectionChange);
-    }
-  }, []);
 
   useEffect(() => {
     setPreviewIframeUrl(prev => {
@@ -796,8 +773,8 @@ const App = () => {
   const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
   
   const containerClasses = isMobileView 
-    ? `max-w-[430px] w-full mx-auto min-h-[100dvh] relative shadow-2xl transition-colors duration-500 overflow-hidden ${containerColor}` 
-    : `w-full min-h-[100dvh] relative transition-colors duration-500 overflow-hidden ${containerColor}`;
+    ? `max-w-[430px] w-full mx-auto min-h-[100vh] relative shadow-2xl transition-colors duration-500 ${containerColor}` 
+    : `w-full min-h-[100vh] relative transition-colors duration-500 ${containerColor}`;
 
   return (
     <div className={`font-sans transition-colors duration-500 flex justify-center select-none ${bodyColor}`}>
@@ -859,7 +836,7 @@ const App = () => {
             </div>
           )}
 
-          <div className="pb-20 sm:pb-16 [padding-bottom:calc(5rem+env(safe-area-inset-bottom))] min-h-[100dvh] flex flex-col relative">
+          <div className="pb-20 sm:pb-16 [padding-bottom:calc(5rem+env(safe-area-inset-bottom))] min-h-[100vh] flex flex-col relative">
             
             <header className={`${isMobileView ? 'px-3' : 'px-6'} py-4 space-y-4`}>
               <div className="flex justify-between items-center gap-2">
@@ -945,8 +922,8 @@ const App = () => {
                 
                 return (
                   <div key={group.date} className="mb-10">
-                    <div className="mb-6">
-                      <div className="flex items-center mb-3">
+                    <div className="mb-4">
+                      <div className="flex items-center mb-4">
                         <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{group.date}</span>
                         <div className={`h-px flex-1 mx-3 transition-colors duration-500 ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
                         {weatherData[group.date] && (
@@ -1156,8 +1133,8 @@ const App = () => {
           {showModal && (
             <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
               <div className="w-full max-w-md relative">
-                <div className={`absolute top-1/2 bottom-[-50vh] left-0 right-0 ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
-                <form onSubmit={handleSubmitForm} className={`relative z-10 w-full max-h-[90vh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                <div className={`absolute top-1/2 -bottom-[500px] left-0 right-0 ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
+                <form onSubmit={handleSubmitForm} className={`relative z-10 w-full max-h-[90dvh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                   <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
                     <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
                     <button type="button" onClick={() => { setShowModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
@@ -1257,7 +1234,7 @@ const App = () => {
           {showTimeModal && (
             <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
               <div className="w-full max-w-md relative">
-                <div className={`absolute top-1/2 bottom-[-50vh] left-0 right-0 ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
+                <div className={`absolute top-1/2 -bottom-[500px] left-0 right-0 ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
                 <form onSubmit={(e) => {
                   e.preventDefault();
                   setDailyStartTimes(prev => ({
@@ -1266,7 +1243,7 @@ const App = () => {
                   }));
                   setShowTimeModal(false);
                   restoreZoom();
-                }} className={`relative z-10 w-full max-h-[90vh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                }} className={`relative z-10 w-full max-h-[90dvh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                   <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
                     <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑时间</h2>
                     <button type="button" onClick={() => { setShowTimeModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
@@ -1296,8 +1273,8 @@ const App = () => {
           {showTransportModal && (
             <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
               <div className="w-full max-w-md relative">
-                <div className={`absolute top-1/2 bottom-[-50vh] left-0 right-0 ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
-                <form onSubmit={handleSaveTransportDuration} className={`relative z-10 w-full max-h-[90vh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                <div className={`absolute top-1/2 -bottom-[500px] left-0 right-0 ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
+                <form onSubmit={handleSaveTransportDuration} className={`relative z-10 w-full max-h-[90dvh] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                   <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
                     <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑交通</h2>
                     <button type="button" onClick={() => { setShowTransportModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
@@ -1341,7 +1318,7 @@ const App = () => {
 
         <style>{`
           html, body {
-            background-color: ${isMobileView ? (isDarkMode ? '#0f1115' : '#fdfbf7') : (isDarkMode ? '#000000' : '#e8e4d9')};
+            background-color: ${isDarkMode ? '#000000' : '#e8e4d9'};
             transition: background-color 0.5s;
           }
           .transition-colors {
