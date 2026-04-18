@@ -153,12 +153,16 @@ const App = () => {
     return {};
   });
 
+  const [showTimeModal, setShowTimeModal] = useState(false);
+  const [timeEditData, setTimeEditData] = useState({ date: '', time: '08:00' });
+
+  const [showTransportModal, setShowTransportModal] = useState(false);
+  const [transportEditId, setTransportEditId] = useState(null);
+  const [transportEditDuration, setTransportEditDuration] = useState('');
+
   useEffect(() => {
     localStorage.setItem('travey_start_times_v1', JSON.stringify(dailyStartTimes));
   }, [dailyStartTimes]);
-
-  const [showTimeModal, setShowTimeModal] = useState(false);
-  const [timeEditData, setTimeEditData] = useState({ date: '', time: '08:00' });
 
   const showMessage = (msg, type = 'success') => {
     setToast({ show: true, message: msg, type });
@@ -490,6 +494,26 @@ const App = () => {
     setShowModal(true);
   };
 
+  const openTransportModal = (item) => {
+    setTransportEditId(item.id);
+    setTransportEditDuration(String(item.transportDuration || 0));
+    setShowTransportModal(true);
+  };
+
+  const handleSaveTransportDuration = (e) => {
+    e.preventDefault();
+    const updatedData = currentTripData.map(item => {
+      if (item.id === transportEditId) {
+        return { ...item, transportDuration: parseInt(transportEditDuration) || 0 };
+      }
+      return item;
+    });
+    updateTrips({ ...trips, [activeTrip]: updatedData });
+    setShowTransportModal(false);
+    restoreZoom();
+    showMessage("已保存");
+  };
+
   const renameTrip = () => {
     if (newTitle.trim() && newTitle !== activeTrip) {
       const newTrips = { ...trips };
@@ -717,7 +741,7 @@ const App = () => {
                             <div className={`absolute left-[27px] top-[36px] -bottom-[40px] w-[2px] z-0 transition-colors duration-500 ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`} />
                           )}
 
-                          <div className="relative flex gap-4 group z-10 pt-2">
+                          <div className={`relative flex ${isMobileView ? 'gap-2' : 'gap-4'} group z-10 pt-2`}>
                             <div className="flex flex-col items-center w-14 shrink-0 bg-transparent">
                               <button onClick={() => toggleCheck(item.id)} className={`z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all shadow-lg hover:scale-110 ${item.done ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')}`}>
                                 {item.done ? <CheckCircle className="w-5 h-5"/> : item.order}
@@ -761,8 +785,8 @@ const App = () => {
                               
                               <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
                                 <div className="flex gap-3 text-[10px] font-bold">
-                                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}><Clock className="w-3 h-3" /> {item.duration}m</div>
-                                  {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><DollarSign className="w-3 h-3" /> {item.cost} {item.currency}</div>}
+                                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}><Clock className="w-3 h-3" /> {item.duration >= 1000 ? '999m+' : item.duration + 'm'}</div>
+                                  {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><DollarSign className="w-3 h-3" /> {item.cost >= 1000 ? '999+' : item.cost} {item.currency}</div>}
                                 </div>
                                 
                                 <div className="flex gap-1.5">
@@ -778,7 +802,7 @@ const App = () => {
                           </div>
 
                           {idx < group.items.length - 1 && (
-                            <div className="flex gap-4 py-3 items-center relative z-10">
+                            <div className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-3 items-center relative z-10`}>
                               <div className="w-14 shrink-0 bg-transparent flex flex-col items-center justify-center relative z-20 -translate-y-5">
                                 <button onClick={() => toggleTransportCheck(item.id)} className={`w-6 h-6 rounded-full z-20 border-[3px] flex items-center justify-center transition-all shadow-lg hover:scale-110 ${item.transportDone ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')}`}>
                                   {item.transportDone && <CheckCircle className="w-4 h-4"/>}
@@ -788,10 +812,15 @@ const App = () => {
                                 </div>
                               </div>
                               <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.02] border-white/10' : 'bg-white shadow-sm border-gray-300'} ${item.transportDone ? 'opacity-50' : ''}`}>
-                                <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
-                                  <Clock className="w-3 h-3" /> {item.transportDuration || 0}m
+                                <div className="flex items-center gap-2">
+                                  <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
+                                    <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= 1000 ? '999m+' : (item.transportDuration || 0) + 'm'}
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-3 shrink-0">
+                                <div className={`flex items-center shrink-0 ${isMobileView ? 'gap-2' : 'gap-3'}`}>
+                                  <button onClick={() => openTransportModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition-all ${isDarkMode ? 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
                                   <div className="flex gap-1 shrink-0">
                                     {Object.entries(TRANSPORT_ESTIMATES).map(([mode, config]) => {
                                       const isActive = item.transportMode === mode;
@@ -964,6 +993,30 @@ const App = () => {
                       onInput={e => e.target.setCustomValidity('')}
                       className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-500 [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                       value={timeEditData.time} onChange={e => setTimeEditData({...timeEditData, time: e.target.value})} />
+                  </div>
+                </div>
+
+                <button type="submit" className="w-full mt-6 h-14 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/20 active:scale-95 transition-all box-border">
+                  保存
+                </button>
+              </form>
+            </div>
+          )}
+
+          {showTransportModal && (
+            <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
+              <form onSubmit={handleSaveTransportDuration} className={`w-full max-w-md max-h-[90%] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
+                  <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑交通</h2>
+                  <button type="button" onClick={() => { setShowTransportModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1.5">
+                     <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间(分)</label>
+                     <input type="text" inputMode="numeric" pattern="[0-9]*" 
+                      className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                      value={transportEditDuration} onChange={e => setTransportEditDuration(e.target.value.replace(/[^0-9]/g, ''))} />
                   </div>
                 </div>
 
