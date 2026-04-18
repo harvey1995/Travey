@@ -182,6 +182,13 @@ const App = () => {
   };
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isMobile = window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      setViewMode(isMobile ? 'mobile' : 'web');
+    }
+  }, []);
+
+  useEffect(() => {
     if (showModal && modalMode === 'add') {
       const currentTripData = trips[activeTrip] || [];
       const sameDayItems = currentTripData.filter(item => sanitizeDate(item.date) === formData.date);
@@ -418,7 +425,19 @@ const App = () => {
   };
 
   const toggleCheck = (id) => {
-    const updated = currentTripData.map(item => item.id === id ? { ...item, done: !item.done } : item);
+    const idx = currentTripData.findIndex(item => item.id === id);
+    if (idx === -1) return;
+    const newDone = !currentTripData[idx].done;
+    let updated = currentTripData.map(item => item.id === id ? { ...item, done: newDone } : item);
+    if (newDone) {
+      const item = updated[idx];
+      const sameDay = updated.filter(i => i.date === item.date).sort((a,b) => (a.order||0) - (b.order||0));
+      const subIdx = sameDay.findIndex(i => i.id === id);
+      const prev = sameDay[subIdx - 1];
+      const next = sameDay[subIdx + 1];
+      if (prev && prev.done) updated = updated.map(i => i.id === prev.id ? { ...i, transportDone: true } : i);
+      if (next && next.done) updated = updated.map(i => i.id === item.id ? { ...i, transportDone: true } : i);
+    }
     updateTrips({ ...trips, [activeTrip]: updated });
   };
 
@@ -599,7 +618,7 @@ const App = () => {
 
           <div className="pb-32 min-h-[100dvh] flex flex-col relative">
             
-            <header className="px-6 py-4 space-y-4">
+            <header className={`${isMobileView ? 'px-3' : 'px-6'} py-4 space-y-4`}>
               <div className="flex justify-between items-center gap-2">
                 {isEditingTitle ? (
                   <input 
@@ -644,7 +663,7 @@ const App = () => {
               </div>
             </header>
 
-            <nav className="px-6 flex gap-2 overflow-x-auto no-scrollbar min-h-[60px] items-center shrink-0">
+            <nav className={`${isMobileView ? 'px-3' : 'px-6'} flex gap-2 overflow-x-auto no-scrollbar min-h-[60px] items-center shrink-0`}>
               <button onClick={() => setActiveTab('Total')} className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-5 rounded-xl text-xs font-black transition-all ${activeTab === 'Total' ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-70 hover:opacity-100'}`}>全部</button>
               {dates.map(date => (
                 <button key={date} onClick={() => setActiveTab(date)} className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-4 rounded-xl text-xs font-black transition-all ${activeTab === date ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-70 hover:opacity-100'}`}>
@@ -653,7 +672,7 @@ const App = () => {
               ))}
             </nav>
 
-            <div className="px-6 mt-2 flex gap-2">
+            <div className={`${isMobileView ? 'px-3' : 'px-6'} mt-2 flex gap-2`}>
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" />
                 <input 
@@ -669,7 +688,7 @@ const App = () => {
               </button>
             </div>
 
-            <main className="px-6 py-6">
+            <main className={`${isMobileView ? 'px-3' : 'px-6'} py-6`}>
               {groupedDataWithTime.length === 0 ? (
                 <div className="py-20 text-center opacity-60 flex flex-col items-center gap-4">
                    <Sparkles className="w-12 h-12" />
@@ -829,7 +848,7 @@ const App = () => {
                                 </div>
                               </div>
                               <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.02] border-white/10' : 'bg-white shadow-sm border-gray-300'} ${item.transportDone ? 'opacity-50' : ''}`}>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center min-w-0">
                                   <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
                                     <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= 1000 ? '999m+' : (item.transportDuration || 0) + 'm'}
                                   </div>
@@ -843,7 +862,7 @@ const App = () => {
                                       const isActive = item.transportMode === mode;
                                       const Icon = config.icon;
                                       return (
-                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition-all ${isActive ? `${config.color} ${isDarkMode ? 'bg-white/10' : 'bg-gray-100'} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
+                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition-all transform-gpu ${isActive ? `${config.color} ${isDarkMode ? 'bg-white/10' : 'bg-gray-100'} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
                                           <Icon className="w-3.5 h-3.5" />
                                         </button>
                                       );
@@ -859,7 +878,7 @@ const App = () => {
                                       const dirflg = dirflgMap[item.transportMode || 'train'];
                                       setPreviewIframeUrl(`https://maps.google.com/maps?saddr=$${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
                                     }}
-                                    className={`px-4 py-1.5 rounded-lg text-[11px] font-black transition-all flex items-center gap-1 ${
+                                    className={`px-4 py-1.5 rounded-lg text-[11px] font-black transition-all flex items-center gap-1 shrink-0 ${
                                       item.transportMode === 'walk' ? (isDarkMode ? 'bg-orange-400/20 text-orange-400' : 'bg-orange-100 text-orange-600') :
                                       item.transportMode === 'car' ? (isDarkMode ? 'bg-blue-400/20 text-blue-400' : 'bg-blue-100 text-blue-600') :
                                       (isDarkMode ? 'bg-green-400/20 text-green-400' : 'bg-green-100 text-green-600')
@@ -880,7 +899,7 @@ const App = () => {
               })}
             </main>
 
-            <div className={`fixed bottom-[20px] sm:bottom-0 flex justify-end px-6 pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
+            <div className={`fixed bottom-[20px] sm:bottom-0 flex justify-end ${isMobileView ? 'px-3' : 'px-6'} pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
               <button 
                 onClick={handleOpenAddModal} 
                 className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
