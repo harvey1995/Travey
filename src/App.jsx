@@ -31,9 +31,9 @@ const isUrl = (str) => {
 };
 
 const TRANSPORT_ESTIMATES = {
-  walk: { label: '步行', icon: Footprints, color: 'text-orange-400', alert: null },
-  train: { label: '公交', icon: Train, color: 'text-green-400', alert: null },
-  car: { label: '打车', icon: Car, color: 'text-blue-400', alert: '可能拥堵' }
+  car: { label: '打车', icon: Car, color: 'text-orange-400', alert: '可能拥堵' },
+  train: { label: '公交', icon: Train, color: 'text-red-400', alert: null },
+  walk: { label: '步行', icon: Footprints, color: 'text-blue-400', alert: null }
 };
 
 const TOKYO_TRIP = [
@@ -140,7 +140,7 @@ const App = () => {
   const [lastSelectedCurrency, setLastSelectedCurrency] = useState('USD');
 
   const [formData, setFormData] = useState({ 
-    name: '', date: getTodayDate(), duration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'car', transitRoute: '' 
+    name: '', date: getTodayDate(), duration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'walk', transitRoute: '' 
   });
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -289,7 +289,7 @@ const App = () => {
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      if (previewIframeUrl || showModal || showTimeModal || showTransportModal || showImportModal) {
+      if (previewIframeUrl) {
         document.body.style.overflow = 'hidden';
       } else {
         document.body.style.overflow = '';
@@ -300,7 +300,7 @@ const App = () => {
         document.body.style.overflow = '';
       }
     };
-  }, [previewIframeUrl, showModal, showTimeModal, showTransportModal, showImportModal]);
+  }, [previewIframeUrl]);
 
   useEffect(() => {
     setPreviewIframeUrl(prev => {
@@ -351,7 +351,7 @@ const App = () => {
               note: values[5] || "",
               cost: parseFloat(values[6]) || 0,
               currency: values[7] || "USD",
-              transportMode: 'car',
+              transportMode: 'walk',
               transportDuration: 0,
               transitRoute: '',
               done: false
@@ -400,7 +400,7 @@ const App = () => {
             item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.duration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : ""
           ].join(','));
           if (idx < groupItems.length - 1) {
-            const modeLabel = TRANSPORT_ESTIMATES[item.transportMode || 'car'].label;
+            const modeLabel = TRANSPORT_ESTIMATES[item.transportMode || 'walk'].label;
             exportRows.push([
               item.date, 0, "交通", modeLabel, item.transportDuration || 0, '""', "", ""
             ].join(','));
@@ -569,18 +569,18 @@ const App = () => {
   const handleOpenAddModal = () => {
     setModalMode('add'); 
     const dateToUse = activeTab !== 'Total' ? activeTab : getTodayDate();
-    setFormData({ name: '', date: dateToUse, duration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'car', transitRoute: '' }); 
+    setFormData({ name: '', date: dateToUse, duration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'walk', transitRoute: '' }); 
     setShowModal(true); 
   };
 
-  const isMobileView = viewMode === 'mobile';
+  const isMobileView = viewMode === 'mobile' || isNarrow;
   
   const bodyColor = isDarkMode ? 'bg-[#000000] text-white' : 'bg-[#e8e4d9] text-[#2c241b]';
   const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
   
   const containerClasses = isMobileView 
-    ? `max-w-[430px] w-full mx-auto min-h-[100dvh] relative shadow-2xl transition-colors duration-500 overflow-hidden ${containerColor}` 
-    : `w-full min-h-[100dvh] relative transition-colors duration-500 overflow-hidden ${containerColor}`;
+    ? `max-w-[430px] w-full mx-auto min-h-[100vh] relative shadow-2xl transition-colors duration-500 overflow-hidden ${containerColor}` 
+    : `w-full min-h-[100vh] relative transition-colors duration-500 overflow-hidden ${containerColor}`;
 
   return (
     <div className={`font-sans transition-colors duration-500 flex justify-center ${bodyColor}`}>
@@ -623,7 +623,7 @@ const App = () => {
             </div>
           )}
 
-          <div className="pb-32 min-h-[100dvh] flex flex-col relative">
+          <div className="pb-32 min-h-[100vh] flex flex-col relative">
             
             <header className={`${isMobileView ? 'px-3' : 'px-6'} py-4 space-y-4`}>
               <div className="flex justify-between items-center gap-2">
@@ -647,8 +647,8 @@ const App = () => {
                   <button onClick={handleThemeToggle} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
                     {isDarkMode ? <Moon className="w-4 h-4 text-yellow-400" /> : <SunMedium className="w-4 h-4 text-orange-500" />}
                   </button>
-                  <button onClick={() => setViewMode(isMobileView ? 'web' : 'mobile')} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
-                    {isMobileView ? <Monitor className="w-4 h-4 text-gray-400" /> : <Smartphone className="w-4 h-4 text-gray-400" />}
+                  <button onClick={() => setViewMode(viewMode === 'mobile' ? 'web' : 'mobile')} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
+                    {viewMode === 'mobile' ? <Monitor className="w-4 h-4 text-gray-400" /> : <Smartphone className="w-4 h-4 text-gray-400" />}
                   </button>
                 </div>
               </div>
@@ -886,9 +886,9 @@ const App = () => {
                                       setPreviewIframeUrl(`https://maps.google.com/maps?saddr=$${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
                                     }}
                                     className={`${isMobileView ? 'px-2.5' : 'px-4'} py-1.5 rounded-lg text-[11px] font-black transition flex items-center gap-1 shrink-0 ${
-                                      item.transportMode === 'walk' ? (isDarkMode ? 'bg-orange-400/20 text-orange-400' : 'bg-orange-100 text-orange-600') :
-                                      item.transportMode === 'car' ? (isDarkMode ? 'bg-blue-400/20 text-blue-400' : 'bg-blue-100 text-blue-600') :
-                                      (isDarkMode ? 'bg-green-400/20 text-green-400' : 'bg-green-100 text-green-600')
+                                      item.transportMode === 'car' ? (isDarkMode ? 'bg-orange-400/20 text-orange-400' : 'bg-orange-100 text-orange-600') :
+                                      item.transportMode === 'train' ? (isDarkMode ? 'bg-red-400/20 text-red-400' : 'bg-red-100 text-red-600') :
+                                      (isDarkMode ? 'bg-blue-400/20 text-blue-400' : 'bg-blue-100 text-blue-600')
                                     }`}
                                   >
                                     <Map className="w-3.5 h-3.5" />
