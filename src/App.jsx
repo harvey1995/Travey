@@ -139,11 +139,26 @@ const App = () => {
   const [lastSelectedCurrency, setLastSelectedCurrency] = useState('USD');
 
   const [formData, setFormData] = useState({ 
-    name: '', date: getTodayDate(), duration: '60', city: '', note: '', cost: '0', currency: lastSelectedCurrency, order: '1', transportMode: 'car', transitRoute: '' 
+    name: '', date: getTodayDate(), duration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'car', transitRoute: '' 
   });
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [weatherData, setWeatherData] = useState({});
+
+  const [dailyStartTimes, setDailyStartTimes] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('travey_start_times_v1');
+      if (saved) return JSON.parse(saved);
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    localStorage.setItem('travey_start_times_v1', JSON.stringify(dailyStartTimes));
+  }, [dailyStartTimes]);
+
+  const [showTimeModal, setShowTimeModal] = useState(false);
+  const [timeEditData, setTimeEditData] = useState({ date: '', time: '08:00' });
 
   const showMessage = (msg, type = 'success') => {
     setToast({ show: true, message: msg, type });
@@ -167,9 +182,9 @@ const App = () => {
       const currentTripData = trips[activeTrip] || [];
       const sameDayItems = currentTripData.filter(item => sanitizeDate(item.date) === formData.date);
       const maxOrder = sameDayItems.reduce((max, item) => Math.max(max, parseInt(item.order) || 0), 0);
-      setFormData(prev => ({ ...prev, order: String(maxOrder + 1), currency: lastSelectedCurrency }));
+      setFormData(prev => ({ ...prev, order: String(maxOrder + 1) }));
     }
-  }, [formData.date, showModal, modalMode, activeTrip, trips, lastSelectedCurrency]);
+  }, [formData.date, showModal, modalMode, activeTrip, trips]);
 
   const currentTripData = trips[activeTrip] || [];
 
@@ -191,14 +206,14 @@ const App = () => {
     const groups = {};
     sorted.forEach(item => {
       const cleanDate = item.date;
-      if (!groups[cleanDate]) groups[cleanDate] = { date: cleanDate, items: [], startTime: "09:00" };
+      if (!groups[cleanDate]) groups[cleanDate] = { date: cleanDate, items: [], startTime: dailyStartTimes[activeTrip]?.[cleanDate] || "08:00" };
       
       const dayItems = groups[cleanDate].items;
       let arrivalTime = groups[cleanDate].startTime;
 
       if (dayItems.length > 0) {
         const prevItem = dayItems[dayItems.length - 1];
-        const travelTime = 0; 
+        const travelTime = prevItem.transportDuration || 0; 
         const [h, m] = prevItem.endTimeStr.split(':').map(Number);
         const date = new Date(2000, 0, 1, h, m + travelTime);
         arrivalTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
@@ -222,9 +237,8 @@ const App = () => {
       })).filter(g => g.items.length > 0);
     }
     return result;
-  }, [sanitizedTripData, activeTab, searchQuery]);
+  }, [sanitizedTripData, activeTab, searchQuery, dailyStartTimes, activeTrip]);
 
-  // 天气获取 API 逻辑
   useEffect(() => {
     let isMounted = true;
     const fetchWeather = async () => {
@@ -293,23 +307,40 @@ const App = () => {
       try {
         const text = new TextDecoder('utf-8').decode(new Uint8Array(event.target.result));
         const rows = text.split(/\r?\n/).filter(row => row.trim());
-        const importedData = rows.slice(1).map((row, index) => {
+        const importedData = [];
+        
+        rows.slice(1).forEach((row, index) => {
           const values = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
-          return {
-            date: sanitizeDate(values[0]),
-            id: `imported-${Date.now()}-${index}`, 
-            order: parseInt(values[1]) || (index + 1),
-            city: values[2] || "",
-            name: values[3] || "未命名地点",
-            duration: parseInt(values[4]) || 60,
-            note: values[5] || "",
-            cost: parseFloat(values[6]) || 0,
-            currency: values[7] || "USD",
-            transportMode: 'car',
-            transitRoute: '',
-            done: false
-          };
+          const orderVal = parseInt(values[1]);
+          
+          if (orderVal === 0) {
+            if (importedData.length > 0) {
+              const lastItem = importedData[importedData.length - 1];
+              const nameVal = values[3] || "";
+              if (nameVal.includes("步行")) lastItem.transportMode = 'walk';
+              else if (nameVal.includes("公交")) lastItem.transportMode = 'train';
+              else if (nameVal.includes("打车")) lastItem.transportMode = 'car';
+              lastItem.transportDuration = parseInt(values[4]) || 0;
+            }
+          } else {
+            importedData.push({
+              date: sanitizeDate(values[0]),
+              id: `imported-${Date.now()}-${index}`, 
+              order: isNaN(orderVal) ? (index + 1) : orderVal,
+              city: values[2] || "",
+              name: values[3] || "未命名地点",
+              duration: parseInt(values[4]) || 60,
+              note: values[5] || "",
+              cost: parseFloat(values[6]) || 0,
+              currency: values[7] || "USD",
+              transportMode: 'car',
+              transportDuration: 0,
+              transitRoute: '',
+              done: false
+            });
+          }
         });
+        
         if (importedData.length > 0) {
           setPendingImportData(importedData);
           setShowImportModal(true); 
@@ -336,13 +367,34 @@ const App = () => {
   };
 
   const handleExport = () => {
-    const headers = ["日期", "序号", "城市", "地点名称", "停留时间(分)", "备注", "费用", "币种"];
+    const headers = ["日期", "序号", "城市/交通", "地点名称/出行方式", "时间(分)", "备注", "费用", "币种"];
+    
+    const exportGroups = {};
+    sanitizedTripData.sort((a,b) => new Date(a.date) - new Date(b.date) || a.order - b.order).forEach(item => {
+       if (!exportGroups[item.date]) exportGroups[item.date] = [];
+       exportGroups[item.date].push(item);
+    });
+    
+    const exportRows = [];
+    Object.values(exportGroups).forEach(groupItems => {
+       groupItems.forEach((item, idx) => {
+          exportRows.push([
+            item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.duration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : ""
+          ].join(','));
+          if (idx < groupItems.length - 1) {
+            const modeLabel = TRANSPORT_ESTIMATES[item.transportMode || 'car'].label;
+            exportRows.push([
+              item.date, 0, "交通", modeLabel, item.transportDuration || 0, '""', "", ""
+            ].join(','));
+          }
+       });
+    });
+
     const csvContent = [
       headers.join(','),
-      ...sanitizedTripData.sort((a,b) => new Date(a.date) - new Date(b.date) || a.order - b.order).map(item => [
-        item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.duration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || 0, item.currency || "USD"
-      ].join(','))
+      ...exportRows
     ].join('\n');
+    
     const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -363,6 +415,11 @@ const App = () => {
 
   const toggleCheck = (id) => {
     const updated = currentTripData.map(item => item.id === id ? { ...item, done: !item.done } : item);
+    updateTrips({ ...trips, [activeTrip]: updated });
+  };
+
+  const toggleTransportCheck = (id) => {
+    const updated = currentTripData.map(item => item.id === id ? { ...item, transportDone: !item.transportDone } : item);
     updateTrips({ ...trips, [activeTrip]: updated });
   };
 
@@ -387,7 +444,6 @@ const App = () => {
 
     let dayItems = currentTripData.filter(item => sanitizeDate(item.date) === targetDate && item.id !== (modalMode === 'edit' ? editingId : null));
     
-    // i. 除了手动新建、编辑为m的地点之外、所有此前小于m的序号，计数为n1，从1开始顺序生成到n1
     let lessItems = dayItems.filter(item => item.order < m).sort((a,b) => a.order - b.order);
     let greaterItems = dayItems.filter(item => item.order >= m).sort((a,b) => a.order - b.order);
     
@@ -397,10 +453,8 @@ const App = () => {
     let currentOrderCounter = 1;
     lessItems.forEach(item => { newOrders[item.id] = currentOrderCounter++; });
     
-    // ii. 手动新建、编辑为m的地点序号为n1+1
     payload.order = n1 + 1;
     
-    // iii. 除了手动新建、编辑为m的地点之外、所有此前大于等于m的序号，计数为n2，从n1+2开始顺序生成到n1+1+n2
     currentOrderCounter = n1 + 2;
     greaterItems.forEach(item => { newOrders[item.id] = currentOrderCounter++; });
 
@@ -428,7 +482,8 @@ const App = () => {
     setFormData({ 
       ...item, 
       duration: String(item.duration), 
-      cost: String(item.cost), 
+      cost: item.cost ? String(item.cost) : '', 
+      currency: item.cost ? item.currency : '',
       order: String(item.order),
       transitRoute: item.transitRoute || ''
     });
@@ -464,7 +519,7 @@ const App = () => {
   const handleOpenAddModal = () => {
     setModalMode('add'); 
     const dateToUse = activeTab !== 'Total' ? activeTab : getTodayDate();
-    setFormData({ name: '', date: dateToUse, duration: '60', city: '', note: '', cost: '0', currency: lastSelectedCurrency, order: '1', transportMode: 'car', transitRoute: '' }); 
+    setFormData({ name: '', date: dateToUse, duration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'car', transitRoute: '' }); 
     setShowModal(true); 
   };
 
@@ -495,7 +550,6 @@ const App = () => {
             </div>
           )}
 
-          {/* Iframe 气泡 */}
           {previewIframeUrl && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPreviewIframeUrl(null)}></div>
@@ -557,7 +611,6 @@ const App = () => {
                 <button onClick={handleExport} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500/10 text-green-600 dark:text-green-500 border border-green-500/20 text-xs font-black hover:bg-green-500/20 transition-all">
                   <Download className="w-4 h-4" /> 导出
                 </button>
-                {/* 撤销重做按钮 */}
                 <button onClick={handleUndo} disabled={past.length === 0} className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
                   <Undo2 className="w-4 h-4" />
                 </button>
@@ -622,10 +675,16 @@ const App = () => {
                         )}
                       </div>
                       
-                      <button onClick={() => toggleOverview(group.date)} className={`w-full flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
-                         <span className="text-xs font-black opacity-80">当日线路总览 ({group.items.length}个地点)</span>
-                         {isOverviewExpanded ? <ChevronUp className="w-4 h-4 opacity-60"/> : <ChevronDown className="w-4 h-4 opacity-60"/>}
-                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={() => toggleOverview(group.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
+                           <span className="text-xs font-black opacity-80">当日线路总览 ({group.items.length}个地点)</span>
+                           {isOverviewExpanded ? <ChevronUp className="w-4 h-4 opacity-60"/> : <ChevronDown className="w-4 h-4 opacity-60"/>}
+                        </button>
+                        <button onClick={() => { setTimeEditData({ date: group.date, time: dailyStartTimes[activeTrip]?.[group.date] || "08:00" }); setShowTimeModal(true); }} className={`px-3 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed transition-all shrink-0 ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
+                           <Clock className="w-4 h-4 opacity-60"/>
+                           <span className="text-xs font-black opacity-80">{dailyStartTimes[activeTrip]?.[group.date] || "08:00"}</span>
+                        </button>
+                      </div>
                       
                       {isOverviewExpanded && (
                         <div className={`mt-2 p-4 rounded-2xl text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
@@ -691,7 +750,7 @@ const App = () => {
                               {item.note && (
                                 isUrl(item.note) ? (
                                   <div onClick={() => setPreviewIframeUrl(item.note)} className={`mt-3 mb-3 text-[12px] font-bold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate max-w-[200px] inline-block ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
-                                    {item.note.length > 20 ? item.note.substring(0, 20) + '...' : item.note}
+                                    {item.note.length > 28 ? item.note.substring(0, 20) + '...' + item.note.slice(-8) : item.note}
                                   </div>
                                 ) : (
                                   <div className={`mt-3 mb-3 text-[11px] p-3 rounded-xl whitespace-pre-wrap leading-relaxed border-l-2 ${isDarkMode ? 'text-gray-300 bg-black/20 border-white/10' : 'text-gray-700 bg-gray-50 border-gray-300'}`}>
@@ -702,9 +761,8 @@ const App = () => {
                               
                               <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
                                 <div className="flex gap-3 text-[10px] font-bold">
-                                  {/* 停留时间亮色风格 */}
-                                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><Clock className="w-3 h-3" /> {item.duration}m</div>
-                                  {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'}`}><DollarSign className="w-3 h-3" /> {item.cost} {item.currency}</div>}
+                                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}><Clock className="w-3 h-3" /> {item.duration}m</div>
+                                  {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><DollarSign className="w-3 h-3" /> {item.cost} {item.currency}</div>}
                                 </div>
                                 
                                 <div className="flex gap-1.5">
@@ -721,38 +779,50 @@ const App = () => {
 
                           {idx < group.items.length - 1 && (
                             <div className="flex gap-4 py-3 items-center relative z-10">
-                              <div className="w-14 shrink-0 bg-transparent" />
-                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.02] border-white/10' : 'bg-white shadow-sm border-gray-300'}`}>
-                                <div className="flex gap-1 shrink-0">
-                                  {Object.entries(TRANSPORT_ESTIMATES).map(([mode, config]) => {
-                                    const isActive = item.transportMode === mode;
-                                    const Icon = config.icon;
-                                    return (
-                                      <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition-all ${isActive ? `${config.color} ${isDarkMode ? 'bg-white/10' : 'bg-gray-100'} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
-                                        <Icon className="w-3.5 h-3.5" />
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                                
-                                <button 
-                                  onClick={() => {
-                                    const endItem = group.items[idx+1];
-                                    const origin = encodeURIComponent(`${item.name} ${item.city || ''}`);
-                                    const dest = encodeURIComponent(`${endItem.name} ${endItem.city || ''}`);
-                                    const dirflgMap = { walk: 'w', car: 'd', train: 'r' };
-                                    const dirflg = dirflgMap[item.transportMode || 'train'];
-                                    setPreviewIframeUrl(`https://maps.google.com/maps?saddr=$${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
-                                  }}
-                                  className={`px-4 py-1.5 rounded-lg text-[11px] font-black transition-all flex items-center gap-1 ${
-                                    item.transportMode === 'walk' ? (isDarkMode ? 'bg-orange-400/20 text-orange-400' : 'bg-orange-100 text-orange-600') :
-                                    item.transportMode === 'car' ? (isDarkMode ? 'bg-blue-400/20 text-blue-400' : 'bg-blue-100 text-blue-600') :
-                                    (isDarkMode ? 'bg-green-400/20 text-green-400' : 'bg-green-100 text-green-600')
-                                  }`}
-                                >
-                                  <Map className="w-3.5 h-3.5" />
-                                  路线
+                              <div className="w-14 shrink-0 bg-transparent flex flex-col items-center justify-center relative z-20 -translate-y-5">
+                                <button onClick={() => toggleTransportCheck(item.id)} className={`w-6 h-6 rounded-full z-20 border-[3px] flex items-center justify-center transition-all shadow-lg hover:scale-110 ${item.transportDone ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')}`}>
+                                  {item.transportDone && <CheckCircle className="w-4 h-4"/>}
                                 </button>
+                                <div className="mt-2 text-[10px] font-black opacity-80 tabular-nums bg-transparent">
+                                  {item.endTimeStr}
+                                </div>
+                              </div>
+                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.02] border-white/10' : 'bg-white shadow-sm border-gray-300'} ${item.transportDone ? 'opacity-50' : ''}`}>
+                                <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
+                                  <Clock className="w-3 h-3" /> {item.transportDuration || 0}m
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                  <div className="flex gap-1 shrink-0">
+                                    {Object.entries(TRANSPORT_ESTIMATES).map(([mode, config]) => {
+                                      const isActive = item.transportMode === mode;
+                                      const Icon = config.icon;
+                                      return (
+                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition-all ${isActive ? `${config.color} ${isDarkMode ? 'bg-white/10' : 'bg-gray-100'} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
+                                          <Icon className="w-3.5 h-3.5" />
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                  
+                                  <button 
+                                    onClick={() => {
+                                      const endItem = group.items[idx+1];
+                                      const origin = encodeURIComponent(`${item.name} ${item.city || ''}`);
+                                      const dest = encodeURIComponent(`${endItem.name} ${endItem.city || ''}`);
+                                      const dirflgMap = { walk: 'w', car: 'd', train: 'r' };
+                                      const dirflg = dirflgMap[item.transportMode || 'train'];
+                                      setPreviewIframeUrl(`https://maps.google.com/maps?saddr=$${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
+                                    }}
+                                    className={`px-4 py-1.5 rounded-lg text-[11px] font-black transition-all flex items-center gap-1 ${
+                                      item.transportMode === 'walk' ? (isDarkMode ? 'bg-orange-400/20 text-orange-400' : 'bg-orange-100 text-orange-600') :
+                                      item.transportMode === 'car' ? (isDarkMode ? 'bg-blue-400/20 text-blue-400' : 'bg-blue-100 text-blue-600') :
+                                      (isDarkMode ? 'bg-green-400/20 text-green-400' : 'bg-green-100 text-green-600')
+                                    }`}
+                                  >
+                                    <Map className="w-3.5 h-3.5" />
+                                    路线
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -793,9 +863,9 @@ const App = () => {
                         value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className={`text-[10px] font-black uppercase ml-1 text-center block transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>序号</label>
+                      <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>序号</label>
                       <input type="text" inputMode="numeric" pattern="[0-9]*" 
-                        className={`w-full h-12 px-2 rounded-2xl text-base font-black outline-none focus:ring-2 focus:ring-blue-500 text-center box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                        className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                         value={formData.order} onChange={e => setFormData({...formData, order: e.target.value.replace(/[^0-9]/g, '')})} />
                     </div>
                   </div>
@@ -803,13 +873,12 @@ const App = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5 min-w-0">
                       <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>日期</label>
-                      {/* 利用 type="date" 配合 appearance-none 与 min-w-0 限制了最大宽度，解决 iOS Safari 原生日期拉宽的问题 */}
                       <input 
                         type="date" 
                         required 
                         onInvalid={e => e.target.setCustomValidity('请填写')}
                         onInput={e => e.target.setCustomValidity('')}
-                        className={`w-full min-w-0 h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-500 [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                        className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-500 [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                         value={formData.date} onChange={e => setFormData({...formData, date: sanitizeDate(e.target.value)})} />
                     </div>
                     <div className="flex flex-col gap-1.5 min-w-0">
@@ -821,7 +890,7 @@ const App = () => {
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="flex flex-col gap-1.5">
-                       <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>停留时间(分)</label>
+                       <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间(分)</label>
                        <input type="text" inputMode="numeric" pattern="[0-9]*" 
                         className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                         value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value.replace(/[^0-9]/g, '')})} />
@@ -831,9 +900,6 @@ const App = () => {
                       <input 
                         type="text" 
                         inputMode="decimal"
-                        required
-                        onInvalid={e => e.target.setCustomValidity('请填写数字')}
-                        onInput={e => e.target.setCustomValidity('')}
                         className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                         value={formData.cost} onChange={e => setFormData({...formData, cost: e.target.value.replace(/[^0-9.]/g, '')})} />
                     </div>
@@ -842,6 +908,7 @@ const App = () => {
                       <div className="relative h-12">
                         <select className={`w-full h-full px-4 pr-8 rounded-2xl text-base font-medium outline-none appearance-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                           value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})}>
+                          <option value=""></option>
                           <option value="USD">USD</option>
                           <option value="GBP">GBP</option>
                           <option value="EUR">EUR</option>
@@ -861,6 +928,42 @@ const App = () => {
                     <textarea className={`w-full p-4 rounded-2xl text-base font-medium min-h-[100px] outline-none resize-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-500 ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                       placeholder="例如：住宿、交通、门票、营业时间等信息"
                       value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} />
+                  </div>
+                </div>
+
+                <button type="submit" className="w-full mt-6 h-14 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/20 active:scale-95 transition-all box-border">
+                  保存
+                </button>
+              </form>
+            </div>
+          )}
+
+          {showTimeModal && (
+            <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                setDailyStartTimes(prev => ({
+                  ...prev,
+                  [activeTrip]: { ...(prev[activeTrip] || {}), [timeEditData.date]: timeEditData.time }
+                }));
+                setShowTimeModal(false);
+                restoreZoom();
+              }} className={`w-full max-w-md max-h-[90%] overflow-y-auto rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-12 shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit py-2 z-10">
+                  <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑时间</h2>
+                  <button type="button" onClick={() => { setShowTimeModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1.5 min-w-0">
+                    <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-500 ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>当日出发时间</label>
+                    <input 
+                      type="time" 
+                      required 
+                      onInvalid={e => e.target.setCustomValidity('请填写')}
+                      onInput={e => e.target.setCustomValidity('')}
+                      className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-500 [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                      value={timeEditData.time} onChange={e => setTimeEditData({...timeEditData, time: e.target.value})} />
                   </div>
                 </div>
 
@@ -898,7 +1001,7 @@ const App = () => {
           .no-scrollbar::-webkit-scrollbar { display: none; }
           * { -webkit-tap-highlight-color: transparent; }
           input:invalid { box-shadow: none; }
-          input[type="date"] {
+          input[type="date"], input[type="time"] {
             display: flex;
             align-items: center;
           }
