@@ -800,9 +800,9 @@ const App = () => {
           )}
 
           {previewIframeUrl && (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-in zoom-in-95 fade-in duration-300">
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPreviewIframeUrl(null)}></div>
-               <div className={`relative w-[95vw] h-[75dvh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+               <div className={`relative w-[95vw] h-[75vh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setPreviewIframeUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
@@ -823,9 +823,9 @@ const App = () => {
           )}
 
           {notePreview && (
-            <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-in zoom-in-95 fade-in duration-300">
+            <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setNotePreview(null)}></div>
-               <div className={`relative w-[95vw] max-h-[75dvh] overflow-y-auto rounded-[2rem] p-8 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+               <div className={`relative w-[95vw] max-h-[75vh] overflow-y-auto rounded-[2rem] p-8 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setNotePreview(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
@@ -956,7 +956,7 @@ const App = () => {
                       {isOverviewExpanded && (
                         <div className={`mt-2 p-4 rounded-2xl text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
                           {group.items.length >= 2 && (
-                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75dvh]'} rounded-xl overflow-hidden mb-2 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75vh]'} rounded-xl overflow-hidden mb-2 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                               <iframe 
                                 title="Daily Route"
                                 width="100%" 
@@ -981,11 +981,7 @@ const App = () => {
                         <div key={item.id} id={`card-${item.id}`} className="relative mb-0">
                           
                           {idx < group.items.length - 1 && (
-                            <div className={`absolute left-[27px] top-[36px] -bottom-[40px] w-[2px] z-0 transition-colors duration-500 ${
-                              (group.date < getTodayDate() || (group.date === getTodayDate() && `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}` >= item.endTimeStr))
-                                ? `border-l-[2px] border-dashed bg-transparent ${isDarkMode ? 'border-white/30' : 'border-gray-400'}`
-                                : (isDarkMode ? 'bg-white/10' : 'bg-gray-300')
-                            }`} />
+                            <div className={`absolute left-[27px] top-[36px] -bottom-[40px] w-[2px] z-0 transition-colors duration-500 ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`} />
                           )}
 
                           <div className={`relative flex ${isMobileView ? 'gap-2' : 'gap-4'} group z-10 pt-2`}>
@@ -993,7 +989,7 @@ const App = () => {
                               <button onClick={() => toggleCheck(item.id)} className={`z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all shadow-lg hover:scale-110 ${item.done ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')}`}>
                                 {item.done ? <CheckCircle className="w-5 h-5"/> : item.order}
                               </button>
-                              <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/[0.08] border-white/5' : 'bg-gray-300/80 border-gray-300/50'}`}>
+                              <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-[#0f1115]/80 border-white/10' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
                                 {item.startTimeStr}
                               </div>
                             </div>
@@ -1027,7 +1023,7 @@ const App = () => {
                                   return (
                                     <div 
                                       onClick={() => setNotePreview(item.note)}
-                                      className={`mt-3 mb-3 text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-white/10 hover:bg-white/20 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'}`}
+                                      className={`mt-3 mb-3 text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-white/5 hover:bg-white/10 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'}`}
                                     >
                                       {item.note}
                                     </div>
@@ -1041,7 +1037,7 @@ const App = () => {
                                     {textPart && (
                                       <div 
                                         onClick={() => setNotePreview(item.note)}
-                                        className={`w-full text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-white/10 hover:bg-white/20 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'}`}
+                                        className={`w-full text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-white/5 hover:bg-white/10 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'}`}
                                       >
                                         {textPart}
                                       </div>
@@ -1079,7 +1075,7 @@ const App = () => {
                                 <button onClick={() => toggleTransportCheck(item.id)} className={`w-6 h-6 rounded-full z-20 border-[3px] flex items-center justify-center transition shadow-lg hover:scale-110 ${item.transportDone ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')}`}>
                                   {item.transportDone && <CheckCircle className="w-4 h-4"/>}
                                 </button>
-                                <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/[0.08] border-white/5' : 'bg-gray-300/80 border-gray-300/50'}`}>
+                                <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-[#0f1115]/80 border-white/10' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
                                   {item.endTimeStr}
                                 </div>
                               </div>
