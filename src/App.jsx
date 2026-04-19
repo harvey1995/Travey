@@ -838,6 +838,10 @@ const App = () => {
         )}
 
         <div className={(isInitialLoading || isSwitchingTheme) ? 'opacity-0 pointer-events-none' : 'transition-opacity duration-500 opacity-100'}>
+          {/* 瀑布流模糊处理：顶部与底部平滑渐变到安全区域 */}
+          <div className={`fixed top-0 z-[45] pointer-events-none h-[calc(env(safe-area-inset-top)+1.5rem)] bg-gradient-to-b ${isDarkMode ? 'from-[#0f1115] to-transparent' : 'from-[#fdfbf7] to-transparent'} w-full ${isMobileView ? 'max-w-[430px]' : ''}`} />
+          <div className={`fixed bottom-0 z-[45] pointer-events-none h-[calc(env(safe-area-inset-bottom)+4rem)] bg-gradient-to-t ${isDarkMode ? 'from-[#0f1115] via-[#0f1115]/80 to-transparent' : 'from-[#fdfbf7] via-[#fdfbf7]/80 to-transparent'} w-full ${isMobileView ? 'max-w-[430px]' : ''}`} />
+
           {toast.show && (
             <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-full bg-black/80 backdrop-blur text-white shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
               {(() => {
@@ -1069,33 +1073,37 @@ const App = () => {
 
                           <div className={`relative flex ${isMobileView ? 'gap-2' : 'gap-4'} group z-10 pt-2`}>
                             <div className="flex flex-col items-center w-14 shrink-0 bg-transparent">
-                              <button 
+                              <div 
+                                className="relative z-10 flex items-center justify-center cursor-pointer"
                                 onPointerDown={() => setActiveScaleId(item.id)}
                                 onPointerUp={() => setActiveScaleId(null)}
                                 onPointerLeave={() => setActiveScaleId(null)}
+                                onPointerCancel={() => setActiveScaleId(null)}
                                 onClick={() => toggleCheck(item.id)} 
-                                className={`relative z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 active:scale-90 scale-100 overflow-hidden ${
+                              >
+                                <div className="absolute -inset-3 sm:-inset-4 z-0"></div>
+                                <div className={`relative pointer-events-none z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform ${activeScaleId === item.id ? 'scale-90' : 'scale-100 hover:scale-110'} overflow-hidden ${
                                   item.done 
                                     ? 'bg-gray-500 border-gray-500/20 text-white' 
                                     : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')
-                                }`}
-                              >
-                                <span 
-                                  className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                                    item.done ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
-                                  }`}
-                                >
-                                  <CheckCircle className="w-5 h-5"/>
-                                </span>
+                                }`}>
+                                  <span 
+                                    className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
+                                      item.done ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
+                                    }`}
+                                  >
+                                    <CheckCircle className="w-5 h-5"/>
+                                  </span>
 
-                                <span 
-                                  className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                                    item.done ? 'opacity-0 scale-150' : 'opacity-100 scale-100'
-                                  }`}
-                                >
-                                  {item.order}
-                                </span>
-                              </button>
+                                  <span 
+                                    className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
+                                      item.done ? 'opacity-0 scale-150' : 'opacity-100 scale-100'
+                                    }`}
+                                  >
+                                    {item.order}
+                                  </span>
+                                </div>
+                              </div>
                               <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/5 border-white/[0.08]' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
                                 {item.startTimeStr}
                               </div>
@@ -1179,25 +1187,29 @@ const App = () => {
                           {idx < group.items.length - 1 && (
                             <div key={`transport-${item.id}`} id={`transport-${item.id}`} className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-3 items-center relative z-10 group`}>
                               <div className="w-14 shrink-0 bg-transparent flex flex-col items-center justify-center relative z-20 -translate-y-5">
-                                <button 
+                                <div 
+                                  className="relative z-20 flex items-center justify-center cursor-pointer"
                                   onPointerDown={() => setActiveScaleId(`transport-${item.id}`)}
                                   onPointerUp={() => setActiveScaleId(null)}
                                   onPointerLeave={() => setActiveScaleId(null)}
+                                  onPointerCancel={() => setActiveScaleId(null)}
                                   onClick={() => toggleTransportCheck(item.id)} 
-                                  className={`relative z-20 w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 active:scale-90 scale-100 overflow-hidden ${
+                                >
+                                  <div className="absolute -inset-3 sm:-inset-4 z-0"></div>
+                                  <div className={`relative pointer-events-none z-20 w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform ${activeScaleId === `transport-${item.id}` ? 'scale-90' : 'scale-100 hover:scale-110'} overflow-hidden ${
                                     item.transportDone 
                                       ? 'bg-gray-500 border-gray-500/20 text-white' 
                                       : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')
-                                  }`}
-                                >
-                                  <span 
-                                    className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                                      item.transportDone ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
-                                    }`}
-                                  >
-                                    <CheckCircle className="w-4 h-4"/>
-                                  </span>
-                                </button>
+                                  }`}>
+                                    <span 
+                                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
+                                        item.transportDone ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
+                                      }`}
+                                    >
+                                      <CheckCircle className="w-4 h-4"/>
+                                    </span>
+                                  </div>
+                                </div>
                                 <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/5 border-white/[0.08]' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
                                   {item.endTimeStr}
                                 </div>
@@ -1264,7 +1276,7 @@ const App = () => {
 
           {showModal && (
             <>
-              <div className={`fixed bottom-0 left-0 right-0 h-[max(env(safe-area-inset-bottom),20px)] z-[111] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
+              <div className={`fixed bottom-0 left-0 right-0 h-[calc(env(safe-area-inset-bottom)+2.5rem)] z-[113] pointer-events-none bg-gradient-to-t ${isDarkMode ? 'from-[#1a1d23] via-[#1a1d23] to-transparent' : 'from-white via-white to-transparent'} sm:hidden`}></div>
               
               <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
                 <div className={`absolute -inset-[200px] backdrop-blur-sm -z-10 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`}></div>
@@ -1409,7 +1421,7 @@ const App = () => {
 
           {showTimeModal && (
             <>
-              <div className={`fixed bottom-0 left-0 right-0 h-[max(env(safe-area-inset-bottom),20px)] z-[111] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
+              <div className={`fixed bottom-0 left-0 right-0 h-[calc(env(safe-area-inset-bottom)+2.5rem)] z-[113] pointer-events-none bg-gradient-to-t ${isDarkMode ? 'from-[#1a1d23] via-[#1a1d23] to-transparent' : 'from-white via-white to-transparent'} sm:hidden`}></div>
               
               <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
                 <div className={`absolute -inset-[200px] backdrop-blur-sm -z-10 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`}></div>
@@ -1457,7 +1469,7 @@ const App = () => {
 
           {showTransportModal && (
             <>
-              <div className={`fixed bottom-0 left-0 right-0 h-[max(env(safe-area-inset-bottom),20px)] z-[111] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
+              <div className={`fixed bottom-0 left-0 right-0 h-[calc(env(safe-area-inset-bottom)+2.5rem)] z-[113] pointer-events-none bg-gradient-to-t ${isDarkMode ? 'from-[#1a1d23] via-[#1a1d23] to-transparent' : 'from-white via-white to-transparent'} sm:hidden`}></div>
               
               <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
                 <div className={`absolute -inset-[200px] backdrop-blur-sm -z-10 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`}></div>
@@ -1514,7 +1526,7 @@ const App = () => {
         <style>{`
           html, body {
             background-color: ${isDarkMode ? '#000000' : '#e8e4d9'} !important;
-            ${isLoaded ? 'transition: background-color 0.5s;' : ''}
+            ${isLoaded && !isSwitchingTheme ? 'transition: background-color 0.5s;' : 'transition: background-color 0s !important;'}
           }
           ${!isLoaded ? '* { transition: none !important; }' : ''}
           .transition-colors {
