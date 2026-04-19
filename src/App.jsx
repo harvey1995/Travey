@@ -27,7 +27,11 @@ import {
 if (typeof document !== 'undefined') {
   const savedTheme = localStorage.getItem('travey_theme_v1');
   const isDark = savedTheme !== null ? JSON.parse(savedTheme) : true;
-  document.documentElement.style.backgroundColor = isDark ? '#000000' : '#e8e4d9';
+  const bgColor = isDark ? '#000000' : '#e8e4d9';
+  document.documentElement.style.backgroundColor = bgColor;
+  const style = document.createElement('style');
+  style.innerHTML = `html, body { background-color: ${bgColor} !important; }`;
+  document.head.appendChild(style);
 }
 
 // --- 工具函数 ---
@@ -423,21 +427,16 @@ const App = () => {
     const isModalOpen = previewIframeUrl || notePreview || showModal || showTimeModal || showTransportModal || showImportModal;
     
     if (isModalOpen) {
-      const currentScrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.top = `-${currentScrollY}px`;
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
       
       return () => {
-        const scrollY = document.body.style.top;
-        document.body.style.position = '';
-        document.body.style.width = '';
-        document.body.style.top = '';
         document.body.style.overflow = '';
-        if (scrollY) {
-          window.scrollTo(0, parseInt(scrollY || '0') * -1);
-        }
+        document.documentElement.style.overflow = '';
+        document.body.style.paddingRight = '';
       };
     }
   }, [previewIframeUrl, notePreview, showModal, showTimeModal, showTransportModal, showImportModal]);
@@ -938,7 +937,7 @@ const App = () => {
 
             <div className={`${isMobileView ? 'px-3' : 'px-6'} mt-2 flex gap-2`}>
               <div className="relative flex-1 group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50 group-hover:opacity-100" />
+                <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50 group-hover:opacity-100 ${isDarkMode ? 'text-white' : 'text-gray-900'}`} />
                 <input 
                   type="text" 
                   value={searchQuery}
@@ -1035,14 +1034,12 @@ const App = () => {
                                 onPointerUp={() => setActiveScaleId(null)}
                                 onPointerLeave={() => setActiveScaleId(null)}
                                 onClick={() => toggleCheck(item.id)} 
-                                /* 新增了 relative，并确保 flex 和居中样式保留 */
                                 className={`relative z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg hover:scale-110 active:scale-90 overflow-hidden ${
                                   item.done 
                                     ? 'bg-gray-500 border-gray-500/20 text-white' 
                                     : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')
                                 }`}
                               >
-                                {/* 图标节点：打卡后显示 (opacity-100)，未打卡时隐藏并缩小 (opacity-0 scale-50) */}
                                 <span 
                                   className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
                                     item.done ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
@@ -1051,7 +1048,6 @@ const App = () => {
                                   <CheckCircle className="w-5 h-5"/>
                                 </span>
 
-                                {/* 序号节点：打卡后隐藏并放大 (opacity-0 scale-150)，未打卡时显示 (opacity-100 scale-100) */}
                                 <span 
                                   className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
                                     item.done ? 'opacity-0 scale-150' : 'opacity-100 scale-100'
