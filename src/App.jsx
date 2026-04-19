@@ -830,7 +830,7 @@ const App = () => {
                     <X className="w-5 h-5" />
                   </button>
                   <div 
-                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif' }}
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang SC", "PingFang SC", sans-serif' }}
                     className={`text-2xl font-black whitespace-pre-wrap select-text leading-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                   >
                     {notePreview}
