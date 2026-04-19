@@ -153,10 +153,16 @@ const App = () => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('travey_view_v1');
       if (saved) return saved;
+      return (window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) ? 'mobile' : 'web';
     }
     return 'web';
   }); 
-  const [isNarrow, setIsNarrow] = useState(false);
+  const [isNarrow, setIsNarrow] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
   const [searchQuery, setSearchQuery] = useState('');
   
   const [expandedDates, setExpandedDates] = useState({});
@@ -926,8 +932,8 @@ const App = () => {
             </nav>
 
             <div className={`${isMobileView ? 'px-3' : 'px-6'} mt-2 flex gap-2`}>
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" />
+              <div className="relative flex-1 group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50 group-hover:opacity-100" />
                 <input 
                   type="text" 
                   value={searchQuery}
@@ -936,11 +942,11 @@ const App = () => {
                   className={`appearance-none w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold transition-all outline-none border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-300'}`}
                 />
               </div>
-              <button onClick={handleRefresh} className={`p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
-                <RefreshCw className="w-4 h-4 opacity-50 hover:opacity-100" />
+              <button onClick={handleRefresh} className={`group p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
+                <RefreshCw className="w-4 h-4 opacity-50 group-hover:opacity-100" />
               </button>
-              <button onClick={handleLocate} className={`p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
-                <Locate className="w-4 h-4 opacity-50 hover:opacity-100" />
+              <button onClick={handleLocate} className={`group p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
+                <Locate className="w-4 h-4 opacity-50 group-hover:opacity-100" />
               </button>
             </div>
 
@@ -965,7 +971,7 @@ const App = () => {
                             className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
                             onClick={() => {
                               if (group.items[0]?.city) {
-                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + ' ' + formattedDate + ' 天气')}&igu=1`);
+                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + ' ' + formattedDate + ' 天气')}&igu=1&hl=zh-CN&gl=CN`);
                               }
                             }}
                           >
