@@ -1074,7 +1074,7 @@ const App = () => {
                                 onPointerUp={() => setActiveScaleId(null)}
                                 onPointerLeave={() => setActiveScaleId(null)}
                                 onClick={() => toggleCheck(item.id)} 
-                                className={`relative z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 ${activeScaleId === item.id ? 'scale-90' : 'scale-100'} before:absolute before:-inset-3 before:bg-transparent before:content-[''] ${
+                                className={`relative z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 active:scale-90 scale-100 before:absolute before:-inset-3 before:bg-transparent before:content-[''] ${
                                   item.done 
                                     ? 'bg-gray-500 border-gray-500/20 text-white' 
                                     : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')
@@ -1184,7 +1184,7 @@ const App = () => {
                                   onPointerUp={() => setActiveScaleId(null)}
                                   onPointerLeave={() => setActiveScaleId(null)}
                                   onClick={() => toggleTransportCheck(item.id)} 
-                                  className={`relative z-20 w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 ${activeScaleId === \`transport-\${item.id}\` ? 'scale-90' : 'scale-100'} before:absolute before:-inset-4 before:bg-transparent before:content-[''] ${
+                                  className={`relative z-20 w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 active:scale-90 scale-100 before:absolute before:-inset-4 before:bg-transparent before:content-[''] ${
                                     item.transportDone 
                                       ? 'bg-gray-500 border-gray-500/20 text-white' 
                                       : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')
