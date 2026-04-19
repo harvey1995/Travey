@@ -1069,38 +1069,33 @@ const App = () => {
 
                           <div className={`relative flex ${isMobileView ? 'gap-2' : 'gap-4'} group z-10 pt-2`}>
                             <div className="flex flex-col items-center w-14 shrink-0 bg-transparent">
-                              <div className="relative z-10 w-9 h-9 flex items-center justify-center group/btn">
-                                <button 
-                                  onPointerDown={() => setActiveScaleId(item.id)}
-                                  onPointerUp={() => setActiveScaleId(null)}
-                                  onPointerLeave={() => setActiveScaleId(null)}
-                                  onClick={() => toggleCheck(item.id)} 
-                                  className="absolute -inset-4 z-20 rounded-full cursor-pointer outline-none"
-                                />
-                                <div 
-                                  className={`pointer-events-none w-full h-full rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform group-hover/btn:scale-110 ${activeScaleId === item.id ? 'scale-90' : 'scale-100'} ${
-                                    item.done 
-                                      ? 'bg-gray-500 border-gray-500/20 text-white' 
-                                      : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')
+                              <button 
+                                onPointerDown={() => setActiveScaleId(item.id)}
+                                onPointerUp={() => setActiveScaleId(null)}
+                                onPointerLeave={() => setActiveScaleId(null)}
+                                onClick={() => toggleCheck(item.id)} 
+                                className={`relative z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 ${activeScaleId === item.id ? 'scale-90' : 'scale-100'} before:absolute before:-inset-3 before:bg-transparent before:content-[''] ${
+                                  item.done 
+                                    ? 'bg-gray-500 border-gray-500/20 text-white' 
+                                    : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')
+                                }`}
+                              >
+                                <span 
+                                  className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
+                                    item.done ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
                                   }`}
                                 >
-                                  <span 
-                                    className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                                      item.done ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
-                                    }`}
-                                  >
-                                    <CheckCircle className="w-5 h-5"/>
-                                  </span>
+                                  <CheckCircle className="w-5 h-5"/>
+                                </span>
 
-                                  <span 
-                                    className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                                      item.done ? 'opacity-0 scale-150' : 'opacity-100 scale-100'
-                                    }`}
-                                  >
-                                    {item.order}
-                                  </span>
-                                </div>
-                              </div>
+                                <span 
+                                  className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
+                                    item.done ? 'opacity-0 scale-150' : 'opacity-100 scale-100'
+                                  }`}
+                                >
+                                  {item.order}
+                                </span>
+                              </button>
                               <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/5 border-white/[0.08]' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
                                 {item.startTimeStr}
                               </div>
@@ -1184,30 +1179,25 @@ const App = () => {
                           {idx < group.items.length - 1 && (
                             <div key={`transport-${item.id}`} id={`transport-${item.id}`} className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-3 items-center relative z-10 group`}>
                               <div className="w-14 shrink-0 bg-transparent flex flex-col items-center justify-center relative z-20 -translate-y-5">
-                                <div className="relative z-20 w-6 h-6 flex items-center justify-center group/btn">
-                                  <button 
-                                    onPointerDown={() => setActiveScaleId(`transport-${item.id}`)}
-                                    onPointerUp={() => setActiveScaleId(null)}
-                                    onPointerLeave={() => setActiveScaleId(null)}
-                                    onClick={() => toggleTransportCheck(item.id)} 
-                                    className="absolute -inset-4 z-20 rounded-full cursor-pointer outline-none"
-                                  />
-                                  <div 
-                                    className={`pointer-events-none w-full h-full rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform group-hover/btn:scale-110 ${activeScaleId === `transport-${item.id}` ? 'scale-90' : 'scale-100'} ${
-                                      item.transportDone 
-                                        ? 'bg-gray-500 border-gray-500/20 text-white' 
-                                        : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')
+                                <button 
+                                  onPointerDown={() => setActiveScaleId(`transport-${item.id}`)}
+                                  onPointerUp={() => setActiveScaleId(null)}
+                                  onPointerLeave={() => setActiveScaleId(null)}
+                                  onClick={() => toggleTransportCheck(item.id)} 
+                                  className={`relative z-20 w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 ${activeScaleId === `transport-${item.id}` ? 'scale-90' : 'scale-100'} before:absolute before:-inset-4 before:bg-transparent before:content-[''] ${
+                                    item.transportDone 
+                                      ? 'bg-gray-500 border-gray-500/20 text-white' 
+                                      : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')
+                                  }`}
+                                >
+                                  <span 
+                                    className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
+                                      item.transportDone ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
                                     }`}
                                   >
-                                    <span 
-                                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                                        item.transportDone ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
-                                      }`}
-                                    >
-                                      <CheckCircle className="w-4 h-4"/>
-                                    </span>
-                                  </div>
-                                </div>
+                                    <CheckCircle className="w-4 h-4"/>
+                                  </span>
+                                </button>
                                 <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/5 border-white/[0.08]' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
                                   {item.endTimeStr}
                                 </div>
