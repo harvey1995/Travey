@@ -826,7 +826,7 @@ const App = () => {
 
           {previewIframeUrl && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
-               <div className="absolute left-0 right-0 -top-[max(env(safe-area-inset-top),60px)] -bottom-[max(env(safe-area-inset-bottom),60px)] bg-black/60 backdrop-blur-sm" onClick={() => setPreviewIframeUrl(null)}></div>
+               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPreviewIframeUrl(null)}></div>
                <div className={`relative w-[95vw] h-[75dvh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setPreviewIframeUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
@@ -849,7 +849,7 @@ const App = () => {
 
           {notePreview && (
             <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
-               <div className="absolute left-0 right-0 -top-[max(env(safe-area-inset-top),60px)] -bottom-[max(env(safe-area-inset-bottom),60px)] bg-black/60 backdrop-blur-sm" onClick={() => setNotePreview(null)}></div>
+               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setNotePreview(null)}></div>
                <div className={`relative w-[95vw] max-h-[75dvh] overflow-y-auto rounded-[2rem] p-8 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setNotePreview(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
@@ -1226,9 +1226,8 @@ const App = () => {
             <>
               <div className={`fixed bottom-0 left-0 right-0 h-[max(env(safe-area-inset-bottom),20px)] z-[111] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
               
-              <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
-                <div className="absolute left-0 right-0 -top-[max(env(safe-area-inset-top),60px)] -bottom-[max(env(safe-area-inset-bottom),60px)] bg-black/60 backdrop-blur-sm" onClick={() => { setShowModal(false); restoreZoom(); }}></div>
-                <div className="w-full max-w-md relative z-10">
+              <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
+                <div className="w-full max-w-md relative">
                   <form onSubmit={handleSubmitForm} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
                       <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
@@ -1371,9 +1370,8 @@ const App = () => {
             <>
               <div className={`fixed bottom-0 left-0 right-0 h-[max(env(safe-area-inset-bottom),20px)] z-[111] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
               
-              <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
-                <div className="absolute left-0 right-0 -top-[max(env(safe-area-inset-top),60px)] -bottom-[max(env(safe-area-inset-bottom),60px)] bg-black/60 backdrop-blur-sm" onClick={() => { setShowTimeModal(false); restoreZoom(); }}></div>
-                <div className="w-full max-w-md relative z-10">
+              <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
+                <div className="w-full max-w-md relative">
                   <form onSubmit={(e) => {
                     e.preventDefault();
                     setDailyStartTimes(prev => ({
@@ -1419,9 +1417,8 @@ const App = () => {
             <>
               <div className={`fixed bottom-0 left-0 right-0 h-[max(env(safe-area-inset-bottom),20px)] z-[111] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
               
-              <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
-                <div className="absolute left-0 right-0 -top-[max(env(safe-area-inset-top),60px)] -bottom-[max(env(safe-area-inset-bottom),60px)] bg-black/60 backdrop-blur-sm" onClick={() => { setShowTransportModal(false); restoreZoom(); }}></div>
-                <div className="w-full max-w-md relative z-10">
+              <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
+                <div className="w-full max-w-md relative">
                   <form onSubmit={handleSaveTransportDuration} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
                       <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑交通</h2>
@@ -1452,9 +1449,8 @@ const App = () => {
           )}
 
           {showImportModal && (
-            <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
-              <div className="absolute left-0 right-0 -top-[max(env(safe-area-inset-top),60px)] -bottom-[max(env(safe-area-inset-bottom),60px)] bg-black/80 backdrop-blur-md" onClick={() => setShowImportModal(false)}></div>
-              <div className={`relative z-10 w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border border-white/5' : 'bg-white text-black'}`}>
+            <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+              <div className={`w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border border-white/5' : 'bg-white text-black'}`}>
                 <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Download className="w-8 h-8 text-blue-500" />
                 </div>
