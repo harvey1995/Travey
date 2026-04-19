@@ -161,6 +161,7 @@ const App = () => {
   
   const [expandedDates, setExpandedDates] = useState({});
   const [previewIframeUrl, setPreviewIframeUrl] = useState(null);
+  const [notePreview, setNotePreview] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add');
@@ -399,7 +400,7 @@ const App = () => {
   useEffect(() => {
     if (typeof document === 'undefined') return;
     
-    const isModalOpen = previewIframeUrl || showModal || showTimeModal || showTransportModal || showImportModal;
+    const isModalOpen = previewIframeUrl || notePreview || showModal || showTimeModal || showTransportModal || showImportModal;
     
     if (isModalOpen) {
       const currentScrollY = window.scrollY;
@@ -419,7 +420,7 @@ const App = () => {
         }
       };
     }
-  }, [previewIframeUrl, showModal, showTimeModal, showTransportModal, showImportModal]);
+  }, [previewIframeUrl, notePreview, showModal, showTimeModal, showTransportModal, showImportModal]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -733,12 +734,12 @@ const App = () => {
 
   const openInGoogleMaps = (name, city) => {
     const query = encodeURIComponent(`${name} ${city}`);
-    window.open(`https://maps.google.com/?q=$${query}`, '_blank');
+    window.open(`https://maps.google.com/maps?q=${query}`, '_blank');
   };
 
   const openMapPreview = (name, city) => {
     const query = encodeURIComponent(`${name} ${city}`);
-    setPreviewIframeUrl(`https://maps.google.com/maps?q=$${query}&output=embed`);
+    setPreviewIframeUrl(`https://maps.google.com/maps?q=${query}&output=embed`);
   };
 
   const toggleOverview = (date) => {
@@ -801,7 +802,7 @@ const App = () => {
           {previewIframeUrl && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPreviewIframeUrl(null)}></div>
-               <div className={`relative w-[95vw] h-[75vh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+               <div className={`relative w-[95vw] h-[90vh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setPreviewIframeUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
@@ -821,6 +822,23 @@ const App = () => {
             </div>
           )}
 
+          {notePreview && (
+            <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
+               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setNotePreview(null)}></div>
+               <div className={`relative w-[95vw] max-h-[90vh] overflow-y-auto rounded-[2rem] p-8 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+                  <button onClick={() => setNotePreview(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                  <div 
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif' }}
+                    className={`text-2xl font-black whitespace-pre-wrap select-text leading-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+                  >
+                    {notePreview}
+                  </div>
+               </div>
+            </div>
+          )}
+
           <div className="pb-[42px] min-h-[100dvh] flex flex-col relative">
             
             <header className={`${isMobileView ? 'px-3' : 'px-6'} py-4 space-y-4`}>
@@ -828,7 +846,7 @@ const App = () => {
                 {isEditingTitle ? (
                   <input 
                     autoFocus
-                    className={`w-1/2 min-w-0 flex-1 bg-transparent border-b border-blue-500 outline-none text-2xl font-black truncate transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+                    className={`w-1/2 min-w-0 flex-1 bg-transparent border-b border-blue-500 outline-none text-2xl font-semibold truncate transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     onBlur={renameTrip}
@@ -836,7 +854,7 @@ const App = () => {
                   />
                 ) : (
                   <div className="flex items-center gap-2 flex-1 min-w-0 group cursor-pointer" onClick={() => { setNewTitle(activeTrip); setIsEditingTitle(true); }}>
-                    <h1 className="text-2xl font-black tracking-tighter truncate">{activeTrip}</h1>
+                    <h1 className="text-2xl font-semibold truncate">{activeTrip}</h1>
                     <NotebookPen className={`w-4 h-4 opacity-0 group-hover:opacity-70 transition-opacity shrink-0 ${isDarkMode ? 'text-white' : 'text-gray-600'}`} />
                   </div>
                 )}
@@ -904,6 +922,7 @@ const App = () => {
                 </div>
               ) : groupedDataWithTime.map((group) => {
                 const isOverviewExpanded = expandedDates[group.date]; 
+                const formattedDate = group.date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日');
                 
                 return (
                   <div key={group.date} className="mb-[18px]">
@@ -916,7 +935,7 @@ const App = () => {
                             className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
                             onClick={() => {
                               if (group.items[0]?.city) {
-                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + '天气')}&igu=1`);
+                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + ' ' + formattedDate + ' 天气')}&igu=1&hl=zh-CN&gl=CN`);
                               }
                             }}
                           >
@@ -940,13 +959,13 @@ const App = () => {
                       {isOverviewExpanded && (
                         <div className={`mt-2 p-4 rounded-2xl text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
                           {group.items.length >= 2 && (
-                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75vh]'} rounded-xl overflow-hidden mb-2 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[90vh]'} rounded-xl overflow-hidden mb-2 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                               <iframe 
                                 title="Daily Route"
                                 width="100%" 
                                 height="100%" 
                                 frameBorder="0" 
-                                src={`https://maps.google.com/maps?saddr=$${encodeURIComponent(group.items[0].name + ' ' + (group.items[0].city || ''))}&daddr=${encodeURIComponent(group.items.slice(1).map(i => i.name + ' ' + (i.city || '')).join(' to:'))}&output=embed`} 
+                                src={`https://maps.google.com/maps?saddr=${encodeURIComponent(group.items[0].name + ' ' + (group.items[0].city || ''))}&daddr=${encodeURIComponent(group.items.slice(1).map(i => i.name + ' ' + (i.city || '')).join(' to:'))}&output=embed`} 
                                 allowFullScreen
                               ></iframe>
                             </div>
@@ -979,7 +998,7 @@ const App = () => {
                             <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border transition-all ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200 shadow-sm'} ${item.done ? 'opacity-50' : ''}`}>
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1 min-w-0 pr-2">
-                                  <h3 className={`font-bold text-sm leading-snug select-text ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
+                                  <h3 className={`text-black-hack text-sm leading-snug select-text ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
                                   {item.city && (
                                     <div className="flex items-center gap-1 mt-1 opacity-80">
                                       <MapPin className="w-3 h-3" />
@@ -1003,7 +1022,10 @@ const App = () => {
                                 const urls = item.note.match(urlRegex);
                                 if (!urls) {
                                   return (
-                                    <div className={`mt-3 mb-3 text-[11px] p-3 rounded-xl whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-black/20 border-white/10' : 'text-gray-700 bg-gray-50 border-gray-300'}`}>
+                                    <div 
+                                      onClick={() => setNotePreview(item.note)}
+                                      className={`mt-3 mb-3 text-[12px] font-bold px-3 py-2 rounded-xl cursor-pointer whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text transition-colors ${isDarkMode ? 'text-gray-300 bg-black/20 hover:bg-black/40 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-200 border-gray-300'}`}
+                                    >
                                       {item.note}
                                     </div>
                                   );
@@ -1014,7 +1036,10 @@ const App = () => {
                                 return (
                                   <div className="mt-3 mb-3 flex flex-col gap-2 items-start w-full min-w-0">
                                     {textPart && (
-                                      <div className={`w-full text-[11px] p-3 rounded-xl whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-black/20 border-white/10' : 'text-gray-700 bg-gray-50 border-gray-300'}`}>
+                                      <div 
+                                        onClick={() => setNotePreview(item.note)}
+                                        className={`w-full text-[12px] font-bold px-3 py-2 rounded-xl cursor-pointer whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text transition-colors ${isDarkMode ? 'text-gray-300 bg-black/20 hover:bg-black/40 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-200 border-gray-300'}`}
+                                      >
                                         {textPart}
                                       </div>
                                     )}
@@ -1084,7 +1109,7 @@ const App = () => {
                                       const dest = encodeURIComponent(`${endItem.name} ${endItem.city || ''}`);
                                       const dirflgMap = { walk: 'w', car: 'd', train: 'r' };
                                       const dirflg = dirflgMap[item.transportMode || 'train'];
-                                      setPreviewIframeUrl(`https://maps.google.com/maps?saddr=$${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
+                                      setPreviewIframeUrl(`https://maps.google.com/maps?saddr=${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
                                     }}
                                     className={`${isMobileView ? 'px-2.5' : 'px-4'} py-1.5 rounded-lg text-[11px] font-black transition flex items-center gap-1 shrink-0 ${
                                       isDarkMode ? TRANSPORT_ESTIMATES[item.transportMode || 'walk'].darkClass : TRANSPORT_ESTIMATES[item.transportMode || 'walk'].lightClass
@@ -1374,6 +1399,10 @@ const App = () => {
           input[type="date"], input[type="time"] {
             display: flex;
             align-items: center;
+          }
+          .text-black-hack {
+            font-weight: 900;
+            -webkit-text-stroke: 0.5px currentColor;
           }
         `}</style>
       </div>
