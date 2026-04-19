@@ -220,6 +220,12 @@ const App = () => {
 
   const [now, setNow] = useState(() => new Date());
   const [activeScaleId, setActiveScaleId] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
@@ -1496,8 +1502,9 @@ const App = () => {
         <style>{`
           html, body {
             background-color: ${isDarkMode ? '#000000' : '#e8e4d9'} !important;
-            transition: background-color 0.5s;
+            ${isLoaded ? 'transition: background-color 0.5s;' : ''}
           }
+          ${!isLoaded ? '* { transition: none !important; }' : ''}
           .transition-colors {
             transition-property: background-color, border-color, text-decoration-color, fill, stroke !important;
           }
