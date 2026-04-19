@@ -932,7 +932,7 @@ const App = () => {
                             className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
                             onClick={() => {
                               if (group.items[0]?.city) {
-                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + ' ' + formattedDate + ' 天气')}&igu=1&hl=zh-CN&gl=CN`);
+                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + ' ' + formattedDate + ' 天气')}&igu=1`);
                               }
                             }}
                           >
