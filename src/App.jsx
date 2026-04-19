@@ -168,6 +168,7 @@ const App = () => {
     return true;
   });
   const [isSwitchingTheme, setIsSwitchingTheme] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [viewMode, setViewMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('travey_view_v1');
@@ -224,6 +225,13 @@ const App = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 400); 
     return () => clearTimeout(timer);
   }, []);
 
@@ -823,13 +831,13 @@ const App = () => {
     <div className={`font-sans transition-colors duration-500 flex justify-center select-none ${bodyColor}`}>
       <div className={containerClasses}>
         
-        {isSwitchingTheme && (
-          <div className="fixed inset-0 flex items-center justify-center z-[999]">
+        {(isInitialLoading || isSwitchingTheme) && (
+          <div className="fixed inset-0 flex items-center justify-center z-[999] bg-inherit">
             <RefreshCw className={`w-10 h-10 animate-spin ${isDarkMode ? 'text-white' : 'text-gray-800'}`} />
           </div>
         )}
 
-        <div className={isSwitchingTheme ? 'opacity-0 pointer-events-none' : ''}>
+        <div className={(isInitialLoading || isSwitchingTheme) ? 'opacity-0 pointer-events-none' : 'transition-opacity duration-500 opacity-100'}>
           {toast.show && (
             <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-full bg-black/80 backdrop-blur text-white shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
               {(() => {
