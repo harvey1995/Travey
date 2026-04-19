@@ -168,7 +168,6 @@ const App = () => {
     return true;
   });
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isSwitchingTheme, setIsSwitchingTheme] = useState(false);
   const [viewMode, setViewMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('travey_view_v1');
@@ -231,7 +230,7 @@ const App = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitialLoading(false);
-    }, 200); 
+    }, 400); 
     return () => clearTimeout(timer);
   }, []);
 
@@ -346,11 +345,7 @@ const App = () => {
   };
 
   const handleThemeToggle = () => {
-    setIsSwitchingTheme(true);
     setIsDarkMode(!isDarkMode);
-    setTimeout(() => {
-      setIsSwitchingTheme(false);
-    }, 300);
   };
 
   useEffect(() => {
@@ -831,13 +826,13 @@ const App = () => {
     <div className={`font-sans transition-colors duration-500 flex justify-center select-none ${bodyColor}`}>
       <div className={containerClasses}>
         
-        {(isInitialLoading || isSwitchingTheme) && (
-          <div className="fixed inset-0 flex items-center justify-center z-[999] bg-inherit transition-opacity duration-300">
+        {isInitialLoading && (
+          <div className="fixed inset-0 flex items-center justify-center z-[999] bg-inherit">
             <RefreshCw className={`w-10 h-10 animate-spin ${isDarkMode ? 'text-white' : 'text-gray-800'}`} />
           </div>
         )}
 
-        <div className={(isInitialLoading || isSwitchingTheme) ? 'opacity-0 pointer-events-none' : 'transition-opacity duration-300 opacity-100'}>
+        <div className={isInitialLoading ? 'opacity-0 pointer-events-none' : 'transition-opacity duration-500 opacity-100'}>
           {toast.show && (
             <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-full bg-black/80 backdrop-blur text-white shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
               {(() => {
@@ -1520,13 +1515,13 @@ const App = () => {
         <style>{`
           html, body {
             background-color: ${isDarkMode ? '#000000' : '#e8e4d9'} !important;
-            ${isLoaded ? 'transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);' : ''}
+            ${isLoaded ? 'transition: background-color 0.3s ease;' : ''}
           }
           ${!isLoaded ? '* { transition: none !important; }' : ''}
           .transition-colors {
             transition-property: background-color, border-color, text-decoration-color, fill, stroke !important;
             transition-duration: 0.3s !important;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+            transition-timing-function: ease !important;
           }
           .no-scrollbar::-webkit-scrollbar { display: none; }
           * { -webkit-tap-highlight-color: transparent; }
