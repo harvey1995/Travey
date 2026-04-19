@@ -1515,13 +1515,13 @@ const App = () => {
         <style>{`
           html, body {
             background-color: ${isDarkMode ? '#000000' : '#e8e4d9'} !important;
-            ${isLoaded ? 'transition: background-color 0.4s cubic-bezier(.17,.67,.83,.67);' : ''}
+            ${isLoaded ? 'transition: background-color 0.4s ease;' : ''}
           }
           ${!isLoaded ? '* { transition: none !important; }' : ''}
           .transition-colors {
             transition-property: background-color, border-color, text-decoration-color, fill, stroke !important;
             transition-duration: 0.4s !important;
-            transition-timing-function: cubic-bezier(.17,.67,.83,.67) !important;
+            transition-timing-function: ease !important;
           }
           .no-scrollbar::-webkit-scrollbar { display: none; }
           * { -webkit-tap-highlight-color: transparent; }
