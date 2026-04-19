@@ -32,6 +32,14 @@ if (typeof document !== 'undefined') {
   const style = document.createElement('style');
   style.innerHTML = `html, body { background-color: ${bgColor} !important; }`;
   document.head.appendChild(style);
+
+  let metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (!metaTheme) {
+    metaTheme = document.createElement('meta');
+    metaTheme.name = 'theme-color';
+    document.head.appendChild(metaTheme);
+  }
+  metaTheme.content = bgColor;
 }
 
 // --- 工具函数 ---
@@ -223,6 +231,16 @@ const App = () => {
 
   useEffect(() => {
     localStorage.setItem('travey_theme_v1', JSON.stringify(isDarkMode));
+    if (typeof document !== 'undefined') {
+      const bgColor = isDarkMode ? '#000000' : '#e8e4d9';
+      let metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (!metaTheme) {
+        metaTheme = document.createElement('meta');
+        metaTheme.name = 'theme-color';
+        document.head.appendChild(metaTheme);
+      }
+      metaTheme.content = bgColor;
+    }
   }, [isDarkMode]);
 
   useEffect(() => {
@@ -1034,7 +1052,7 @@ const App = () => {
                                 onPointerUp={() => setActiveScaleId(null)}
                                 onPointerLeave={() => setActiveScaleId(null)}
                                 onClick={() => toggleCheck(item.id)} 
-                                className={`relative z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg hover:scale-110 active:scale-90 overflow-hidden ${
+                                className={`relative z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 active:scale-90 scale-100 overflow-hidden ${
                                   item.done 
                                     ? 'bg-gray-500 border-gray-500/20 text-white' 
                                     : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')
@@ -1061,7 +1079,7 @@ const App = () => {
                               </div>
                             </div>
 
-                            <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all duration-300 ${activeScaleId === item.id ? 'scale-[0.98]' : ''} ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.done ? 'opacity-50' : ''}`}>
+                            <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all duration-300 transform ${activeScaleId === item.id ? 'scale-[0.98]' : 'scale-100'} ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.done ? 'opacity-50' : ''}`}>
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1 min-w-0 pr-2">
                                   <h3 className={`font-semibold text-sm leading-snug select-text ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
@@ -1144,7 +1162,7 @@ const App = () => {
                                   onPointerUp={() => setActiveScaleId(null)}
                                   onPointerLeave={() => setActiveScaleId(null)}
                                   onClick={() => toggleTransportCheck(item.id)} 
-                                  className={`relative z-20 w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-110 active:scale-90 overflow-hidden ${
+                                  className={`relative z-20 w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 active:scale-90 scale-100 overflow-hidden ${
                                     item.transportDone 
                                       ? 'bg-gray-500 border-gray-500/20 text-white' 
                                       : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')
@@ -1162,7 +1180,7 @@ const App = () => {
                                   {item.endTimeStr}
                                 </div>
                               </div>
-                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed shadow-sm transition-all duration-300 ${activeScaleId === `transport-${item.id}` ? 'scale-[0.98]' : ''} ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
+                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed shadow-sm transition-all duration-300 transform ${activeScaleId === `transport-${item.id}` ? 'scale-[0.98]' : 'scale-100'} ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
                                 <div className="flex items-center min-w-0">
                                   <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
                                     <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : (item.transportDuration || 0) + 'm'}
