@@ -888,10 +888,10 @@ const App = () => {
                 <button onClick={handleExport} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500/10 text-green-600 dark:text-green-500 border border-green-500/20 text-xs font-black hover:bg-green-500/20 transition-all">
                   <Upload className="w-4 h-4" /> 导出
                 </button>
-                <button onClick={handleUndo} disabled={past.length === 0} className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
+                <button onClick={handleUndo} disabled={past.length === 0} className={`w-10 flex items-center justify-center rounded-xl border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30'}`}>
                   <Undo2 className="w-4 h-4" />
                 </button>
-                <button onClick={handleRedo} disabled={future.length === 0} className={`w-10 flex items-center justify-center rounded-xl border transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30 shadow-sm'}`}>
+                <button onClick={handleRedo} disabled={future.length === 0} className={`w-10 flex items-center justify-center rounded-xl border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30'}`}>
                   <Redo2 className="w-4 h-4" />
                 </button>
               </div>
@@ -957,18 +957,18 @@ const App = () => {
                       </div>
                       
                       <div className="flex gap-2">
-                        <button onClick={() => toggleOverview(group.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.02] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
+                        <button onClick={() => toggleOverview(group.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
                            <span className="text-xs font-semibold opacity-80">当日行程总览（{group.items.length}个地点）</span>
                            {isOverviewExpanded ? <ChevronUp className="w-4 h-4 opacity-60"/> : <ChevronDown className="w-4 h-4 opacity-60"/>}
                         </button>
-                        <button onClick={() => { setTimeEditData({ date: group.date, time: dailyStartTimes[activeTrip]?.[group.date] || "08:00" }); setShowTimeModal(true); }} className={`px-3 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed transition-all shrink-0 ${isDarkMode ? 'bg-white/[0.02] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
+                        <button onClick={() => { setTimeEditData({ date: group.date, time: dailyStartTimes[activeTrip]?.[group.date] || "08:00" }); setShowTimeModal(true); }} className={`px-3 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed transition-all shrink-0 ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
                            <Clock className="w-4 h-4 opacity-60"/>
                            <span className="text-xs font-black opacity-80">{dailyStartTimes[activeTrip]?.[group.date] || "08:00"}</span>
                         </button>
                       </div>
                       
                       {isOverviewExpanded && (
-                        <div className={`mt-2 p-4 rounded-2xl text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
+                        <div className={`mt-2 p-4 rounded-2xl shadow-sm text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white'}`}>
                           {group.items.length >= 2 && (
                             <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75dvh]'} rounded-xl overflow-hidden mb-2 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                               <iframe 
@@ -1008,7 +1008,7 @@ const App = () => {
                               </div>
                             </div>
 
-                            <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border transition-all ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200 shadow-sm'} ${item.done ? 'opacity-50' : ''}`}>
+                            <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.done ? 'opacity-50' : ''}`}>
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1 min-w-0 pr-2">
                                   <h3 className={`font-semibold text-sm leading-snug select-text ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
@@ -1093,7 +1093,7 @@ const App = () => {
                                   {item.endTimeStr}
                                 </div>
                               </div>
-                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed transition ${isDarkMode ? 'bg-white/[0.02] border-white/5' : 'bg-white/60 shadow-sm border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
+                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed shadow-sm transition ${isDarkMode ? 'bg-white/[0.02] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
                                 <div className="flex items-center min-w-0">
                                   <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
                                     <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : (item.transportDuration || 0) + 'm'}
@@ -1288,7 +1288,7 @@ const App = () => {
                       </div>
                     </div>
 
-                    <button type="submit" className="w-full mt-6 h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_0_10px] sm:shadow-[0_0_20px] shadow-blue-600/20">
+                    <button type="submit" className="w-full mt-6 h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_4px_15px_rgb(37,99,235,0.4)] sm:shadow-[0_8px_30px_rgb(37,99,235,0.4)]">
                       保存
                     </button>
                   </form>
@@ -1335,7 +1335,7 @@ const App = () => {
                       </div>
                     </div>
 
-                    <button type="submit" className="w-full mt-6 h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_0_10px] sm:shadow-[0_0_20px] shadow-blue-600/20">
+                    <button type="submit" className="w-full mt-6 h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_4px_15px_rgb(37,99,235,0.4)] sm:shadow-[0_8px_30px_rgb(37,99,235,0.4)]">
                       保存
                     </button>
                   </form>
@@ -1370,7 +1370,7 @@ const App = () => {
                       </div>
                     </div>
 
-                    <button type="submit" className="w-full mt-6 h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_0_10px] sm:shadow-[0_0_20px] shadow-blue-600/20">
+                    <button type="submit" className="w-full mt-6 h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_4px_15px_rgb(37,99,235,0.4)] sm:shadow-[0_8px_30px_rgb(37,99,235,0.4)]">
                       保存
                     </button>
                   </form>
@@ -1389,7 +1389,7 @@ const App = () => {
                 <p className="text-[11px] opacity-80 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{activeTrip}</span></p>
                 
                 <div className="grid gap-3">
-                  <button onClick={() => confirmImport('append')} className="w-full h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_0_10px] sm:shadow-[0_0_20px] shadow-blue-600/20">追加到当前行程末尾</button>
+                  <button onClick={() => confirmImport('append')} className="w-full h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_4px_15px_rgb(37,99,235,0.4)] sm:shadow-[0_8px_30px_rgb(37,99,235,0.4)]">追加到当前行程末尾</button>
                   <button onClick={() => confirmImport('overwrite')} className="w-full h-12 rounded-2xl border border-red-500/30 text-red-500 font-black hover:bg-red-500/10 transition-all active:scale-[0.98]">覆盖当前行程</button>
                   <button onClick={() => setShowImportModal(false)} className="mt-2 text-xs font-black opacity-70 uppercase tracking-widest hover:opacity-100 p-2">取消</button>
                 </div>
