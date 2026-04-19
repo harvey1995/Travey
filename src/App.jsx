@@ -813,8 +813,8 @@ const App = () => {
   const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
   
   const containerClasses = isMobileView 
-    ? `max-w-[430px] w-full mx-auto min-h-[100dvh] relative shadow-2xl transition-colors duration-[400ms] overflow-hidden ${containerColor}` 
-    : `w-full min-h-[100dvh] relative transition-colors duration-[400ms] overflow-hidden ${containerColor}`;
+    ? `max-w-[430px] w-full mx-auto min-h-[100dvh] relative shadow-2xl transition-colors duration-[800ms] overflow-hidden ${containerColor}` 
+    : `w-full min-h-[100dvh] relative transition-colors duration-[800ms] overflow-hidden ${containerColor}`;
 
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -823,7 +823,7 @@ const App = () => {
   const currentHourMin = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
   return (
-    <div className={`font-sans transition-colors duration-[400ms] flex justify-center select-none ${bodyColor}`}>
+    <div className={`font-sans transition-colors duration-[800ms] flex justify-center select-none ${bodyColor}`}>
       <div className={containerClasses}>
         
         {isInitialLoading && (
@@ -862,7 +862,7 @@ const App = () => {
           {previewIframeUrl && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className={`fixed -inset-[200px] backdrop-blur-sm ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`} onClick={() => setPreviewIframeUrl(null)}></div>
-               <div className={`relative w-[95vw] h-[75dvh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-[400ms] ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+               <div className={`relative w-[95vw] h-[75dvh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-[800ms] ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setPreviewIframeUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
@@ -885,7 +885,7 @@ const App = () => {
           {notePreview && (
             <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className={`fixed -inset-[200px] backdrop-blur-sm ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`} onClick={() => setNotePreview(null)}></div>
-               <div className={`relative w-[95vw] max-h-[75dvh] overflow-y-auto rounded-[2rem] p-8 border-4 transition-colors duration-[400ms] ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+               <div className={`relative w-[95vw] max-h-[75dvh] overflow-y-auto rounded-[2rem] p-8 border-4 transition-colors duration-[800ms] ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setNotePreview(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
@@ -903,7 +903,7 @@ const App = () => {
                 {isEditingTitle ? (
                   <input 
                     autoFocus
-                    className={`w-1/2 min-w-0 flex-1 bg-transparent border-b border-blue-500 outline-none text-2xl font-semibold truncate transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+                    className={`w-1/2 min-w-0 flex-1 bg-transparent border-b border-blue-500 outline-none text-2xl font-semibold truncate transition-colors duration-[800ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     onBlur={renameTrip}
@@ -916,7 +916,7 @@ const App = () => {
                   </div>
                 )}
 
-                <div className={`flex backdrop-blur-xl rounded-2xl p-1 shrink-0 border transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-200/50 border-gray-300'}`}>
+                <div className={`flex backdrop-blur-xl rounded-2xl p-1 shrink-0 border transition-colors duration-[800ms] ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-200/50 border-gray-300'}`}>
                   <button onClick={handleThemeToggle} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
                     {isDarkMode ? <Moon className="w-4 h-4 text-yellow-400" /> : <Sun className="w-4 h-4 text-orange-500" />}
                   </button>
@@ -1004,7 +1004,7 @@ const App = () => {
                     <div className="mb-[12px]">
                       <div className="flex items-center mb-[20px]">
                         <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{group.date}</span>
-                        <div className={`h-px flex-1 mx-3 transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
+                        <div className={`h-px flex-1 mx-3 transition-colors duration-[800ms] ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
                         {weatherData[group.date] && (
                           <div 
                             className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
@@ -1034,7 +1034,7 @@ const App = () => {
                       {isOverviewExpanded && (
                         <div className={`mt-2 p-4 rounded-2xl shadow-sm text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white'}`}>
                           {group.items.length >= 2 && (
-                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75dvh]'} rounded-xl overflow-hidden mb-2 border-4 transition-colors duration-[400ms] ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75dvh]'} rounded-xl overflow-hidden mb-2 border-4 transition-colors duration-[800ms] ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                               <iframe 
                                 title="Daily Route"
                                 width="100%" 
@@ -1059,7 +1059,7 @@ const App = () => {
                         <div key={item.id} id={`card-${item.id}`} className="relative mb-0">
                           
                           {idx < group.items.length - 1 && (
-                            <div className={`absolute left-[27px] top-[36px] -bottom-[40px] z-0 transition-colors duration-[400ms] ${(group.date < currentDateStr || (group.date === currentDateStr && item.endTimeStr <= currentHourMin)) ? `border-l-[2px] border-dotted w-0 ${isDarkMode ? 'border-white/30' : 'border-gray-400'} bg-transparent` : `w-[2px] ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`}`} />
+                            <div className={`absolute left-[27px] top-[36px] -bottom-[40px] z-0 transition-colors duration-[800ms] ${(group.date < currentDateStr || (group.date === currentDateStr && item.endTimeStr <= currentHourMin)) ? `border-l-[2px] border-dotted w-0 ${isDarkMode ? 'border-white/30' : 'border-gray-400'} bg-transparent` : `w-[2px] ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`}`} />
                           )}
 
                           <div className={`relative flex ${isMobileView ? 'gap-2' : 'gap-4'} group z-10 pt-2`}>
@@ -1158,8 +1158,8 @@ const App = () => {
                               
                               <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
                                 <div className="flex gap-3 text-[10px] font-bold">
-                                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}><Clock className="w-3 h-3" /> {item.duration >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : item.duration + 'm'}</div>
-                                  {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><Wallet className="w-3 h-3" /> {item.cost >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999+' : '999999+') : item.cost} {item.currency}</div>}
+                                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[800ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}><Clock className="w-3 h-3" /> {item.duration >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : item.duration + 'm'}</div>
+                                  {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[800ms] ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><Wallet className="w-3 h-3" /> {item.cost >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999+' : '999999+') : item.cost} {item.currency}</div>}
                                 </div>
                                 
                                 <div className="flex gap-1.5">
@@ -1205,7 +1205,7 @@ const App = () => {
                               </div>
                               <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed shadow-sm transition-all duration-300 transform ${activeScaleId === `transport-${item.id}` ? 'scale-[0.98]' : 'scale-100'} ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
                                 <div className="flex items-center min-w-0">
-                                  <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
+                                  <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[800ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
                                     <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : (item.transportDuration || 0) + 'm'}
                                   </div>
                                 </div>
@@ -1270,16 +1270,16 @@ const App = () => {
               <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
                 <div className={`fixed -inset-[200px] backdrop-blur-sm -z-10 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`}></div>
                 <div className="w-full max-w-md relative">
-                  <form onSubmit={handleSubmitForm} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                  <form onSubmit={handleSubmitForm} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[800ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
-                      <h2 className={`text-xl font-black transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
-                      <button type="button" onClick={() => { setShowModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
+                      <h2 className={`text-xl font-black transition-colors duration-[800ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
+                      <button type="button" onClick={() => { setShowModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[800ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
                     </div>
                     
                     <div className="space-y-4">
                       <div className="grid grid-cols-[1fr_80px] gap-4">
                         <div className="flex flex-col gap-1.5">
-                          <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>地点名称</label>
+                          <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[800ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>地点名称</label>
                           <input required 
                             onFocus={(e) => {
                               setTimeout(() => {
@@ -1288,25 +1288,25 @@ const App = () => {
                             }}
                             onInvalid={e => e.target.setCustomValidity('请填写')}
                             onInput={e => e.target.setCustomValidity('')}
-                            className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                            className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[800ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                             value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>序号</label>
+                          <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[800ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>序号</label>
                           <input type="text" inputMode="numeric" pattern="[0-9]*" 
                             onFocus={(e) => {
                               setTimeout(() => {
                                 e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                               }, 300);
                             }}
-                            className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                            className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[800ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                             value={formData.order} onChange={e => setFormData({...formData, order: e.target.value.replace(/[^0-9]/g, '')})} />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5 min-w-0">
-                          <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>日期</label>
+                          <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[800ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>日期</label>
                           <input 
                             type="date" 
                             required 
@@ -1317,12 +1317,12 @@ const App = () => {
                             }}
                             onInvalid={e => e.target.setCustomValidity('请填写')}
                             onInput={e => e.target.setCustomValidity('')}
-                            className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-[400ms] [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                            className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-[800ms] [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                             value={formData.date} onChange={e => setFormData({...formData, date: sanitizeDate(e.target.value)})} />
                         </div>
                         <div className="flex flex-col gap-1.5 min-w-0">
-                          <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>城市</label>
-                          <input className={`w-full min-w-0 h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                          <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[800ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>城市</label>
+                          <input className={`w-full min-w-0 h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[800ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                             onFocus={(e) => {
                               setTimeout(() => {
                                 e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1334,18 +1334,18 @@ const App = () => {
 
                       <div className="grid grid-cols-3 gap-4">
                         <div className="flex flex-col gap-1.5">
-                           <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间（分）</label>
+                           <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[800ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间（分）</label>
                            <input type="text" inputMode="numeric" pattern="[0-9]*" 
                             onFocus={(e) => {
                               setTimeout(() => {
                                 e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                               }, 300);
                             }}
-                            className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                            className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[800ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                             value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value.replace(/[^0-9]/g, '')})} />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>花销</label>
+                          <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[800ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>花销</label>
                           <input 
                             type="text" 
                             inputMode="decimal"
@@ -1354,11 +1354,11 @@ const App = () => {
                                 e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                               }, 300);
                             }}
-                            className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                            className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[800ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                             value={formData.cost} onChange={e => setFormData({...formData, cost: e.target.value.replace(/[^0-9.]/g, '')})} />
                         </div>
                         <div className="flex flex-col gap-1.5 relative">
-                          <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>币种</label>
+                          <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[800ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>币种</label>
                           <div className="relative h-12">
                             <select 
                               required={parseFloat(formData.cost) > 0}
@@ -1369,7 +1369,7 @@ const App = () => {
                               }}
                               onInvalid={e => e.target.setCustomValidity('请填写')}
                               onInput={e => e.target.setCustomValidity('')}
-                              className={`w-full h-full px-4 pr-8 rounded-2xl text-base font-medium outline-none appearance-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                              className={`w-full h-full px-4 pr-8 rounded-2xl text-base font-medium outline-none appearance-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[800ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                               value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})}>
                               <option value=""></option>
                               <option value="USD">USD</option>
@@ -1384,11 +1384,11 @@ const App = () => {
                       </div>
 
                       <div className="flex flex-col gap-1.5">
-                        <label className={`text-[10px] font-black uppercase ml-1 flex justify-between transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>
+                        <label className={`text-[10px] font-black uppercase ml-1 flex justify-between transition-colors duration-[800ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>
                           <span>备注</span>
                           <span className="text-blue-500 font-normal opacity-100">（支持文本/链接）</span>
                         </label>
-                        <textarea className={`w-full p-4 rounded-2xl text-base font-medium min-h-[100px] outline-none resize-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                        <textarea className={`w-full p-4 rounded-2xl text-base font-medium min-h-[100px] outline-none resize-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[800ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                           onFocus={(e) => {
                             setTimeout(() => {
                               e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1423,15 +1423,15 @@ const App = () => {
                     }));
                     setShowTimeModal(false);
                     restoreZoom();
-                  }} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                  }} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[800ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
-                      <h2 className={`text-xl font-black transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑时间</h2>
-                      <button type="button" onClick={() => { setShowTimeModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
+                      <h2 className={`text-xl font-black transition-colors duration-[800ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑时间</h2>
+                      <button type="button" onClick={() => { setShowTimeModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[800ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
                     </div>
                     
                     <div className="space-y-4">
                       <div className="flex flex-col gap-1.5 min-w-0">
-                        <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>当日出发时间</label>
+                        <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[800ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>当日出发时间</label>
                         <input 
                           type="time" 
                           required 
@@ -1442,7 +1442,7 @@ const App = () => {
                           }}
                           onInvalid={e => e.target.setCustomValidity('请填写')}
                           onInput={e => e.target.setCustomValidity('')}
-                          className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-[400ms] [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                          className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-[800ms] [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                           value={timeEditData.time} onChange={e => setTimeEditData({...timeEditData, time: e.target.value})} />
                       </div>
                     </div>
@@ -1463,22 +1463,22 @@ const App = () => {
               <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
                 <div className={`fixed -inset-[200px] backdrop-blur-sm -z-10 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`}></div>
                 <div className="w-full max-w-md relative">
-                  <form onSubmit={handleSaveTransportDuration} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                  <form onSubmit={handleSaveTransportDuration} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[800ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
-                      <h2 className={`text-xl font-black transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑交通</h2>
-                      <button type="button" onClick={() => { setShowTransportModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
+                      <h2 className={`text-xl font-black transition-colors duration-[800ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑交通</h2>
+                      <button type="button" onClick={() => { setShowTransportModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[800ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
                     </div>
                     
                     <div className="space-y-4">
                       <div className="flex flex-col gap-1.5">
-                         <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间（分）</label>
+                         <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[800ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>时间（分）</label>
                          <input type="text" inputMode="numeric" pattern="[0-9]*" 
                           onFocus={(e) => {
                             setTimeout(() => {
                               e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             }, 300);
                           }}
-                          className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                          className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[800ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                           value={transportEditDuration} onChange={e => setTransportEditDuration(e.target.value.replace(/[^0-9]/g, ''))} />
                       </div>
                     </div>
@@ -1495,11 +1495,11 @@ const App = () => {
           {showImportModal && (
             <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
               <div className={`fixed -inset-[200px] backdrop-blur-md -z-10 ${isDarkMode ? 'bg-black/80' : 'bg-black/40'}`}></div>
-              <div className={`w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border border-white/5' : 'bg-white text-black'}`}>
+              <div className={`w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl transition-colors duration-[800ms] ${isDarkMode ? 'bg-[#1a1d23] border border-white/5' : 'bg-white text-black'}`}>
                 <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Download className="w-8 h-8 text-blue-500" />
                 </div>
-                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>识别到 {pendingImportData.length} 个地点</h2>
+                <h2 className={`text-xl font-black mb-1 transition-colors duration-[800ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>识别到 {pendingImportData.length} 个地点</h2>
                 <p className="text-[11px] opacity-80 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{activeTrip}</span></p>
                 
                 <div className="grid gap-3">
@@ -1515,12 +1515,12 @@ const App = () => {
         <style>{`
           html, body {
             background-color: ${isDarkMode ? '#000000' : '#e8e4d9'} !important;
-            ${isLoaded ? 'transition: background-color 0.4s ease;' : ''}
+            ${isLoaded ? 'transition: background-color 0.8s ease;' : ''}
           }
           ${!isLoaded ? '* { transition: none !important; }' : ''}
           .transition-colors {
             transition-property: background-color, border-color, text-decoration-color, fill, stroke !important;
-            transition-duration: 0.4s !important;
+            transition-duration: 0.8s !important;
             transition-timing-function: ease !important;
           }
           .no-scrollbar::-webkit-scrollbar { display: none; }
