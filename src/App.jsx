@@ -898,9 +898,9 @@ const App = () => {
             </header>
 
             <nav className={`${isMobileView ? 'px-3' : 'px-6'} py-4 flex gap-2 overflow-x-auto no-scrollbar items-center shrink-0`}>
-              <button onClick={() => setActiveTab('Total')} className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-5 rounded-xl text-xs font-black transition-all ${activeTab === 'Total' ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-70 hover:opacity-100'}`}>全部</button>
+              <button onClick={() => setActiveTab('Total')} className={`appearance-none relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-5 rounded-xl text-xs font-black transition-all ${activeTab === 'Total' ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-solid border-gray-300 dark:border-white/10 opacity-70 hover:opacity-100'}`}>全部</button>
               {dates.map(date => (
-                <button key={date} onClick={() => setActiveTab(date)} className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-4 rounded-xl text-xs font-black transition-all ${activeTab === date ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-gray-300 dark:border-white/10 opacity-70 hover:opacity-100'}`}>
+                <button key={date} onClick={() => setActiveTab(date)} className={`appearance-none relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-4 rounded-xl text-xs font-black transition-all ${activeTab === date ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-solid border-gray-300 dark:border-white/10 opacity-70 hover:opacity-100'}`}>
                   {date.split('-').slice(1).join('/')}
                 </button>
               ))}
@@ -914,7 +914,7 @@ const App = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="搜索" 
-                  className={`w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold transition-all outline-none border ${isDarkMode ? 'bg-white/5 focus:bg-white/10 shadow-sm text-white border-white/10' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-200'}`}
+                  className={`appearance-none w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold transition-all outline-none border ${isDarkMode ? 'bg-white/5 focus:bg-white/10 shadow-sm text-white border-white/10' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-200'}`}
                 />
               </div>
               <button onClick={handleRefresh} className={`p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-200'}`}>
@@ -1000,7 +1000,7 @@ const App = () => {
 
                           <div className={`relative flex ${isMobileView ? 'gap-2' : 'gap-4'} group z-10 pt-2`}>
                             <div className="flex flex-col items-center w-14 shrink-0 bg-transparent">
-                              <button onClick={() => toggleCheck(item.id)} className={`z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all shadow-lg hover:scale-110 active:scale-95 ${item.done ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')}`}>
+                              <button onClick={() => toggleCheck(item.id)} className={`z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all shadow-lg hover:scale-110 active:scale-90 ${item.done ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')}`}>
                                 {item.done ? <CheckCircle className="w-5 h-5"/> : item.order}
                               </button>
                               <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/5 border-white/[0.08]' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
@@ -1008,7 +1008,7 @@ const App = () => {
                               </div>
                             </div>
 
-                            <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.done ? 'opacity-50' : ''}`}>
+                            <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all group-active:scale-90 ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.done ? 'opacity-50' : ''}`}>
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1 min-w-0 pr-2">
                                   <h3 className={`font-semibold text-sm leading-snug select-text ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
@@ -1084,16 +1084,16 @@ const App = () => {
                           </div>
 
                           {idx < group.items.length - 1 && (
-                            <div key={`transport-${item.id}`} id={`transport-${item.id}`} className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-3 items-center relative z-10`}>
+                            <div key={`transport-${item.id}`} id={`transport-${item.id}`} className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-3 items-center relative z-10 group`}>
                               <div className="w-14 shrink-0 bg-transparent flex flex-col items-center justify-center relative z-20 -translate-y-5">
-                                <button onClick={() => toggleTransportCheck(item.id)} className={`w-6 h-6 rounded-full z-20 border-[3px] flex items-center justify-center transition shadow-lg hover:scale-110 active:scale-95 ${item.transportDone ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')}`}>
+                                <button onClick={() => toggleTransportCheck(item.id)} className={`w-6 h-6 rounded-full z-20 border-[3px] flex items-center justify-center transition shadow-lg hover:scale-110 active:scale-90 ${item.transportDone ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')}`}>
                                   {item.transportDone && <CheckCircle className="w-4 h-4"/>}
                                 </button>
                                 <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/5 border-white/[0.08]' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
                                   {item.endTimeStr}
                                 </div>
                               </div>
-                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed shadow-sm transition ${isDarkMode ? 'bg-white/[0.02] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
+                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed shadow-sm transition-all group-active:scale-90 ${isDarkMode ? 'bg-white/[0.02] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
                                 <div className="flex items-center min-w-0">
                                   <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
                                     <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : (item.transportDuration || 0) + 'm'}
@@ -1108,7 +1108,7 @@ const App = () => {
                                       const isActive = item.transportMode === mode;
                                       const Icon = config.icon;
                                       return (
-                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition transform-gpu ${isActive ? `${isDarkMode ? config.darkClass : config.lightClass} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
+                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition ${isActive ? `${isDarkMode ? config.darkClass : config.lightClass} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
                                           <Icon className="w-3.5 h-3.5" />
                                         </button>
                                       );
