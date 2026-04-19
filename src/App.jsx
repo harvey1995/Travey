@@ -30,6 +30,7 @@ if (typeof document !== 'undefined') {
   const bgColor = isDark ? '#000000' : '#e8e4d9';
   document.documentElement.style.backgroundColor = bgColor;
   const style = document.createElement('style');
+  style.id = 'travey-theme-style';
   style.innerHTML = `html, body { background-color: ${bgColor} !important; }`;
   document.head.appendChild(style);
 
@@ -233,6 +234,13 @@ const App = () => {
     localStorage.setItem('travey_theme_v1', JSON.stringify(isDarkMode));
     if (typeof document !== 'undefined') {
       const bgColor = isDarkMode ? '#000000' : '#e8e4d9';
+      
+      document.documentElement.style.backgroundColor = bgColor;
+      const globalStyle = document.getElementById('travey-theme-style');
+      if (globalStyle) {
+        globalStyle.innerHTML = `html, body { background-color: ${bgColor} !important; }`;
+      }
+      
       let metaTheme = document.querySelector('meta[name="theme-color"]');
       if (!metaTheme) {
         metaTheme = document.createElement('meta');
@@ -1487,7 +1495,7 @@ const App = () => {
 
         <style>{`
           html, body {
-            background-color: ${isDarkMode ? '#000000' : '#e8e4d9'};
+            background-color: ${isDarkMode ? '#000000' : '#e8e4d9'} !important;
             transition: background-color 0.5s;
           }
           .transition-colors {
