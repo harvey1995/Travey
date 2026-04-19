@@ -2,44 +2,41 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     
     <script>
       (function() {
         try {
-          // 1. 读取本地存储的主题设置
           var savedTheme = localStorage.getItem('travey_theme_v1');
           var isDark = true; // 默认深色
           
           if (savedTheme !== null) {
             isDark = JSON.parse(savedTheme);
-          } else {
-            // 可选：如果没设置过，跟随系统主题
-            // isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
           }
           
-          // 2. 区分深色/浅色背景
+          // 适配实际色号
           var bgColor = isDark ? '#000000' : '#e8e4d9';
           
-          // 3. 立即注入样式，阻断首次渲染
+          // 创建 style 标签
           var style = document.createElement('style');
           style.id = 'travey-theme-style';
+          // 这里的 transition: none 很关键，防止初始加载时背景色渐变
           style.innerHTML = 'html, body { background-color: ' + bgColor + ' !important; transition: none !important; }';
-          document.documentElement.appendChild(style);
+          document.head.appendChild(style);
           
-          // 4. 同步更新 theme-color 供移动端状态栏使用
+          // 创建 meta theme-color
           var metaTheme = document.createElement('meta');
           metaTheme.name = 'theme-color';
           metaTheme.content = bgColor;
-          document.documentElement.appendChild(metaTheme);
+          document.head.appendChild(metaTheme);
         } catch (e) {}
       })();
     </script>
+    
     <link rel="icon" type="image/svg+xml" href="/Travey/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/Travey/apple-touch-icon.png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Travey</title>
-    <script type="module" crossorigin src="/Travey/assets/index-B5V3t0-k.js"></script>
+    <script type="module" crossorigin src="/Travey/assets/index-CFlmWds3.js"></script>
     <link rel="stylesheet" crossorigin href="/Travey/assets/index-BIcbMqDF.css">
   </head>
   <body>
