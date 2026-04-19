@@ -167,7 +167,6 @@ const App = () => {
     }
     return true;
   });
-  const [safeAreaDarkMode, setSafeAreaDarkMode] = useState(isDarkMode);
   const [isSwitchingTheme, setIsSwitchingTheme] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [viewMode, setViewMode] = useState(() => {
@@ -246,9 +245,9 @@ const App = () => {
   }, [dailyStartTimes]);
 
   useEffect(() => {
-    localStorage.setItem('travey_theme_v1', JSON.stringify(safeAreaDarkMode));
+    localStorage.setItem('travey_theme_v1', JSON.stringify(isDarkMode));
     if (typeof document !== 'undefined') {
-      const bgColor = safeAreaDarkMode ? '#000000' : '#e8e4d9';
+      const bgColor = isDarkMode ? '#000000' : '#e8e4d9';
       
       document.documentElement.style.backgroundColor = bgColor;
       const globalStyle = document.getElementById('travey-theme-style');
@@ -264,7 +263,7 @@ const App = () => {
       }
       metaTheme.content = bgColor;
     }
-  }, [safeAreaDarkMode]);
+  }, [isDarkMode]);
 
   useEffect(() => {
     localStorage.setItem('travey_view_v1', viewMode);
@@ -348,9 +347,8 @@ const App = () => {
 
   const handleThemeToggle = () => {
     setIsSwitchingTheme(true);
-    setSafeAreaDarkMode(!isDarkMode);
+    setIsDarkMode(!isDarkMode);
     setTimeout(() => {
-      setIsDarkMode(!isDarkMode);
       setIsSwitchingTheme(false);
     }, 500);
   };
@@ -829,10 +827,6 @@ const App = () => {
   const currentDateStr = `${yyyy}-${mm}-${dd}`;
   const currentHourMin = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-  const currentSafeAreaColor = safeAreaDarkMode ? '#000000' : '#e8e4d9';
-  const topGradientStyle = { background: `linear-gradient(to bottom, ${currentSafeAreaColor} 0%, ${currentSafeAreaColor} env(safe-area-inset-top, 0px), transparent 100%)` };
-  const bottomGradientStyle = { background: `linear-gradient(to top, ${currentSafeAreaColor} 0%, ${currentSafeAreaColor} env(safe-area-inset-bottom, 0px), transparent 100%)` };
-
   return (
     <div className={`font-sans transition-colors duration-500 flex justify-center select-none ${bodyColor}`}>
       <div className={containerClasses}>
@@ -873,8 +867,6 @@ const App = () => {
           {previewIframeUrl && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className={`absolute -inset-[200px] backdrop-blur-sm ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`} onClick={() => setPreviewIframeUrl(null)}></div>
-               <div className="absolute top-0 left-0 right-0 h-[calc(env(safe-area-inset-top,0px)+60px)] pointer-events-none -z-10" style={topGradientStyle}></div>
-               <div className="absolute bottom-0 left-0 right-0 h-[calc(env(safe-area-inset-bottom,0px)+60px)] pointer-events-none -z-10" style={bottomGradientStyle}></div>
                <div className={`relative w-[95vw] h-[75dvh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setPreviewIframeUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
@@ -898,8 +890,6 @@ const App = () => {
           {notePreview && (
             <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className={`absolute -inset-[200px] backdrop-blur-sm ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`} onClick={() => setNotePreview(null)}></div>
-               <div className="absolute top-0 left-0 right-0 h-[calc(env(safe-area-inset-top,0px)+60px)] pointer-events-none -z-10" style={topGradientStyle}></div>
-               <div className="absolute bottom-0 left-0 right-0 h-[calc(env(safe-area-inset-bottom,0px)+60px)] pointer-events-none -z-10" style={bottomGradientStyle}></div>
                <div className={`relative w-[95vw] max-h-[75dvh] overflow-y-auto rounded-[2rem] p-8 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setNotePreview(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
@@ -1084,7 +1074,7 @@ const App = () => {
                                 onPointerUp={() => setActiveScaleId(null)}
                                 onPointerLeave={() => setActiveScaleId(null)}
                                 onClick={() => toggleCheck(item.id)} 
-                                className={`relative z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 active:scale-90 scale-100 before:absolute before:-inset-4 before:content-[''] before:rounded-full ${
+                                className={`relative z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 active:scale-90 scale-100 overflow-hidden ${
                                   item.done 
                                     ? 'bg-gray-500 border-gray-500/20 text-white' 
                                     : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')
@@ -1194,7 +1184,7 @@ const App = () => {
                                   onPointerUp={() => setActiveScaleId(null)}
                                   onPointerLeave={() => setActiveScaleId(null)}
                                   onClick={() => toggleTransportCheck(item.id)} 
-                                  className={`relative z-20 w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 active:scale-90 scale-100 before:absolute before:-inset-4 before:content-[''] before:rounded-full ${
+                                  className={`relative z-20 w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 active:scale-90 scale-100 overflow-hidden ${
                                     item.transportDone 
                                       ? 'bg-gray-500 border-gray-500/20 text-white' 
                                       : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')
@@ -1278,8 +1268,6 @@ const App = () => {
               
               <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
                 <div className={`absolute -inset-[200px] backdrop-blur-sm -z-10 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`}></div>
-                <div className="absolute top-0 left-0 right-0 h-[calc(env(safe-area-inset-top,0px)+60px)] pointer-events-none -z-10" style={topGradientStyle}></div>
-                <div className="absolute bottom-0 left-0 right-0 h-[calc(env(safe-area-inset-bottom,0px)+60px)] pointer-events-none -z-10" style={bottomGradientStyle}></div>
                 <div className="w-full max-w-md relative">
                   <form onSubmit={handleSubmitForm} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
@@ -1425,8 +1413,6 @@ const App = () => {
               
               <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
                 <div className={`absolute -inset-[200px] backdrop-blur-sm -z-10 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`}></div>
-                <div className="absolute top-0 left-0 right-0 h-[calc(env(safe-area-inset-top,0px)+60px)] pointer-events-none -z-10" style={topGradientStyle}></div>
-                <div className="absolute bottom-0 left-0 right-0 h-[calc(env(safe-area-inset-bottom,0px)+60px)] pointer-events-none -z-10" style={bottomGradientStyle}></div>
                 <div className="w-full max-w-md relative">
                   <form onSubmit={(e) => {
                     e.preventDefault();
@@ -1475,8 +1461,6 @@ const App = () => {
               
               <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
                 <div className={`absolute -inset-[200px] backdrop-blur-sm -z-10 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`}></div>
-                <div className="absolute top-0 left-0 right-0 h-[calc(env(safe-area-inset-top,0px)+60px)] pointer-events-none -z-10" style={topGradientStyle}></div>
-                <div className="absolute bottom-0 left-0 right-0 h-[calc(env(safe-area-inset-bottom,0px)+60px)] pointer-events-none -z-10" style={bottomGradientStyle}></div>
                 <div className="w-full max-w-md relative">
                   <form onSubmit={handleSaveTransportDuration} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
@@ -1510,8 +1494,6 @@ const App = () => {
           {showImportModal && (
             <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
               <div className={`absolute -inset-[200px] backdrop-blur-md -z-10 ${isDarkMode ? 'bg-black/80' : 'bg-black/40'}`}></div>
-              <div className="absolute top-0 left-0 right-0 h-[calc(env(safe-area-inset-top,0px)+60px)] pointer-events-none -z-10" style={topGradientStyle}></div>
-              <div className="absolute bottom-0 left-0 right-0 h-[calc(env(safe-area-inset-bottom,0px)+60px)] pointer-events-none -z-10" style={bottomGradientStyle}></div>
               <div className={`w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border border-white/5' : 'bg-white text-black'}`}>
                 <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Download className="w-8 h-8 text-blue-500" />
@@ -1531,7 +1513,8 @@ const App = () => {
 
         <style>{`
           html, body {
-            background-color: ${safeAreaDarkMode ? '#000000' : '#e8e4d9'} !important;
+            background-color: ${isDarkMode ? '#000000' : '#e8e4d9'} !important;
+            ${isLoaded ? 'transition: background-color 0.5s;' : ''}
           }
           ${!isLoaded ? '* { transition: none !important; }' : ''}
           .transition-colors {
