@@ -802,7 +802,7 @@ const App = () => {
           {previewIframeUrl && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPreviewIframeUrl(null)}></div>
-               <div className={`relative w-[95vw] h-[90vh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+               <div className={`relative w-[95vw] h-[75vh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setPreviewIframeUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
@@ -825,14 +825,11 @@ const App = () => {
           {notePreview && (
             <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setNotePreview(null)}></div>
-               <div className={`relative w-[95vw] max-h-[90vh] overflow-y-auto rounded-[2rem] p-8 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+               <div className={`relative w-[95vw] max-h-[75vh] overflow-y-auto rounded-[2rem] p-8 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                   <button onClick={() => setNotePreview(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
-                  <div 
-                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang SC", "PingFang SC", sans-serif' }}
-                    className={`text-2xl font-black whitespace-pre-wrap select-text leading-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
-                  >
+                  <div className={`text-2xl font-semibold whitespace-pre-wrap select-text leading-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     {notePreview}
                   </div>
                </div>
@@ -903,7 +900,7 @@ const App = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="搜索" 
-                  className={`w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-bold transition-all outline-none border ${isDarkMode ? 'bg-white/5 focus:bg-white/10 text-white border-transparent' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-200'}`}
+                  className={`w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold transition-all outline-none border ${isDarkMode ? 'bg-white/5 focus:bg-white/10 text-white border-transparent' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-200'}`}
                 />
               </div>
               <button onClick={handleRefresh} className={`p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 text-white border-transparent' : 'bg-white shadow-sm text-gray-700 border-gray-200'}`}>
@@ -947,7 +944,7 @@ const App = () => {
                       
                       <div className="flex gap-2">
                         <button onClick={() => toggleOverview(group.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
-                           <span className="text-xs font-black opacity-80">当日行程总览（{group.items.length}个地点）</span>
+                           <span className="text-xs font-semibold opacity-80">当日行程总览（{group.items.length}个地点）</span>
                            {isOverviewExpanded ? <ChevronUp className="w-4 h-4 opacity-60"/> : <ChevronDown className="w-4 h-4 opacity-60"/>}
                         </button>
                         <button onClick={() => { setTimeEditData({ date: group.date, time: dailyStartTimes[activeTrip]?.[group.date] || "08:00" }); setShowTimeModal(true); }} className={`px-3 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed transition-all shrink-0 ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
@@ -959,7 +956,7 @@ const App = () => {
                       {isOverviewExpanded && (
                         <div className={`mt-2 p-4 rounded-2xl text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
                           {group.items.length >= 2 && (
-                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[90vh]'} rounded-xl overflow-hidden mb-2 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
+                            <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75vh]'} rounded-xl overflow-hidden mb-2 border-4 transition-colors duration-500 ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                               <iframe 
                                 title="Daily Route"
                                 width="100%" 
@@ -992,13 +989,15 @@ const App = () => {
                               <button onClick={() => toggleCheck(item.id)} className={`z-10 w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all shadow-lg hover:scale-110 ${item.done ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')}`}>
                                 {item.done ? <CheckCircle className="w-5 h-5"/> : item.order}
                               </button>
-                              <div className="mt-2 text-[10px] font-black opacity-80 tabular-nums bg-transparent">{item.startTimeStr}</div>
+                              <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-[#0f1115]/80 border-white/10' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
+                                {item.startTimeStr}
+                              </div>
                             </div>
 
                             <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border transition-all ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200 shadow-sm'} ${item.done ? 'opacity-50' : ''}`}>
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1 min-w-0 pr-2">
-                                  <h3 className={`text-black-hack text-sm leading-snug select-text ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
+                                  <h3 className={`font-semibold text-sm leading-snug select-text ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
                                   {item.city && (
                                     <div className="flex items-center gap-1 mt-1 opacity-80">
                                       <MapPin className="w-3 h-3" />
@@ -1024,7 +1023,7 @@ const App = () => {
                                   return (
                                     <div 
                                       onClick={() => setNotePreview(item.note)}
-                                      className={`mt-3 mb-3 text-[12px] font-bold px-3 py-2 rounded-xl cursor-pointer whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text transition-colors ${isDarkMode ? 'text-gray-300 bg-black/20 hover:bg-black/40 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-200 border-gray-300'}`}
+                                      className={`mt-3 mb-3 text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-white/5 hover:bg-white/10 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'}`}
                                     >
                                       {item.note}
                                     </div>
@@ -1038,13 +1037,13 @@ const App = () => {
                                     {textPart && (
                                       <div 
                                         onClick={() => setNotePreview(item.note)}
-                                        className={`w-full text-[12px] font-bold px-3 py-2 rounded-xl cursor-pointer whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text transition-colors ${isDarkMode ? 'text-gray-300 bg-black/20 hover:bg-black/40 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-200 border-gray-300'}`}
+                                        className={`w-full text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-white/5 hover:bg-white/10 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'}`}
                                       >
                                         {textPart}
                                       </div>
                                     )}
                                     {urls.map((url, i) => (
-                                      <div key={i} onClick={() => setPreviewIframeUrl(url)} className={`text-[12px] font-bold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate w-full block select-text ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
+                                      <div key={i} onClick={() => setPreviewIframeUrl(url)} className={`text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate w-full block select-text ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
                                         {url.length > 28 ? url.substring(0, 20) + '...' + url.slice(-8) : url}
                                       </div>
                                     ))}
@@ -1076,7 +1075,7 @@ const App = () => {
                                 <button onClick={() => toggleTransportCheck(item.id)} className={`w-6 h-6 rounded-full z-20 border-[3px] flex items-center justify-center transition shadow-lg hover:scale-110 ${item.transportDone ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')}`}>
                                   {item.transportDone && <CheckCircle className="w-4 h-4"/>}
                                 </button>
-                                <div className="mt-2 text-[10px] font-black opacity-80 tabular-nums bg-transparent">
+                                <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-[#0f1115]/80 border-white/10' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
                                   {item.endTimeStr}
                                 </div>
                               </div>
@@ -1399,10 +1398,6 @@ const App = () => {
           input[type="date"], input[type="time"] {
             display: flex;
             align-items: center;
-          }
-          .text-black-hack {
-            font-weight: 900;
-            -webkit-text-stroke: 0.5px currentColor;
           }
         `}</style>
       </div>
