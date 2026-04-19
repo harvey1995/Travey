@@ -888,19 +888,37 @@ const App = () => {
                 <button onClick={handleExport} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500/10 text-green-600 dark:text-green-500 border border-green-500/20 text-xs font-black hover:bg-green-500/20 transition-all">
                   <Upload className="w-4 h-4" /> 导出
                 </button>
-                <button onClick={handleUndo} disabled={past.length === 0} className={`w-10 flex items-center justify-center rounded-xl border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30'}`}>
+                <button onClick={handleUndo} disabled={past.length === 0} className={`w-10 flex items-center justify-center rounded-xl border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-white/10 text-white disabled:opacity-20' : 'bg-white border-gray-300 text-gray-700 disabled:opacity-30'}`}>
                   <Undo2 className="w-4 h-4" />
                 </button>
-                <button onClick={handleRedo} disabled={future.length === 0} className={`w-10 flex items-center justify-center rounded-xl border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-transparent text-white disabled:opacity-20' : 'bg-white border-gray-200 text-gray-800 disabled:opacity-30'}`}>
+                <button onClick={handleRedo} disabled={future.length === 0} className={`w-10 flex items-center justify-center rounded-xl border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-white/10 text-white disabled:opacity-20' : 'bg-white border-gray-300 text-gray-700 disabled:opacity-30'}`}>
                   <Redo2 className="w-4 h-4" />
                 </button>
               </div>
             </header>
 
             <nav className={`${isMobileView ? 'px-3' : 'px-6'} py-4 flex gap-2 overflow-x-auto no-scrollbar items-center shrink-0`}>
-              <button onClick={() => setActiveTab('Total')} className={`appearance-none relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-5 rounded-xl text-xs font-black transition-all ${activeTab === 'Total' ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-solid border-gray-300 dark:border-white/10 opacity-70 hover:opacity-100'}`}>全部</button>
+              <button 
+                onClick={() => setActiveTab('Total')} 
+                className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-5 rounded-xl text-xs font-black transition-all border border-solid box-border ${
+                  activeTab === 'Total' 
+                    ? (isDarkMode ? 'bg-white text-black shadow-lg border-transparent' : 'bg-gray-800 text-white shadow-lg border-transparent') 
+                    : (isDarkMode ? 'bg-transparent border-white/20 text-gray-400 hover:text-white hover:border-white/40' : 'bg-white shadow-sm border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300')
+                }`}
+              >
+                全部
+              </button>
+
               {dates.map(date => (
-                <button key={date} onClick={() => setActiveTab(date)} className={`appearance-none relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-4 rounded-xl text-xs font-black transition-all ${activeTab === date ? (isDarkMode ? 'bg-white text-black shadow-lg border border-transparent' : 'bg-gray-800 text-white shadow-lg border border-transparent') : 'bg-transparent border border-solid border-gray-300 dark:border-white/10 opacity-70 hover:opacity-100'}`}>
+                <button 
+                  key={date} 
+                  onClick={() => setActiveTab(date)} 
+                  className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-4 rounded-xl text-xs font-black transition-all border border-solid box-border ${
+                    activeTab === date 
+                      ? (isDarkMode ? 'bg-white text-black shadow-lg border-transparent' : 'bg-gray-800 text-white shadow-lg border-transparent') 
+                      : (isDarkMode ? 'bg-transparent border-white/20 text-gray-400 hover:text-white hover:border-white/40' : 'bg-white shadow-sm border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300')
+                  }`}
+                >
                   {date.split('-').slice(1).join('/')}
                 </button>
               ))}
@@ -914,13 +932,13 @@ const App = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="搜索" 
-                  className={`appearance-none w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold transition-all outline-none border ${isDarkMode ? 'bg-white/5 focus:bg-white/10 shadow-sm text-white border-white/10' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-200'}`}
+                  className={`appearance-none w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold transition-all outline-none border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-300'}`}
                 />
               </div>
-              <button onClick={handleRefresh} className={`p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-200'}`}>
+              <button onClick={handleRefresh} className={`p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
                 <RefreshCw className="w-4 h-4 opacity-50 hover:opacity-100" />
               </button>
-              <button onClick={handleLocate} className={`p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-200'}`}>
+              <button onClick={handleLocate} className={`p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
                 <Locate className="w-4 h-4 opacity-50 hover:opacity-100" />
               </button>
             </div>
@@ -946,7 +964,7 @@ const App = () => {
                             className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
                             onClick={() => {
                               if (group.items[0]?.city) {
-                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + ' ' + formattedDate + ' 天气')}&igu=1`);
+                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + ' ' + formattedDate + ' 天气')}&igu=1&hl=zh-CN&gl=CN`);
                               }
                             }}
                           >
@@ -957,7 +975,7 @@ const App = () => {
                       </div>
                       
                       <div className="flex gap-2">
-                        <button onClick={() => toggleOverview(group.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
+                        <button onClick={() => toggleOverview(group.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/60'}`}>
                            <span className="text-xs font-semibold opacity-80">当日行程总览（{group.items.length}个地点）</span>
                            {isOverviewExpanded ? <ChevronUp className="w-4 h-4 opacity-60"/> : <ChevronDown className="w-4 h-4 opacity-60"/>}
                         </button>
@@ -1008,7 +1026,7 @@ const App = () => {
                               </div>
                             </div>
 
-                            <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all group-active:scale-90 ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.done ? 'opacity-50' : ''}`}>
+                            <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.done ? 'opacity-50' : ''}`}>
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1 min-w-0 pr-2">
                                   <h3 className={`font-semibold text-sm leading-snug select-text ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
@@ -1086,14 +1104,14 @@ const App = () => {
                           {idx < group.items.length - 1 && (
                             <div key={`transport-${item.id}`} id={`transport-${item.id}`} className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-3 items-center relative z-10 group`}>
                               <div className="w-14 shrink-0 bg-transparent flex flex-col items-center justify-center relative z-20 -translate-y-5">
-                                <button onClick={() => toggleTransportCheck(item.id)} className={`w-6 h-6 rounded-full z-20 border-[3px] flex items-center justify-center transition shadow-lg hover:scale-110 active:scale-90 ${item.transportDone ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')}`}>
+                                <button onClick={() => toggleTransportCheck(item.id)} className={`w-6 h-6 rounded-full z-20 border-[3px] flex items-center justify-center transition-all shadow-lg hover:scale-110 active:scale-90 ${item.transportDone ? 'bg-gray-500 border-gray-500/20 text-white' : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')}`}>
                                   {item.transportDone && <CheckCircle className="w-4 h-4"/>}
                                 </button>
                                 <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/5 border-white/[0.08]' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
                                   {item.endTimeStr}
                                 </div>
                               </div>
-                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed shadow-sm transition-all group-active:scale-90 ${isDarkMode ? 'bg-white/[0.02] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
+                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed shadow-sm transition-all ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
                                 <div className="flex items-center min-w-0">
                                   <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-500 ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
                                     <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : (item.transportDuration || 0) + 'm'}
@@ -1108,7 +1126,7 @@ const App = () => {
                                       const isActive = item.transportMode === mode;
                                       const Icon = config.icon;
                                       return (
-                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition ${isActive ? `${isDarkMode ? config.darkClass : config.lightClass} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
+                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition hover:scale-105 ${isActive ? `${isDarkMode ? config.darkClass : config.lightClass} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
                                           <Icon className="w-3.5 h-3.5" />
                                         </button>
                                       );
@@ -1124,7 +1142,7 @@ const App = () => {
                                       const dirflg = dirflgMap[item.transportMode || 'train'];
                                       setPreviewIframeUrl(`https://maps.google.com/maps?saddr=${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
                                     }}
-                                    className={`${isMobileView ? 'px-2.5' : 'px-4'} py-1.5 rounded-lg text-[11px] font-black transition flex items-center gap-1 shrink-0 ${
+                                    className={`${isMobileView ? 'px-2.5' : 'px-4'} py-1.5 rounded-lg text-[11px] font-black transition hover:scale-105 flex items-center gap-1 shrink-0 ${
                                       isDarkMode ? TRANSPORT_ESTIMATES[item.transportMode || 'walk'].darkClass : TRANSPORT_ESTIMATES[item.transportMode || 'walk'].lightClass
                                     }`}
                                   >
@@ -1162,7 +1180,7 @@ const App = () => {
                   <form onSubmit={handleSubmitForm} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
                       <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
-                      <button type="button" onClick={() => { setShowModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
+                      <button type="button" onClick={() => { setShowModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
                     </div>
                     
                     <div className="space-y-4">
@@ -1314,7 +1332,7 @@ const App = () => {
                   }} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
                       <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑时间</h2>
-                      <button type="button" onClick={() => { setShowTimeModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
+                      <button type="button" onClick={() => { setShowTimeModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
                     </div>
                     
                     <div className="space-y-4">
@@ -1353,7 +1371,7 @@ const App = () => {
                   <form onSubmit={handleSaveTransportDuration} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
                       <h2 className={`text-xl font-black transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑交通</h2>
-                      <button type="button" onClick={() => { setShowTransportModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
+                      <button type="button" onClick={() => { setShowTransportModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
                     </div>
                     
                     <div className="space-y-4">
