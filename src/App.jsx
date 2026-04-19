@@ -24,6 +24,12 @@ import {
   Moon, Sun, Monitor, Smartphone
 } from 'lucide-react';
 
+if (typeof document !== 'undefined') {
+  const savedTheme = localStorage.getItem('travey_theme_v1');
+  const isDark = savedTheme !== null ? JSON.parse(savedTheme) : true;
+  document.documentElement.style.backgroundColor = isDark ? '#000000' : '#e8e4d9';
+}
+
 // --- 工具函数 ---
 const getTodayDate = () => new Date().toISOString().split('T')[0];
 
@@ -199,7 +205,6 @@ const App = () => {
   const [transportEditId, setTransportEditId] = useState(null);
   const [transportEditDuration, setTransportEditDuration] = useState('');
 
-  // 记录实际当前时间，用于计算过往的虚线进度条
   const [now, setNow] = useState(() => new Date());
   const [activeScaleId, setActiveScaleId] = useState(null);
 
@@ -939,7 +944,7 @@ const App = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="搜索" 
-                  className={`appearance-none w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold transition-all outline-none border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-300'}`}
+                  className={`appearance-none w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold transition-all outline-none border text-opacity-50 group-hover:text-opacity-100 placeholder:opacity-50 group-hover:placeholder:opacity-100 ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-300'}`}
                 />
               </div>
               <button onClick={handleRefresh} className={`group p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
