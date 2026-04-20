@@ -946,7 +946,7 @@ const App = () => {
             <nav className={`${isMobileView ? 'px-3' : 'px-6'} py-4 flex gap-2 overflow-x-auto no-scrollbar items-center shrink-0`}>
               <button 
                 onClick={() => setActiveTab('Total')} 
-                className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-5 rounded-xl text-xs font-black transition-all border border-solid box-border ${
+                className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] w-[72px] rounded-xl text-xs font-black transition-all border border-solid box-border ${
                   activeTab === 'Total' 
                     ? (isDarkMode ? 'bg-white text-black shadow-lg border-transparent' : 'bg-gray-800 text-white shadow-lg border-transparent') 
                     : (isDarkMode ? 'bg-transparent border-white/20 text-gray-400 hover:text-white hover:border-white/40' : 'bg-white shadow-sm border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300')
@@ -959,7 +959,7 @@ const App = () => {
                 <button 
                   key={date} 
                   onClick={() => setActiveTab(date)} 
-                  className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] px-4 rounded-xl text-xs font-black transition-all border border-solid box-border ${
+                  className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] w-[72px] rounded-xl text-xs font-black transition-all border border-solid box-border ${
                     activeTab === date 
                       ? (isDarkMode ? 'bg-white text-black shadow-lg border-transparent' : 'bg-gray-800 text-white shadow-lg border-transparent') 
                       : (isDarkMode ? 'bg-transparent border-white/20 text-gray-400 hover:text-white hover:border-white/40' : 'bg-white shadow-sm border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300')
@@ -1099,7 +1099,7 @@ const App = () => {
                               </div>
                             </div>
 
-                            <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all duration-300 transform ${activeScaleId === item.id ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.done ? 'opacity-50' : ''}`}>
+                            <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all duration-300 transform-gpu ${activeScaleId === item.id ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.done ? 'opacity-50' : ''}`}>
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1 min-w-0 pr-2">
                                   <h3 className={`font-semibold text-sm leading-snug select-text ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
@@ -1163,10 +1163,10 @@ const App = () => {
                                 </div>
                                 
                                 <div className="flex gap-1.5">
-                                  <button onClick={() => openEditModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition-all ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
+                                  <button onClick={() => openEditModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition-all flex items-center justify-center ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
                                     <SquarePen className="w-3.5 h-3.5" />
                                   </button>
-                                  <button onClick={() => handleDelete(item.id)} className={`p-1.5 rounded-lg hover:scale-105 transition-all ${isDarkMode ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>
+                                  <button onClick={() => handleDelete(item.id)} className={`p-1.5 rounded-lg hover:scale-105 transition-all flex items-center justify-center ${isDarkMode ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
@@ -1203,14 +1203,14 @@ const App = () => {
                                   {item.endTimeStr}
                                 </div>
                               </div>
-                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed shadow-sm transition-all duration-300 transform ${activeScaleId === `transport-${item.id}` ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
+                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed shadow-sm transition-all duration-300 transform-gpu ${activeScaleId === `transport-${item.id}` ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
                                 <div className="flex items-center min-w-0">
                                   <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
                                     <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : (item.transportDuration || 0) + 'm'}
                                   </div>
                                 </div>
                                 <div className={`flex items-center shrink-0 ${isMobileView ? 'gap-2' : 'gap-3'}`}>
-                                  <button onClick={() => openTransportModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
+                                  <button onClick={() => openTransportModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition flex items-center justify-center ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
                                     <SquarePen className="w-3.5 h-3.5" />
                                   </button>
                                   <div className="flex gap-1 shrink-0">
@@ -1218,7 +1218,7 @@ const App = () => {
                                       const isActive = item.transportMode === mode;
                                       const Icon = config.icon;
                                       return (
-                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition hover:scale-105 ${isActive ? `${isDarkMode ? config.darkClass : config.lightClass} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
+                                        <button key={mode} onClick={() => handleUpdateTransport(item.id, mode)} className={`p-1.5 rounded-lg transition hover:scale-105 flex items-center justify-center ${isActive ? `${isDarkMode ? config.darkClass : config.lightClass} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100'}`}>
                                           <Icon className="w-3.5 h-3.5" />
                                         </button>
                                       );
