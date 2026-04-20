@@ -24,29 +24,34 @@ import {
   Clock, Wallet
 } from 'lucide-react';
 
-if (typeof document !== 'undefined') {
-  const savedTheme = localStorage.getItem('travey_theme_v1');
-  const isDark = savedTheme !== null ? JSON.parse(savedTheme) : true;
-  const bgColor = isDark ? '#000000' : '#e8e4d9';
-  document.documentElement.style.backgroundColor = bgColor;
-  const style = document.createElement('style');
-  style.id = 'travey-theme-style';
-  style.innerHTML = `html, body { background-color: ${bgColor} !important; }`;
-  document.head.appendChild(style);
+const CACHE_KEY_TRIP_DATA = 'travey_data_v1';
+const CACHE_KEY_TRIP_NAME = 'travey_active_v1';
+const CACHE_KEY_DARK_MODE = 'travey_theme_v1';
+const CACHE_KEY_VIEW_MODE = 'travey_view_v1';
+const CACHE_KEY_START_TIME = 'travey_start_times_v1';
 
-  let metaTheme = document.querySelector('meta[name="theme-color"]');
-  if (!metaTheme) {
-    metaTheme = document.createElement('meta');
-    metaTheme.name = 'theme-color';
-    document.head.appendChild(metaTheme);
-  }
-  metaTheme.content = bgColor;
-}
+const TRANSPORT_MODE = {
+  car: { label: '打车', icon: Car, lightClass: 'text-orange-600 bg-orange-100 hover:bg-orange-200', darkClass: 'text-orange-400 bg-orange-500/10 hover:bg-orange-500/20', alert: null },
+  train: { label: '公交', icon: Train, lightClass: 'text-red-600 bg-red-100 hover:bg-red-200', darkClass: 'text-red-400 bg-red-500/10 hover:bg-red-500/20', alert: null },
+  walk: { label: '步行', icon: Footprints, lightClass: 'text-blue-600 bg-blue-100 hover:bg-blue-200', darkClass: 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20', alert: null }
+};
 
-const getTodayDate = () => new Date().toISOString().split('T')[0];
+const DEFAULT_TOKYO_TRIP = [
+  { date: "2025-12-31", id: "tokyo-1", city: "Tokyo", name: "涩谷十字路口", locationDuration: 60, note: "感受世界最繁忙的交叉路口，看跨年倒计时准备", cost: 0, currency: "JPY", isLocationChecked: true, order: 1, transportMode: 'walk', transportRoute: '' },
+  { date: "2025-12-31", id: "tokyo-2", city: "Tokyo", name: "SHIBUYA SKY", locationDuration: 90, note: "https://www.shibuya-scramble-square.com/sky/", cost: 2500, currency: "JPY", isLocationChecked: false, order: 2, transportMode: 'train', transportRoute: '山手线' },
+  { date: "2025-12-31", id: "tokyo-3", city: "Tokyo", name: "明治神宫", locationDuration: 120, note: "参加「初诣」，体验日本传统跨年参拜", cost: 0, currency: "JPY", isLocationChecked: false, order: 3, transportMode: 'walk', transportRoute: '' },
+  { date: "2026-01-01", id: "tokyo-4", city: "Tokyo", name: "浅草寺", locationDuration: 120, note: "求御守，吃人形烧，看元旦仲见世商店街", cost: 1000, currency: "JPY", isLocationChecked: false, order: 1, transportMode: 'train', transportRoute: '银座线' },
+  { date: "2026-01-01", id: "tokyo-5", city: "Tokyo", name: "上野恩赐公园", locationDuration: 180, note: "漫步博物馆群，呼吸新年第一份新鲜空气", cost: 0, currency: "JPY", isLocationChecked: false, order: 2, transportMode: 'walk', transportRoute: '' },
+  { date: "2026-01-02", id: "tokyo-6", city: "Tokyo", name: "丰洲市场", locationDuration: 120, note: "吃最正宗的寿司早餐，看金枪鱼拍卖展示", cost: 5000, currency: "JPY", isLocationChecked: false, order: 1, transportMode: 'train', transportRoute: '百合鸥号' },
+  { date: "2026-01-02", id: "tokyo-7", city: "Tokyo", name: "银座", locationDuration: 240, note: "新年大特卖「福袋」抢购，买伴手礼", cost: 20000, currency: "JPY", isLocationChecked: false, order: 2, transportMode: 'walk', transportRoute: '' },
+];
+
+const DEFAULT_TRIP = { "东京跨年三日游": DEFAULT_TOKYO_TRIP };
+
+const getCurrentDate = () => new Date().toISOString().split('T')[0];
 
 const sanitizeDate = (dateStr) => {
-  if (!dateStr) return getTodayDate();
+  if (!dateStr) return getCurrentDate();
   let cleaned = dateStr.toString().trim().replace(/\//g, '-').replace(/[^\d-]/g, '');
   const parts = cleaned.split('-');
   if (parts.length === 3) {
@@ -58,247 +63,157 @@ const sanitizeDate = (dateStr) => {
     if (!isNaN(new Date(formatted).getTime())) return formatted;
   }
   const d = new Date(dateStr);
-  return isNaN(d.getTime()) ? getTodayDate() : d.toISOString().split('T')[0];
+  return isNaN(d.getTime()) ? getCurrentDate() : d.toISOString().split('T')[0];
 };
 
-const isUrl = (str) => {
+const isValidUrl = (str) => {
   try { new URL(str); return true; } catch { return false; }
 };
 
-const TRANSPORT_ESTIMATES = {
-  car: { label: '打车', icon: Car, lightClass: 'text-orange-600 bg-orange-100 hover:bg-orange-200', darkClass: 'text-orange-400 bg-orange-500/10 hover:bg-orange-500/20', alert: null },
-  train: { label: '公交', icon: Train, lightClass: 'text-red-600 bg-red-100 hover:bg-red-200', darkClass: 'text-red-400 bg-red-500/10 hover:bg-red-500/20', alert: null },
-  walk: { label: '步行', icon: Footprints, lightClass: 'text-blue-600 bg-blue-100 hover:bg-blue-200', darkClass: 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20', alert: null }
-};
+if (typeof document !== 'undefined') {
+  const initialThemeCache = localStorage.getItem(CACHE_KEY_DARK_MODE);
+  const isInitialDark = initialThemeCache !== null ? JSON.parse(initialThemeCache) : true;
+  const initialBgColor = isInitialDark ? '#000000' : '#e8e4d9';
+  document.documentElement.style.backgroundColor = initialBgColor;
+  const themeStyleTag = document.createElement('style');
+  themeStyleTag.id = 'travey-theme-style';
+  themeStyleTag.innerHTML = `html, body { background-color: ${initialBgColor} !important; }`;
+  document.head.appendChild(themeStyleTag);
 
-const TOKYO_TRIP = [
-  { date: "2025-12-31", id: "tokyo-1", city: "Tokyo", name: "涩谷十字路口", duration: 60, note: "感受世界最繁忙的交叉路口，看跨年倒计时准备", cost: 0, currency: "JPY", done: true, order: 1, transportMode: 'walk', transitRoute: '' },
-  { date: "2025-12-31", id: "tokyo-2", city: "Tokyo", name: "SHIBUYA SKY", duration: 90, note: "https://www.shibuya-scramble-square.com/sky/", cost: 2500, currency: "JPY", done: false, order: 2, transportMode: 'train', transitRoute: '山手线' },
-  { date: "2025-12-31", id: "tokyo-3", city: "Tokyo", name: "明治神宫", duration: 120, note: "参加「初诣」，体验日本传统跨年参拜", cost: 0, currency: "JPY", done: false, order: 3, transportMode: 'walk', transitRoute: '' },
-  { date: "2026-01-01", id: "tokyo-4", city: "Tokyo", name: "浅草寺", duration: 120, note: "求御守，吃人形烧，看元旦仲见世商店街", cost: 1000, currency: "JPY", done: false, order: 1, transportMode: 'train', transitRoute: '银座线' },
-  { date: "2026-01-01", id: "tokyo-5", city: "Tokyo", name: "上野恩赐公园", duration: 180, note: "漫步博物馆群，呼吸新年第一份新鲜空气", cost: 0, currency: "JPY", done: false, order: 2, transportMode: 'walk', transitRoute: '' },
-  { date: "2026-01-02", id: "tokyo-6", city: "Tokyo", name: "丰洲市场", duration: 120, note: "吃最正宗的寿司早餐，看金枪鱼拍卖展示", cost: 5000, currency: "JPY", done: false, order: 1, transportMode: 'train', transitRoute: '百合鸥号' },
-  { date: "2026-01-02", id: "tokyo-7", city: "Tokyo", name: "银座", duration: 240, note: "新年大特卖「福袋」抢购，买伴手礼", cost: 20000, currency: "JPY", done: false, order: 2, transportMode: 'walk', transitRoute: '' },
-];
-
-const INITIAL_TRIPS = { "东京跨年三日游": TOKYO_TRIP };
+  let themeMetaTag = document.querySelector('meta[name="theme-color"]');
+  if (!themeMetaTag) {
+    themeMetaTag = document.createElement('meta');
+    themeMetaTag.name = 'theme-color';
+    document.head.appendChild(themeMetaTag);
+  }
+  themeMetaTag.content = initialBgColor;
+}
 
 const App = () => {
-  const [trips, setTrips] = useState(() => {
+  const [tripData, setTripData] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('travey_data_v1');
+      const saved = localStorage.getItem(CACHE_KEY_TRIP_DATA);
       if (saved) return JSON.parse(saved);
     }
-    return INITIAL_TRIPS;
+    return DEFAULT_TRIP;
   });
-
-  const [activeTrip, setActiveTrip] = useState(() => {
+  const [tripName, setTripName] = useState(() => {
     if (typeof window !== 'undefined') {
-      const savedActive = localStorage.getItem('travey_active_v1');
-      return savedActive && trips[savedActive] ? savedActive : Object.keys(trips)[0] || "东京跨年三日游";
+      const savedActive = localStorage.getItem(CACHE_KEY_TRIP_NAME);
+      return savedActive && tripData[savedActive] ? savedActive : Object.keys(tripData)[0] || "东京跨年三日游";
     }
     return "东京跨年三日游";
   });
-
-  const [past, setPast] = useState([]);
-  const [future, setFuture] = useState([]);
-
-  useEffect(() => {
-    localStorage.setItem('travey_data_v1', JSON.stringify(trips));
-    localStorage.setItem('travey_active_v1', activeTrip);
-  }, [trips, activeTrip]);
-
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-
-  const [activeTab, setActiveTab] = useState("Total"); 
-  const [isDarkMode, setIsDarkMode] = useState(() => {
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
+  const [isEditingTripName, setIsEditingTripName] = useState(false);
+  const [draftTripName, setDraftTripName] = useState("");
+  const [dailyStartTime, setDailyStartTime] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('travey_theme_v1');
-      if (saved !== null) return JSON.parse(saved);
-    }
-    return true;
-  });
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [viewMode, setViewMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('travey_view_v1');
-      if (saved) return saved;
-      return (window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) ? 'mobile' : 'web';
-    }
-    return 'web';
-  }); 
-  const [isNarrow, setIsNarrow] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 768;
-    }
-    return false;
-  });
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  const [expandedDates, setExpandedDates] = useState({});
-  const [previewIframeUrl, setPreviewIframeUrl] = useState(null);
-  const [notePreview, setNotePreview] = useState(null);
-
-  const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('add');
-  const [editingId, setEditingId] = useState(null);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [pendingImportData, setPendingImportData] = useState([]);
-
-  const [lastSelectedCurrency, setLastSelectedCurrency] = useState('USD');
-
-  const [formData, setFormData] = useState({ 
-    name: '', date: getTodayDate(), duration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'walk', transitRoute: '' 
-  });
-
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success', id: 0 });
-  const [weatherData, setWeatherData] = useState({});
-  const [weatherRefreshTrigger, setWeatherRefreshTrigger] = useState(0);
-
-  const [dailyStartTimes, setDailyStartTimes] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('travey_start_times_v1');
+      const saved = localStorage.getItem(CACHE_KEY_START_TIME);
       if (saved) return JSON.parse(saved);
     }
     return {};
   });
 
-  const [showTimeModal, setShowTimeModal] = useState(false);
-  const [timeEditData, setTimeEditData] = useState({ date: '', time: '08:00' });
+  const [isAppLoading, setIsAppLoading] = useState(true);
+  const [isAppLoaded, setIsAppLoaded] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(CACHE_KEY_DARK_MODE);
+      if (saved !== null) return JSON.parse(saved);
+    }
+    return true;
+  });
+  const [isWindowNarrow, setIsWindowNarrow] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+  const [deviceViewMode, setDeviceViewMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(CACHE_KEY_VIEW_MODE);
+      if (saved) return saved;
+      return (window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) ? 'mobile' : 'web';
+    }
+    return 'web';
+  });
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+  const [lastSelectedCurrency, setLastSelectedCurrency] = useState('USD');
+
+  const [toastState, setToastState] = useState({ show: false, message: '', type: 'success', id: 0 });
+  const [activeDateTab, setActiveDateTab] = useState("Total"); 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedOverviewDate, setExpandedOverviewDate] = useState({});
+  const [weatherForecast, setWeatherForecast] = useState({});
+  const [weatherRefreshTrigger, setWeatherRefreshTrigger] = useState(0);
+
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [locationModalMode, setLocationModalMode] = useState('add');
+  const [editingLocationId, setEditingLocationId] = useState(null);
+  const [locationData, setLocationData] = useState({ 
+    name: '', date: getCurrentDate(), locationDuration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'walk', transportRoute: '' 
+  });
 
   const [showTransportModal, setShowTransportModal] = useState(false);
-  const [transportEditId, setTransportEditId] = useState(null);
-  const [transportEditDuration, setTransportEditDuration] = useState('');
+  const [editingTransportId, setEditingTransportId] = useState(null);
+  const [transportData, setTransportData] = useState('');
 
-  const [now, setNow] = useState(() => new Date());
-  const [activeScaleId, setActiveScaleId] = useState(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [showStartTimeModal, setShowStartTimeModal] = useState(false);
+  const [startTimeData, setStartTimeData] = useState({ date: '', time: '08:00' });
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoaded(true), 50);
-    return () => clearTimeout(timer);
-  }, []);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [pendingImportedData, setPendingImportedData] = useState([]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsInitialLoading(false);
-    }, 400); 
-    return () => clearTimeout(timer);
-  }, []);
+  const [mapPreviewUrl, setMapPreviewUrl] = useState(null);
+  const [notePreviewText, setNotePreviewText] = useState(null);
+  const [activePressId, setActivePressId] = useState(null);
 
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('travey_start_times_v1', JSON.stringify(dailyStartTimes));
-  }, [dailyStartTimes]);
-
-  useEffect(() => {
-    localStorage.setItem('travey_theme_v1', JSON.stringify(isDarkMode));
-    if (typeof document !== 'undefined') {
-      const bgColor = isDarkMode ? '#000000' : '#e8e4d9';
-      
-      document.documentElement.style.backgroundColor = bgColor;
-      const globalStyle = document.getElementById('travey-theme-style');
-      if (globalStyle) {
-        globalStyle.innerHTML = `html, body { background-color: ${bgColor} !important; }`;
-      }
-      
-      let metaTheme = document.querySelector('meta[name="theme-color"]');
-      if (!metaTheme) {
-        metaTheme = document.createElement('meta');
-        metaTheme.name = 'theme-color';
-        document.head.appendChild(metaTheme);
-      }
-      metaTheme.content = bgColor;
-    }
-  }, [isDarkMode]);
-
-  useEffect(() => {
-    localStorage.setItem('travey_view_v1', viewMode);
-  }, [viewMode]);
-
-  useEffect(() => {
-    if (toast.show) {
-      const timer = setTimeout(() => {
-        setToast(prev => ({ ...prev, show: false }));
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast.show, toast.id]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const handleResize = () => setIsNarrow(window.innerWidth < 768);
-      handleResize();
-      window.addEventListener('resize', handleResize);
-      
-      const savedView = localStorage.getItem('travey_view_v1');
-      if (!savedView) {
-        const isMobile = window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        setViewMode(isMobile ? 'mobile' : 'web');
-      }
-      
-      return () => window.removeEventListener('resize', handleResize);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (showModal && modalMode === 'add') {
-      const currentTripData = trips[activeTrip] || [];
-      const sameDayItems = currentTripData.filter(item => sanitizeDate(item.date) === formData.date);
-      const maxOrder = sameDayItems.reduce((max, item) => Math.max(max, parseInt(item.order) || 0), 0);
-      setFormData(prev => ({ ...prev, order: String(maxOrder + 1) }));
-    }
-  }, [formData.date, showModal, modalMode, activeTrip, trips]);
-
-  const currentTripData = trips[activeTrip] || [];
+  const currentTripData = tripData[tripName] || [];
 
   const sanitizedTripData = useMemo(() => {
     return currentTripData.map(item => ({ ...item, date: sanitizeDate(item.date) }));
   }, [currentTripData]);
 
-  const dates = useMemo(() => {
+  const tripDate = useMemo(() => {
     const uniqueDates = [...new Set(sanitizedTripData.map(item => item.date))];
     return uniqueDates.sort((a, b) => new Date(a) - new Date(b));
   }, [sanitizedTripData]);
 
-  const groupedDataWithTime = useMemo(() => {
-    const sorted = [...sanitizedTripData].sort((a, b) => {
+  const tripDataTimeline = useMemo(() => {
+    const sortedTripData = [...sanitizedTripData].sort((a, b) => {
       if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
       return (a.order || 0) - (b.order || 0);
     });
 
-    const groups = {};
-    sorted.forEach(item => {
-      const cleanDate = item.date;
-      if (!groups[cleanDate]) groups[cleanDate] = { date: cleanDate, items: [], startTime: dailyStartTimes[activeTrip]?.[cleanDate] || "08:00" };
+    const dataByDateWithTime = {};
+    sortedTripData.forEach(item => {
+      const formattedDateStr = item.date;
+      if (!dataByDateWithTime[formattedDateStr]) dataByDateWithTime[formattedDateStr] = { date: formattedDateStr, items: [], startTime: dailyStartTime[tripName]?.[formattedDateStr] || "08:00" };
       
-      const dayItems = groups[cleanDate].items;
-      let arrivalTime = groups[cleanDate].startTime;
+      const sameDateItems = dataByDateWithTime[formattedDateStr].items;
+      let currentArrivalTime = dataByDateWithTime[formattedDateStr].startTime;
 
-      if (dayItems.length > 0) {
-        const prevItem = dayItems[dayItems.length - 1];
-        const travelTime = prevItem.transportDuration || 0; 
-        const [h, m] = prevItem.endTimeStr.split(':').map(Number);
-        const date = new Date(2000, 0, 1, h, m + travelTime);
-        arrivalTime = isNaN(date.getTime()) ? '--:--' : `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-        prevItem.nextTravelTime = "?";
+      if (sameDateItems.length > 0) {
+        const previousItem = sameDateItems[sameDateItems.length - 1];
+        const currentTravelTime = previousItem.transportDuration || 0; 
+        const [hour, minute] = previousItem.endTimeStr.split(':').map(Number);
+        const dateObj = new Date(2000, 0, 1, hour, minute + currentTravelTime);
+        currentArrivalTime = isNaN(dateObj.getTime()) ? '--:--' : `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+        previousItem.nextTravelTime = "?";
       }
 
-      const [hours, minutes] = arrivalTime.split(':').map(Number);
+      const [hours, minutes] = currentArrivalTime.split(':').map(Number);
       const startDate = new Date(2000, 0, 1, hours, minutes);
-      const endDate = new Date(startDate.getTime() + (item.duration || 0) * 60000);
+      const endDate = new Date(startDate.getTime() + (item.locationDuration || 0) * 60000);
       const endTimeStr = isNaN(endDate.getTime()) ? '--:--' : `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
       
-      dayItems.push({ ...item, startTimeStr: arrivalTime, endTimeStr });
+      sameDateItems.push({ ...item, startTimeStr: currentArrivalTime, endTimeStr });
     });
 
-    let result = Object.values(groups).sort((a, b) => new Date(a.date) - new Date(b.date));
-    if (activeTab !== "Total") result = result.filter(g => g.date === activeTab);
+    let result = Object.values(dataByDateWithTime).sort((a, b) => new Date(a.date) - new Date(b.date));
+    if (activeDateTab !== "Total") result = result.filter(g => g.date === activeDateTab);
     if (searchQuery) {
       result = result.map(g => ({
         ...g,
@@ -306,42 +221,127 @@ const App = () => {
       })).filter(g => g.items.length > 0);
     }
     return result;
-  }, [sanitizedTripData, activeTab, searchQuery, dailyStartTimes, activeTrip]);
+  }, [sanitizedTripData, activeDateTab, searchQuery, dailyStartTime, tripName]);
+
+  useEffect(() => {
+    localStorage.setItem(CACHE_KEY_TRIP_DATA, JSON.stringify(tripData));
+    localStorage.setItem(CACHE_KEY_TRIP_NAME, tripName);
+  }, [tripData, tripName]);
+
+  useEffect(() => {
+    const loadedTimer = setTimeout(() => setIsAppLoaded(true), 50);
+    return () => clearTimeout(loadedTimer);
+  }, []);
+
+  useEffect(() => {
+    const loadingTimer = setTimeout(() => {
+      setIsAppLoading(false);
+    }, 400); 
+    return () => clearTimeout(loadingTimer);
+  }, []);
+
+  useEffect(() => {
+    const clockInterval = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(clockInterval);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(CACHE_KEY_START_TIME, JSON.stringify(dailyStartTime));
+  }, [dailyStartTime]);
+
+  useEffect(() => {
+    localStorage.setItem(CACHE_KEY_DARK_MODE, JSON.stringify(isDarkMode));
+    if (typeof document !== 'undefined') {
+      const themeBgColor = isDarkMode ? '#000000' : '#e8e4d9';
+      
+      document.documentElement.style.backgroundColor = themeBgColor;
+      const globalStyle = document.getElementById('travey-theme-style');
+      if (globalStyle) {
+        globalStyle.innerHTML = `html, body { background-color: ${themeBgColor} !important; }`;
+      }
+      
+      let themeMetaTag = document.querySelector('meta[name="theme-color"]');
+      if (!themeMetaTag) {
+        themeMetaTag = document.createElement('meta');
+        themeMetaTag.name = 'theme-color';
+        document.head.appendChild(themeMetaTag);
+      }
+      themeMetaTag.content = themeBgColor;
+    }
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    localStorage.setItem(CACHE_KEY_VIEW_MODE, deviceViewMode);
+  }, [deviceViewMode]);
+
+  useEffect(() => {
+    if (toastState.show) {
+      const toastTimer = setTimeout(() => {
+        setToastState(prev => ({ ...prev, show: false }));
+      }, 3000);
+      return () => clearTimeout(toastTimer);
+    }
+  }, [toastState.show, toastState.id]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleResize = () => setIsWindowNarrow(window.innerWidth < 768);
+      handleResize();
+      window.addEventListener('resize', handleResize);
+      
+      const savedView = localStorage.getItem(CACHE_KEY_VIEW_MODE);
+      if (!savedView) {
+        const isMobile = window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        setDeviceViewMode(isMobile ? 'mobile' : 'web');
+      }
+      
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showLocationModal && locationModalMode === 'add') {
+      const targetDataList = tripData[tripName] || [];
+      const sameDateItems = targetDataList.filter(item => sanitizeDate(item.date) === locationData.date);
+      const maxOrder = sameDateItems.reduce((max, item) => Math.max(max, parseInt(item.order) || 0), 0);
+      setLocationData(prev => ({ ...prev, order: String(maxOrder + 1) }));
+    }
+  }, [locationData.date, showLocationModal, locationModalMode, tripName, tripData]);
 
   useEffect(() => {
     let isMounted = true;
     const fetchWeather = async () => {
-      const updates = {};
-      let hasNew = false;
-      for (const g of groupedDataWithTime) {
-        if (weatherData[g.date] === undefined && g.items[0]?.city) {
-          hasNew = true;
+      const weatherUpdates = {};
+      let hasNewWeather = false;
+      for (const dateGroup of tripDataTimeline) {
+        if (weatherForecast[dateGroup.date] === undefined && dateGroup.items[0]?.city) {
+          hasNewWeather = true;
           try {
-            const res = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=9421165d458f483f88d15158261504&q=${g.items[0].city}&dt=${g.date}&lang=zh`);
-            const data = await res.json();
-            if (data?.forecast?.forecastday?.[0]) {
-              const day = data.forecast.forecastday[0].day;
-              updates[g.date] = `${day.condition.text} ${day.maxtemp_c}℃~${day.mintemp_c}℃`;
+            const weatherResponse = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=9421165d458f483f88d15158261504&q=${dateGroup.items[0].city}&dt=${dateGroup.date}&lang=zh`);
+            const weatherJson = await weatherResponse.json();
+            if (weatherJson?.forecast?.forecastday?.[0]) {
+              const forecastDay = weatherJson.forecast.forecastday[0].day;
+              weatherUpdates[dateGroup.date] = `${forecastDay.condition.text} ${forecastDay.maxtemp_c}℃~${forecastDay.mintemp_c}℃`;
             } else {
-              updates[g.date] = "暂无当日天气预报";
+              weatherUpdates[dateGroup.date] = "暂无当日天气预报";
             }
           } catch {
-            updates[g.date] = "暂无当日天气预报";
+            weatherUpdates[dateGroup.date] = "暂无当日天气预报";
           }
         }
       }
-      if (hasNew && isMounted) {
-        setWeatherData(prev => ({ ...prev, ...updates }));
+      if (hasNewWeather && isMounted) {
+        setWeatherForecast(prev => ({ ...prev, ...weatherUpdates }));
       }
     };
     fetchWeather();
     return () => { isMounted = false; };
-  }, [activeTab, weatherRefreshTrigger]);
+  }, [activeDateTab, weatherRefreshTrigger]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
     
-    const isModalOpen = previewIframeUrl || notePreview || showModal || showTimeModal || showTransportModal || showImportModal;
+    const isModalOpen = mapPreviewUrl || notePreviewText || showLocationModal || showStartTimeModal || showTransportModal || showImportModal;
     
     if (isModalOpen) {
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -356,19 +356,19 @@ const App = () => {
         document.body.style.paddingRight = '';
       };
     }
-  }, [previewIframeUrl, notePreview, showModal, showTimeModal, showTransportModal, showImportModal]);
+  }, [mapPreviewUrl, notePreviewText, showLocationModal, showStartTimeModal, showTransportModal, showImportModal]);
 
-  const updateTrip = (newTrips, newActiveTrip = activeTrip) => {
-    setPast(p => [...p, { trips, activeTrip }].slice(-20));
-    setFuture([]);
-    setTrips(newTrips);
-    if (newActiveTrip !== activeTrip) {
-      setActiveTrip(newActiveTrip);
+  const updateTrip = (newTrips, newActiveTrip = tripName) => {
+    setUndoStack(p => [...p, { tripData, tripName }].slice(-20));
+    setRedoStack([]);
+    setTripData(newTrips);
+    if (newActiveTrip !== tripName) {
+      setTripName(newActiveTrip);
     }
   };
 
   const showMessage = (msg, type = 'success') => {
-    setToast({ show: true, message: msg, type, id: Date.now() });
+    setToastState({ show: true, message: msg, type, id: Date.now() });
   };
 
   const restoreZoom = () => {
@@ -388,24 +388,24 @@ const App = () => {
   };
 
   const scrollToElement = (id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      const rect = el.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const targetY = rect.top + scrollTop - (window.innerHeight * 0.3);
-      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    const domElement = document.getElementById(id);
+    if (domElement) {
+      const elementRect = domElement.getBoundingClientRect();
+      const windowScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const targetScrollY = elementRect.top + windowScrollTop - (window.innerHeight * 0.3);
+      window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
     }
   };
 
   const handleTripRename = () => {
-    if (newTitle.trim() && newTitle !== activeTrip) {
-      const newTrips = { ...trips };
-      newTrips[newTitle] = newTrips[activeTrip];
-      delete newTrips[activeTrip];
-      updateTrip(newTrips, newTitle);
+    if (draftTripName.trim() && draftTripName !== tripName) {
+      const newTrips = { ...tripData };
+      newTrips[draftTripName] = newTrips[tripName];
+      delete newTrips[tripName];
+      updateTrip(newTrips, draftTripName);
       showMessage("已保存", "rename");
     }
-    setIsEditingTitle(false);
+    setIsEditingTripName(false);
     restoreZoom();
   };
 
@@ -414,98 +414,98 @@ const App = () => {
   };
 
   const handleImportSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+    const fileReader = new FileReader();
+    fileReader.onload = (fileEvent) => {
       try {
-        const text = new TextDecoder('utf-8').decode(new Uint8Array(event.target.result));
-        const rows = text.split(/\r?\n/).filter(row => row.trim());
-        const headerRow = rows[0].split(',').map(h => h.trim());
+        const csvImportText = new TextDecoder('utf-8').decode(new Uint8Array(fileEvent.target.result));
+        const csvImportRow = csvImportText.split(/\r?\n/).filter(importRowItem => importRowItem.trim());
+        const csvImportHeader = csvImportRow[0].split(',').map(h => h.trim());
         
-        const colMap = {
-          date: headerRow.indexOf("日期"),
-          order: headerRow.indexOf("序号"),
-          city: headerRow.indexOf("城市/交通"),
-          name: headerRow.indexOf("地点名称/出行方式"),
-          duration: headerRow.indexOf("时间（分）"),
-          note: headerRow.indexOf("备注"),
-          cost: headerRow.indexOf("费用"),
-          currency: headerRow.indexOf("币种"),
-          status: headerRow.indexOf("打卡状态")
+        const csvImportHeaderMap = {
+          date: csvImportHeader.indexOf("日期"),
+          order: csvImportHeader.indexOf("序号"),
+          city: csvImportHeader.indexOf("城市/交通"),
+          name: csvImportHeader.indexOf("地点名称/出行方式"),
+          locationDuration: csvImportHeader.indexOf("时间（分）"),
+          note: csvImportHeader.indexOf("备注"),
+          cost: csvImportHeader.indexOf("费用"),
+          currency: csvImportHeader.indexOf("币种"),
+          status: csvImportHeader.indexOf("打卡状态")
         };
 
-        const missing = [];
-        if (colMap.date === -1) missing.push("日期");
-        if (colMap.name === -1) missing.push("地点名称");
-        if (missing.length > 0) {
-          showMessage(`缺少${missing.join('、')}`, "error");
+        const missingCsvImportHeader = [];
+        if (csvImportHeaderMap.date === -1) missingCsvImportHeader.push("日期");
+        if (csvImportHeaderMap.name === -1) missingCsvImportHeader.push("地点名称");
+        if (missingCsvImportHeader.length > 0) {
+          showMessage(`缺少${missingCsvImportHeader.join('、')}`, "error");
           return;
         }
 
-        const rawImported = [];
-        rows.slice(1).forEach((row, index) => {
-          const values = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
-          const getVal = (col) => col !== -1 ? (values[col] || "") : "";
+        const rawImportedData = [];
+        csvImportRow.slice(1).forEach((importRowItem, rowIndex) => {
+          const rowValues = importRowItem.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+          const getColumnValue = (col) => col !== -1 ? (rowValues[col] || "") : "";
           
-          rawImported.push({
-            date: sanitizeDate(getVal(colMap.date)),
-            order: parseInt(getVal(colMap.order)),
-            city: getVal(colMap.city),
-            name: getVal(colMap.name),
-            duration: getVal(colMap.duration) === "" ? null : (parseInt(getVal(colMap.duration)) || 0),
-            note: getVal(colMap.note) || null,
-            cost: getVal(colMap.cost) === "" ? null : (parseFloat(getVal(colMap.cost)) || 0),
-            currency: getVal(colMap.currency) || null,
-            done: getVal(colMap.status) === "是"
+          rawImportedData.push({
+            date: sanitizeDate(getColumnValue(csvImportHeaderMap.date)),
+            order: parseInt(getColumnValue(csvImportHeaderMap.order)),
+            city: getColumnValue(csvImportHeaderMap.city),
+            name: getColumnValue(csvImportHeaderMap.name),
+            locationDuration: getColumnValue(csvImportHeaderMap.locationDuration) === "" ? null : (parseInt(getColumnValue(csvImportHeaderMap.locationDuration)) || 0),
+            note: getColumnValue(csvImportHeaderMap.note) || null,
+            cost: getColumnValue(csvImportHeaderMap.cost) === "" ? null : (parseFloat(getColumnValue(csvImportHeaderMap.cost)) || 0),
+            currency: getColumnValue(csvImportHeaderMap.currency) || null,
+            isLocationChecked: getColumnValue(csvImportHeaderMap.status) === "是"
           });
         });
 
-        const finalData = [];
+        const processedImportedData = [];
         const dataByDate = {};
-        rawImported.forEach(item => {
+        rawImportedData.forEach(item => {
           if (!dataByDate[item.date]) dataByDate[item.date] = [];
           dataByDate[item.date].push(item);
         });
 
         Object.keys(dataByDate).forEach(date => {
-          const dayItems = dataByDate[date];
-          let locationCounter = 1;
-          dayItems.forEach((row, idx) => {
-            const isTransport = row.city === "交通" || (row.name && (row.name.includes("步行") || row.name.includes("公交") || row.name.includes("打车")));
+          const sameDateItems = dataByDate[date];
+          let importLocationCounter = 1;
+          sameDateItems.forEach((importRowItem, importItemIndex) => {
+            const isTransportNode = importRowItem.city === "交通" || (importRowItem.name && (importRowItem.name.includes("步行") || importRowItem.name.includes("公交") || importRowItem.name.includes("打车")));
             
-            if (isTransport) {
-              if (finalData.length > 0) {
-                const last = finalData[finalData.length - 1];
-                if (row.name.includes("打车")) last.transportMode = 'car';
-                else if (row.name.includes("公交")) last.transportMode = 'train';
-                else last.transportMode = 'walk';
-                last.transportDuration = row.duration || 0;
+            if (isTransportNode) {
+              if (processedImportedData.length > 0) {
+                const previousLocation = processedImportedData[processedImportedData.length - 1];
+                if (importRowItem.name.includes("打车")) previousLocation.transportMode = 'car';
+                else if (importRowItem.name.includes("公交")) previousLocation.transportMode = 'train';
+                else previousLocation.transportMode = 'walk';
+                previousLocation.transportDuration = importRowItem.locationDuration || 0;
               }
             } else {
-              if (finalData.length > 0) {
-                const last = finalData[finalData.length - 1];
-                if (last.date === row.date && last.transportDuration === undefined) {
-                  last.transportMode = 'walk';
-                  last.transportDuration = 0;
+              if (processedImportedData.length > 0) {
+                const previousLocation = processedImportedData[processedImportedData.length - 1];
+                if (previousLocation.date === importRowItem.date && previousLocation.transportDuration === undefined) {
+                  previousLocation.transportMode = 'walk';
+                  previousLocation.transportDuration = 0;
                 }
               }
-              finalData.push({
-                ...row,
-                id: `imported-${Date.now()}-${idx}`,
-                order: locationCounter++,
-                duration: row.duration === null ? 0 : row.duration,
+              processedImportedData.push({
+                ...importRowItem,
+                id: `imported-${Date.now()}-${importItemIndex}`,
+                order: importLocationCounter++,
+                locationDuration: importRowItem.locationDuration === null ? 0 : importRowItem.locationDuration,
                 transportMode: 'walk',
                 transportDuration: 0,
-                transitRoute: '',
-                done: row.done || false
+                transportRoute: '',
+                isLocationChecked: importRowItem.isLocationChecked || false
               });
             }
           });
         });
         
-        if (finalData.length > 0) {
-          setPendingImportData(finalData);
+        if (processedImportedData.length > 0) {
+          setPendingImportedData(processedImportedData);
           setShowImportModal(true); 
         } else {
           showMessage("无有效地点", "emptyImport");
@@ -514,126 +514,126 @@ const App = () => {
         showMessage("格式解析失败", "importError");
       }
     };
-    reader.readAsArrayBuffer(file);
+    fileReader.readAsArrayBuffer(selectedFile);
     e.target.value = null;
   };
 
   const handleImportConfirm = (mode) => {
     if (mode === 'overwrite') {
-      updateTrip({ ...trips, [activeTrip]: pendingImportData });
+      updateTrip({ ...tripData, [tripName]: pendingImportedData });
     } else {
-      updateTrip({ ...trips, [activeTrip]: [...(currentTripData || []), ...pendingImportData] });
+      updateTrip({ ...tripData, [tripName]: [...(currentTripData || []), ...pendingImportedData] });
     }
     setShowImportModal(false);
-    setPendingImportData([]);
+    setPendingImportedData([]);
     showMessage("导入成功", "import");
   };
 
   const handleExport = () => {
-    const headers = ["日期", "序号", "城市/交通", "地点名称/出行方式", "时间（分）", "备注", "费用", "币种", "打卡状态"];
+    const csvExportHeaders = ["日期", "序号", "城市/交通", "地点名称/出行方式", "时间（分）", "备注", "费用", "币种", "打卡状态"];
     
-    const exportGroups = {};
+    const csvExportGroups = {};
     sanitizedTripData.sort((a,b) => new Date(a.date) - new Date(b.date) || a.order - b.order).forEach(item => {
-       if (!exportGroups[item.date]) exportGroups[item.date] = [];
-       exportGroups[item.date].push(item);
+       if (!csvExportGroups[item.date]) csvExportGroups[item.date] = [];
+       csvExportGroups[item.date].push(item);
     });
     
-    const exportRows = [];
-    Object.values(exportGroups).forEach(groupItems => {
-       groupItems.forEach((item, idx) => {
-          exportRows.push([
-            item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.duration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : "", item.done ? "是" : "否"
+    const csvExportRow = [];
+    Object.values(csvExportGroups).forEach(csvExportGroupItems => {
+       csvExportGroupItems.forEach((item, groupItemIndex) => {
+          csvExportRow.push([
+            item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.locationDuration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : "", item.isLocationChecked ? "是" : "否"
           ].join(','));
-          if (idx < groupItems.length - 1) {
-            const modeLabel = TRANSPORT_ESTIMATES[item.transportMode || 'walk'].label;
-            exportRows.push([
-              item.date, 0, "交通", modeLabel, item.transportDuration || 0, '""', "", "", item.transportDone ? "是" : "否"
+          if (groupItemIndex < csvExportGroupItems.length - 1) {
+            const transportModeLabel = TRANSPORT_MODE[item.transportMode || 'walk'].label;
+            csvExportRow.push([
+              item.date, 0, "交通", transportModeLabel, item.transportDuration || 0, '""', "", "", item.isTransportChecked ? "是" : "否"
             ].join(','));
           }
        });
     });
 
-    const csvContent = [
-      headers.join(','),
-      ...exportRows
+    const formattedCsvExport = [
+      csvExportHeaders.join(','),
+      ...csvExportRow
     ].join('\n');
     
-    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${activeTrip}_${getTodayDate()}.csv`;
-    link.click();
+    const csvBlob = new Blob(["\ufeff" + formattedCsvExport], { type: 'text/csv;charset=utf-8;' });
+    const csvDownloadLink = document.createElement("a");
+    csvDownloadLink.href = URL.createObjectURL(csvBlob);
+    csvDownloadLink.download = `${tripName}_${getCurrentDate()}.csv`;
+    csvDownloadLink.click();
     showMessage("导出成功", "export");
   };
 
   const handleUndo = () => {
-    if (past.length === 0) return;
-    const previous = past[past.length - 1];
-    setPast(p => p.slice(0, -1));
-    setFuture(f => [{ trips, activeTrip }, ...f]);
-    setTrips(previous.trips);
-    setActiveTrip(previous.activeTrip);
+    if (undoStack.length === 0) return;
+    const previous = undoStack[undoStack.length - 1];
+    setUndoStack(p => p.slice(0, -1));
+    setRedoStack(f => [{ tripData, tripName }, ...f]);
+    setTripData(previous.tripData);
+    setTripName(previous.tripName);
     showMessage("已撤销", "undo");
   };
 
   const handleRedo = () => {
-    if (future.length === 0) return;
-    const next = future[0];
-    setFuture(f => f.slice(1));
-    setPast(p => [...p, { trips, activeTrip }]);
-    setTrips(next.trips);
-    setActiveTrip(next.activeTrip);
+    if (redoStack.length === 0) return;
+    const next = redoStack[0];
+    setRedoStack(f => f.slice(1));
+    setUndoStack(p => [...p, { tripData, tripName }]);
+    setTripData(next.tripData);
+    setTripName(next.tripName);
     showMessage("已重做", "redo");
   };
 
   const handleRefresh = () => {
     setSearchQuery('');
-    setExpandedDates({});
-    setWeatherData({});
+    setExpandedOverviewDate({});
+    setWeatherForecast({});
     setWeatherRefreshTrigger(prev => prev + 1);
     showMessage("已刷新", "refresh");
   };
 
   const handleLocate = () => {
-    const getAllGroupedData = (tabName) => {
-      const sorted = [...(trips[activeTrip] || [])].map(item => ({ ...item, date: sanitizeDate(item.date) })).sort((a, b) => {
+    const getGroupedTripData = (tabName) => {
+      const sortedTripData = [...(tripData[tripName] || [])].map(item => ({ ...item, date: sanitizeDate(item.date) })).sort((a, b) => {
         if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
         return (a.order || 0) - (b.order || 0);
       });
-      const groups = {};
-      sorted.forEach(item => {
-        if (!groups[item.date]) groups[item.date] = { date: item.date, items: [] };
-        groups[item.date].items.push(item);
+      const dataByDateWithTime = {};
+      sortedTripData.forEach(item => {
+        if (!dataByDateWithTime[item.date]) dataByDateWithTime[item.date] = { date: item.date, items: [] };
+        dataByDateWithTime[item.date].items.push(item);
       });
-      let result = Object.values(groups).sort((a, b) => new Date(a.date) - new Date(b.date));
+      let result = Object.values(dataByDateWithTime).sort((a, b) => new Date(a.date) - new Date(b.date));
       if (tabName !== "Total") result = result.filter(g => g.date === tabName);
       return result;
     };
 
-    const currentTabGroups = getAllGroupedData(activeTab);
-    for (const group of currentTabGroups) {
-      for (const [idx, item] of group.items.entries()) {
-        if (!item.done) {
-          scrollToElement(`card-${item.id}`);
+    const activeDateTabLocal = getGroupedTripData(activeDateTab);
+    for (const dateGroup of activeDateTabLocal) {
+      for (const [groupItemIndex, item] of dateGroup.items.entries()) {
+        if (!item.isLocationChecked) {
+          scrollToElement(`location-${item.id}`);
           return;
         }
-        if (idx < group.items.length - 1 && !item.transportDone) {
+        if (groupItemIndex < dateGroup.items.length - 1 && !item.isTransportChecked) {
           scrollToElement(`transport-${item.id}`);
           return;
         }
       }
     }
 
-    const allGroups = getAllGroupedData("Total");
-    for (const group of allGroups) {
-      for (const [idx, item] of group.items.entries()) {
-        if (!item.done) {
-          setActiveTab(group.date);
-          setTimeout(() => scrollToElement(`card-${item.id}`), 100);
+    const allDateGroups = getGroupedTripData("Total");
+    for (const dateGroup of allDateGroups) {
+      for (const [groupItemIndex, item] of dateGroup.items.entries()) {
+        if (!item.isLocationChecked) {
+          setActiveDateTab(dateGroup.date);
+          setTimeout(() => scrollToElement(`location-${item.id}`), 100);
           return;
         }
-        if (idx < group.items.length - 1 && !item.transportDone) {
-          setActiveTab(group.date);
+        if (groupItemIndex < dateGroup.items.length - 1 && !item.isTransportChecked) {
+          setActiveDateTab(dateGroup.date);
           setTimeout(() => scrollToElement(`transport-${item.id}`), 100);
           return;
         }
@@ -644,129 +644,129 @@ const App = () => {
   };
 
   const handleOverviewToggle = (date) => {
-    setExpandedDates(prev => ({ ...prev, [date]: !prev[date] }));
+    setExpandedOverviewDate(prev => ({ ...prev, [date]: !prev[date] }));
   };
 
   const handleLocationCheck = (id) => {
-    const idx = currentTripData.findIndex(item => item.id === id);
-    if (idx === -1) return;
-    const newDone = !currentTripData[idx].done;
-    let updated = currentTripData.map(item => item.id === id ? { ...item, done: newDone } : item);
-    if (newDone) {
-      const item = updated[idx];
-      const sameDay = updated.filter(i => i.date === item.date).sort((a,b) => (a.order||0) - (b.order||0));
-      const subIdx = sameDay.findIndex(i => i.id === id);
-      const prev = sameDay[subIdx - 1];
-      const next = sameDay[subIdx + 1];
-      if (prev && prev.done) updated = updated.map(i => i.id === prev.id ? { ...i, transportDone: true } : i);
-      if (next && next.done) updated = updated.map(i => i.id === item.id ? { ...i, transportDone: true } : i);
+    const itemIndex = currentTripData.findIndex(item => item.id === id);
+    if (itemIndex === -1) return;
+    const toggledCheckState = !currentTripData[itemIndex].isLocationChecked;
+    let updatedCheckData = currentTripData.map(item => item.id === id ? { ...item, isLocationChecked: toggledCheckState } : item);
+    if (toggledCheckState) {
+      const item = updatedCheckData[itemIndex];
+      const sameDateItems = updatedCheckData.filter(i => i.date === item.date).sort((a,b) => (a.order||0) - (b.order||0));
+      const sameDateItemIndex = sameDateItems.findIndex(i => i.id === id);
+      const previousItem = sameDateItems[sameDateItemIndex - 1];
+      const nextItem = sameDateItems[sameDateItemIndex + 1];
+      if (previousItem && previousItem.isLocationChecked) updatedCheckData = updatedCheckData.map(i => i.id === previousItem.id ? { ...i, isTransportChecked: true } : i);
+      if (nextItem && nextItem.isLocationChecked) updatedCheckData = updatedCheckData.map(i => i.id === item.id ? { ...i, isTransportChecked: true } : i);
     } else {
-      const item = updated[idx];
-      const sameDay = updated.filter(i => i.date === item.date).sort((a,b) => (a.order||0) - (b.order||0));
-      const subIdx = sameDay.findIndex(i => i.id === id);
-      const prev = sameDay[subIdx - 1];
-      if (prev) updated = updated.map(i => i.id === prev.id ? { ...i, transportDone: false } : i);
-      updated = updated.map(i => i.id === item.id ? { ...i, transportDone: false } : i);
+      const item = updatedCheckData[itemIndex];
+      const sameDateItems = updatedCheckData.filter(i => i.date === item.date).sort((a,b) => (a.order||0) - (b.order||0));
+      const sameDateItemIndex = sameDateItems.findIndex(i => i.id === id);
+      const previousItem = sameDateItems[sameDateItemIndex - 1];
+      if (previousItem) updatedCheckData = updatedCheckData.map(i => i.id === previousItem.id ? { ...i, isTransportChecked: false } : i);
+      updatedCheckData = updatedCheckData.map(i => i.id === item.id ? { ...i, isTransportChecked: false } : i);
     }
-    updateTrip({ ...trips, [activeTrip]: updated });
+    updateTrip({ ...tripData, [tripName]: updatedCheckData });
   };
 
   const handleLocationAdd = () => {
-    setModalMode('add'); 
-    const dateToUse = activeTab !== 'Total' ? activeTab : getTodayDate();
-    setFormData({ name: '', date: dateToUse, duration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'walk', transitRoute: '' }); 
-    setShowModal(true); 
+    setLocationModalMode('add'); 
+    const targetLocationDate = activeDateTab !== 'Total' ? activeDateTab : getCurrentDate();
+    setLocationData({ name: '', date: targetLocationDate, locationDuration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'walk', transportRoute: '' }); 
+    setShowLocationModal(true); 
   };
 
   const handleLocationEdit = (item) => {
-    setModalMode('edit');
-    setEditingId(item.id);
-    setFormData({ 
+    setLocationModalMode('edit');
+    setEditingLocationId(item.id);
+    setLocationData({ 
       ...item, 
-      duration: String(item.duration), 
+      locationDuration: String(item.locationDuration), 
       cost: item.cost ? String(item.cost) : '', 
       currency: item.cost ? item.currency : '',
       order: String(item.order),
-      transitRoute: item.transitRoute || ''
+      transportRoute: item.transportRoute || ''
     });
-    setShowModal(true);
+    setShowLocationModal(true);
   };
 
   const handleLocationSave = (e) => {
     e.preventDefault();
-    const payload = {
-      ...formData,
-      duration: formData.duration === "" ? 0 : (parseInt(formData.duration) || 0),
-      cost: parseFloat(formData.cost) || 0,
-      order: parseInt(formData.order) || 1,
+    const locationPayload = {
+      ...locationData,
+      locationDuration: locationData.locationDuration === "" ? 0 : (parseInt(locationData.locationDuration) || 0),
+      cost: parseFloat(locationData.cost) || 0,
+      order: parseInt(locationData.order) || 1,
     };
-    setLastSelectedCurrency(formData.currency);
+    setLastSelectedCurrency(locationData.currency);
 
-    const targetDate = sanitizeDate(formData.date);
-    const m = payload.order;
-    let updatedData = [...currentTripData];
+    const targetLocationDate = sanitizeDate(locationData.date);
+    const targetLocationOrder = locationPayload.order;
+    let updatedTripData = [...currentTripData];
 
-    let dayItems = currentTripData.filter(item => sanitizeDate(item.date) === targetDate && item.id !== (modalMode === 'edit' ? editingId : null));
+    let sameDayLocation = currentTripData.filter(item => sanitizeDate(item.date) === targetLocationDate && item.id !== (locationModalMode === 'edit' ? editingLocationId : null));
     
-    let lessItems = dayItems.filter(item => item.order < m).sort((a,b) => a.order - b.order);
-    let greaterItems = dayItems.filter(item => item.order >= m).sort((a,b) => a.order - b.order);
+    let precedingLocation = sameDayLocation.filter(item => item.order < targetLocationOrder).sort((a,b) => a.order - b.order);
+    let succeedingLocation = sameDayLocation.filter(item => item.order >= targetLocationOrder).sort((a,b) => a.order - b.order);
     
-    let n1 = lessItems.length;
-    let newOrders = {};
+    let precedingLocationCount = precedingLocation.length;
+    let updatedOrderMap = {};
     
     let currentOrderCounter = 1;
-    lessItems.forEach(item => { newOrders[item.id] = currentOrderCounter++; });
+    precedingLocation.forEach(item => { updatedOrderMap[item.id] = currentOrderCounter++; });
     
-    payload.order = n1 + 1;
+    locationPayload.order = precedingLocationCount + 1;
     
-    currentOrderCounter = n1 + 2;
-    greaterItems.forEach(item => { newOrders[item.id] = currentOrderCounter++; });
+    currentOrderCounter = precedingLocationCount + 2;
+    succeedingLocation.forEach(item => { updatedOrderMap[item.id] = currentOrderCounter++; });
 
-    if (modalMode === 'add') {
-      const newItem = { ...payload, id: `manual-${Date.now()}`, done: false };
-      updatedData = updatedData.map(item => newOrders[item.id] !== undefined ? { ...item, order: newOrders[item.id] } : item);
-      updatedData.push(newItem);
+    if (locationModalMode === 'add') {
+      const newItem = { ...locationPayload, id: `manual-${Date.now()}`, isLocationChecked: false };
+      updatedTripData = updatedTripData.map(item => updatedOrderMap[item.id] !== undefined ? { ...item, order: updatedOrderMap[item.id] } : item);
+      updatedTripData.push(newItem);
       showMessage("已添加", "add");
     } else {
-      updatedData = updatedData.map(item => {
-        if (item.id === editingId) return { ...item, ...payload };
-        if (newOrders[item.id] !== undefined) return { ...item, order: newOrders[item.id] };
+      updatedTripData = updatedTripData.map(item => {
+        if (item.id === editingLocationId) return { ...item, ...locationPayload };
+        if (updatedOrderMap[item.id] !== undefined) return { ...item, order: updatedOrderMap[item.id] };
         return item;
       });
       showMessage("已保存", "edit");
     }
     
-    updateTrip({ ...trips, [activeTrip]: updatedData });
-    setShowModal(false);
+    updateTrip({ ...tripData, [tripName]: updatedTripData });
+    setShowLocationModal(false);
     restoreZoom();
   };
 
   const handleLocationDelete = (id) => {
     const remainingItems = currentTripData.filter(item => item.id !== id).map(item => ({...item}));
     
-    const groupedByDate = {};
+    const dataByDate = {};
     remainingItems.forEach(item => {
-      if (!groupedByDate[item.date]) groupedByDate[item.date] = [];
-      groupedByDate[item.date].push(item);
+      if (!dataByDate[item.date]) dataByDate[item.date] = [];
+      dataByDate[item.date].push(item);
     });
     
-    Object.keys(groupedByDate).forEach(date => {
-      groupedByDate[date].sort((a, b) => parseInt(a.order || 0) - parseInt(b.order || 0));
+    Object.keys(dataByDate).forEach(date => {
+      dataByDate[date].sort((a, b) => parseInt(a.order || 0) - parseInt(b.order || 0));
       let counter = 1;
-      groupedByDate[date].forEach(item => {
+      dataByDate[date].forEach(item => {
         if (parseInt(item.order) !== 0) {
           item.order = counter++;
         }
       });
     });
     
-    updateTrip({ ...trips, [activeTrip]: remainingItems });
+    updateTrip({ ...tripData, [tripName]: remainingItems });
     showMessage("已删除", "delete");
   };
 
   const handleLocationPreviewMap = (name, city) => {
     const query = encodeURIComponent(`${name} ${city}`);
-    setPreviewIframeUrl(`https://maps.google.com/maps?q=${query}&output=embed`);
+    setMapPreviewUrl(`https://maps.google.com/maps?q=${query}&output=embed`);
   };
 
   const handleLocationOpenMap = (name, city) => {
@@ -775,62 +775,62 @@ const App = () => {
   };
 
   const handleTransportCheck = (id) => {
-    const updated = currentTripData.map(item => item.id === id ? { ...item, transportDone: !item.transportDone } : item);
-    updateTrip({ ...trips, [activeTrip]: updated });
+    const updatedCheckData = currentTripData.map(item => item.id === id ? { ...item, isTransportChecked: !item.isTransportChecked } : item);
+    updateTrip({ ...tripData, [tripName]: updatedCheckData });
   };
 
   const handleTransportEdit = (item) => {
-    setTransportEditId(item.id);
-    setTransportEditDuration(String(item.transportDuration || 0));
+    setEditingTransportId(item.id);
+    setTransportData(String(item.transportDuration || 0));
     setShowTransportModal(true);
   };
 
   const handleTransportSave = (e) => {
     e.preventDefault();
-    const updatedData = currentTripData.map(item => {
-      if (item.id === transportEditId) {
-        return { ...item, transportDuration: parseInt(transportEditDuration) || 0 };
+    const updatedTripData = currentTripData.map(item => {
+      if (item.id === editingTransportId) {
+        return { ...item, transportDuration: parseInt(transportData) || 0 };
       }
       return item;
     });
-    updateTrip({ ...trips, [activeTrip]: updatedData });
+    updateTrip({ ...tripData, [tripName]: updatedTripData });
     setShowTransportModal(false);
     restoreZoom();
     showMessage("已保存", "edit");
   };
 
   const handleTransportChangeMode = (id, mode) => {
-    const updated = currentTripData.map(item => item.id === id ? { ...item, transportMode: mode } : item);
-    updateTrip({ ...trips, [activeTrip]: updated });
+    const updatedTripData = currentTripData.map(item => item.id === id ? { ...item, transportMode: mode } : item);
+    updateTrip({ ...tripData, [tripName]: updatedTripData });
   };
 
-  const isMobileView = viewMode === 'mobile' || isNarrow;
+  const isMobileView = deviceViewMode === 'mobile' || isWindowNarrow;
   
-  const bodyColor = isDarkMode ? 'bg-[#000000] text-white' : 'bg-[#e8e4d9] text-[#2c241b]';
-  const containerColor = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
+  const themeBodyClass = isDarkMode ? 'bg-[#000000] text-white' : 'bg-[#e8e4d9] text-[#2c241b]';
+  const themeContainerClass = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
   
-  const containerClasses = isMobileView 
-    ? `max-w-[430px] w-full mx-auto min-h-[100dvh] relative shadow-2xl transition-colors duration-[400ms] overflow-hidden ${containerColor}` 
-    : `w-full min-h-[100dvh] relative transition-colors duration-[400ms] overflow-hidden ${containerColor}`;
+  const appContainerClass = isMobileView 
+    ? `max-w-[430px] w-full mx-auto min-h-[100dvh] relative shadow-2xl transition-colors duration-[400ms] overflow-hidden ${themeContainerClass}` 
+    : `w-full min-h-[100dvh] relative transition-colors duration-[400ms] overflow-hidden ${themeContainerClass}`;
 
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  const currentDateStr = `${yyyy}-${mm}-${dd}`;
-  const currentHourMin = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const currentYear = currentTime.getFullYear();
+  const currentMonth = String(currentTime.getMonth() + 1).padStart(2, '0');
+  const currentDay = String(currentTime.getDate()).padStart(2, '0');
+  const currentDateStr = `${currentYear}-${currentMonth}-${currentDay}`;
+  const currentTimeStr = `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
 
   return (
-    <div className={`font-sans transition-colors duration-[400ms] flex justify-center select-none ${bodyColor}`}>
-      <div className={containerClasses}>
+    <div className={`font-sans transition-colors duration-[400ms] flex justify-center select-none ${themeBodyClass}`}>
+      <div className={appContainerClass}>
         
-        {isInitialLoading && (
+        {isAppLoading && (
           <div className="fixed inset-0 flex items-center justify-center z-[999] bg-inherit">
             <RefreshCw className={`w-10 h-10 animate-spin ${isDarkMode ? 'text-white' : 'text-gray-800'}`} />
           </div>
         )}
 
-        <div className={isInitialLoading ? 'opacity-0 pointer-events-none' : 'transition-opacity duration-500 opacity-100'}>
-          {toast.show && (
+        <div className={isAppLoading ? 'opacity-0 pointer-events-none' : 'transition-opacity duration-500 opacity-100'}>
+          {toastState.show && (
             <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-full bg-black/80 backdrop-blur text-white shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
               {(() => {
                 const IconMap = {
@@ -848,23 +848,23 @@ const App = () => {
                   refresh: { icon: RefreshCw, color: 'text-yellow-500' },
                   error: { icon: MapPinXInside, color: 'text-red-500' }
                 };
-                const config = IconMap[toast.type] || { icon: Sparkles, color: 'text-yellow-500' };
+                const config = IconMap[toastState.type] || { icon: Sparkles, color: 'text-yellow-500' };
                 const Icon = config.icon;
                 return <Icon className={`w-4 h-4 ${config.color}`} />;
               })()}
-              <span className="text-sm font-bold">{toast.message}</span>
+              <span className="text-sm font-bold">{toastState.message}</span>
             </div>
           )}
 
-          {previewIframeUrl && (
+          {mapPreviewUrl && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
-               <div className={`fixed -inset-[200px] backdrop-blur-sm ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`} onClick={() => setPreviewIframeUrl(null)}></div>
+               <div className={`fixed -inset-[200px] backdrop-blur-sm ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`} onClick={() => setMapPreviewUrl(null)}></div>
                <div className={`relative w-[95vw] h-[75dvh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-[400ms] ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
-                  <button onClick={() => setPreviewIframeUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
+                  <button onClick={() => setMapPreviewUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
                   <iframe 
-                    key={previewIframeUrl}
+                    key={mapPreviewUrl}
                     title="Preview"
                     width="100%" 
                     height="100%" 
@@ -872,22 +872,22 @@ const App = () => {
                     style={{ 
                       border: 0
                     }} 
-                    src={previewIframeUrl} 
+                    src={mapPreviewUrl} 
                     allowFullScreen>
                   </iframe>
                </div>
             </div>
           )}
 
-          {notePreview && (
+          {notePreviewText && (
             <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
-               <div className={`fixed -inset-[200px] backdrop-blur-sm ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`} onClick={() => setNotePreview(null)}></div>
+               <div className={`fixed -inset-[200px] backdrop-blur-sm ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`} onClick={() => setNotePreviewText(null)}></div>
                <div className={`relative w-[95vw] max-h-[75dvh] overflow-y-auto rounded-[2rem] p-8 border-4 transition-colors duration-[400ms] ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
-                  <button onClick={() => setNotePreview(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
+                  <button onClick={() => setNotePreviewText(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
                   <div className={`text-2xl font-semibold whitespace-pre-wrap select-text leading-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {notePreview}
+                    {notePreviewText}
                   </div>
                </div>
             </div>
@@ -897,18 +897,18 @@ const App = () => {
             
             <header className={`${isMobileView ? 'px-3' : 'px-6'} py-4 space-y-4`}>
               <div className="flex justify-between items-center gap-2">
-                {isEditingTitle ? (
+                {isEditingTripName ? (
                   <input 
                     autoFocus
                     className={`w-1/2 min-w-0 flex-1 bg-transparent border-b border-blue-500 outline-none text-2xl font-semibold truncate transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
+                    value={draftTripName}
+                    onChange={(e) => setDraftTripName(e.target.value)}
                     onBlur={handleTripRename}
                     onKeyDown={(e) => e.key === 'Enter' && handleTripRename()}
                   />
                 ) : (
-                  <div className="flex items-center gap-2 flex-1 min-w-0 group cursor-pointer" onClick={() => { setNewTitle(activeTrip); setIsEditingTitle(true); }}>
-                    <h1 className="text-2xl font-semibold truncate">{activeTrip}</h1>
+                  <div className="flex items-center gap-2 flex-1 min-w-0 group cursor-pointer" onClick={() => { setDraftTripName(tripName); setIsEditingTripName(true); }}>
+                    <h1 className="text-2xl font-semibold truncate">{tripName}</h1>
                     <NotebookPen className={`w-4 h-4 opacity-0 group-hover:opacity-70 transition-opacity shrink-0 ${isDarkMode ? 'text-white' : 'text-gray-600'}`} />
                   </div>
                 )}
@@ -917,8 +917,8 @@ const App = () => {
                   <button onClick={handleThemeToggle} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
                     {isDarkMode ? <Moon className="w-4 h-4 text-yellow-400" /> : <Sun className="w-4 h-4 text-orange-500" />}
                   </button>
-                  <button onClick={() => setViewMode(viewMode === 'mobile' ? 'web' : 'mobile')} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
-                    {viewMode === 'mobile' ? <Monitor className="w-4 h-4 text-gray-400" /> : <Smartphone className="w-4 h-4 text-gray-400" />}
+                  <button onClick={() => setDeviceViewMode(deviceViewMode === 'mobile' ? 'web' : 'mobile')} className={`p-2 rounded-xl transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-white'}`}>
+                    {deviceViewMode === 'mobile' ? <Monitor className="w-4 h-4 text-gray-400" /> : <Smartphone className="w-4 h-4 text-gray-400" />}
                   </button>
                 </div>
               </div>
@@ -931,10 +931,10 @@ const App = () => {
                 <button onClick={handleExport} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500/10 text-green-600 dark:text-green-500 border border-green-500/20 text-xs font-black hover:bg-green-500/20 transition-all">
                   <Upload className="w-4 h-4" /> 导出
                 </button>
-                <button onClick={handleUndo} disabled={past.length === 0} className={`w-10 flex items-center justify-center rounded-xl border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-white/10 text-white disabled:opacity-20' : 'bg-white border-gray-300 text-gray-700 disabled:opacity-30'}`}>
+                <button onClick={handleUndo} disabled={undoStack.length === 0} className={`w-10 flex items-center justify-center rounded-xl border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-white/10 text-white disabled:opacity-20' : 'bg-white border-gray-300 text-gray-700 disabled:opacity-30'}`}>
                   <Undo2 className="w-4 h-4" />
                 </button>
-                <button onClick={handleRedo} disabled={future.length === 0} className={`w-10 flex items-center justify-center rounded-xl border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-white/10 text-white disabled:opacity-20' : 'bg-white border-gray-300 text-gray-700 disabled:opacity-30'}`}>
+                <button onClick={handleRedo} disabled={redoStack.length === 0} className={`w-10 flex items-center justify-center rounded-xl border shadow-sm transition-all ${isDarkMode ? 'bg-white/5 border-white/10 text-white disabled:opacity-20' : 'bg-white border-gray-300 text-gray-700 disabled:opacity-30'}`}>
                   <Redo2 className="w-4 h-4" />
                 </button>
               </div>
@@ -942,9 +942,9 @@ const App = () => {
 
             <nav className={`${isMobileView ? 'px-3' : 'px-6'} py-4 flex gap-2 overflow-x-auto no-scrollbar items-center shrink-0`}>
               <button 
-                onClick={() => setActiveTab('Total')} 
+                onClick={() => setActiveDateTab('Total')} 
                 className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] w-[72px] rounded-xl text-xs font-black transition-all border border-solid box-border ${
-                  activeTab === 'Total' 
+                  activeDateTab === 'Total' 
                     ? (isDarkMode ? 'bg-white text-black shadow-lg border-transparent' : 'bg-gray-800 text-white shadow-lg border-transparent') 
                     : (isDarkMode ? 'bg-transparent border-white/20 text-gray-400 hover:text-white hover:border-white/40' : 'bg-white shadow-sm border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300')
                 }`}
@@ -952,12 +952,12 @@ const App = () => {
                 全部
               </button>
 
-              {dates.map(date => (
+              {tripDate.map(date => (
                 <button 
                   key={date} 
-                  onClick={() => setActiveTab(date)} 
+                  onClick={() => setActiveDateTab(date)} 
                   className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] w-[72px] rounded-xl text-xs font-black transition-all border border-solid box-border ${
-                    activeTab === date 
+                    activeDateTab === date 
                       ? (isDarkMode ? 'bg-white text-black shadow-lg border-transparent' : 'bg-gray-800 text-white shadow-lg border-transparent') 
                       : (isDarkMode ? 'bg-transparent border-white/20 text-gray-400 hover:text-white hover:border-white/40' : 'bg-white shadow-sm border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300')
                   }`}
@@ -987,63 +987,63 @@ const App = () => {
             </div>
 
             <main className={`${isMobileView ? 'px-3' : 'px-6'} py-6`}>
-              {groupedDataWithTime.length === 0 ? (
+              {tripDataTimeline.length === 0 ? (
                 <div className="py-20 text-center opacity-60 flex flex-col items-center gap-4">
                    <Sparkles className="w-12 h-12" />
                    <p className="text-xs font-bold uppercase tracking-widest">暂无行程计划，开始添加吧</p>
                 </div>
-              ) : groupedDataWithTime.map((group) => {
-                const isOverviewExpanded = expandedDates[group.date]; 
-                const formattedDate = group.date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日');
+              ) : tripDataTimeline.map((dateGroup) => {
+                const isOverviewExpanded = expandedOverviewDate[dateGroup.date]; 
+                const formattedDateStr = dateGroup.date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日');
                 
                 return (
-                  <div key={group.date} className="mb-[18px]">
+                  <div key={dateGroup.date} className="mb-[18px]">
                     <div className="mb-[12px]">
                       <div className="flex items-center mb-[20px]">
-                        <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{group.date}</span>
+                        <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{dateGroup.date}</span>
                         <div className={`h-px flex-1 mx-3 transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
-                        {weatherData[group.date] && (
+                        {weatherForecast[dateGroup.date] && (
                           <div 
                             className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
                             onClick={() => {
-                              if (group.items[0]?.city) {
-                                setPreviewIframeUrl(`https://www.google.com/search?q=${encodeURIComponent(group.items[0].city + ' ' + formattedDate + ' 天气')}&igu=1&hl=zh-CN&gl=CN`);
+                              if (dateGroup.items[0]?.city) {
+                                setMapPreviewUrl(`https://www.google.com/search?q=${encodeURIComponent(dateGroup.items[0].city + ' ' + formattedDateStr + ' 天气')}&igu=1&hl=zh-CN&gl=CN`);
                               }
                             }}
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
-                            <span className="text-xs font-black whitespace-nowrap">{weatherData[group.date]}</span>
+                            <span className="text-xs font-black whitespace-nowrap">{weatherForecast[dateGroup.date]}</span>
                           </div>
                         )}
                       </div>
                       
                       <div className="flex gap-2">
-                        <button onClick={() => handleOverviewToggle(group.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/60'}`}>
-                           <span className="text-xs font-semibold opacity-80">当日行程总览（{group.items.length}个地点）</span>
+                        <button onClick={() => handleOverviewToggle(dateGroup.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/60'}`}>
+                           <span className="text-xs font-semibold opacity-80">当日行程总览（{dateGroup.items.length}个地点）</span>
                            {isOverviewExpanded ? <ChevronUp className="w-4 h-4 opacity-60"/> : <ChevronDown className="w-4 h-4 opacity-60"/>}
                         </button>
-                        <button onClick={() => { setTimeEditData({ date: group.date, time: dailyStartTimes[activeTrip]?.[group.date] || "08:00" }); setShowTimeModal(true); }} className={`px-3 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed transition-all shrink-0 ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
+                        <button onClick={() => { setStartTimeData({ date: dateGroup.date, time: dailyStartTime[tripName]?.[dateGroup.date] || "08:00" }); setShowStartTimeModal(true); }} className={`px-3 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed transition-all shrink-0 ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
                            <Clock className="w-4 h-4 opacity-60"/>
-                           <span className="text-xs font-black opacity-80">{dailyStartTimes[activeTrip]?.[group.date] || "08:00"}</span>
+                           <span className="text-xs font-black opacity-80">{dailyStartTime[tripName]?.[dateGroup.date] || "08:00"}</span>
                         </button>
                       </div>
                       
                       {isOverviewExpanded && (
                         <div className={`mt-2 p-4 rounded-2xl shadow-sm text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white'}`}>
-                          {group.items.length >= 2 && (
+                          {dateGroup.items.length >= 2 && (
                             <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75dvh]'} rounded-xl overflow-hidden mb-2 border-4 transition-colors duration-[400ms] ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                               <iframe 
                                 title="Daily Route"
                                 width="100%" 
                                 height="100%" 
                                 frameBorder="0" 
-                                src={`https://maps.google.com/maps?saddr=${encodeURIComponent(group.items[0].name + ' ' + (group.items[0].city || ''))}&daddr=${encodeURIComponent(group.items.slice(1).map(i => i.name + ' ' + (i.city || '')).join(' to:'))}&output=embed`} 
+                                src={`https://maps.google.com/maps?saddr=${encodeURIComponent(dateGroup.items[0].name + ' ' + (dateGroup.items[0].city || ''))}&daddr=${encodeURIComponent(dateGroup.items.slice(1).map(i => i.name + ' ' + (i.city || '')).join(' to:'))}&output=embed`} 
                                 allowFullScreen
                               ></iframe>
                             </div>
                           )}
-                          {group.items.map((i, idx) => (
-                             <span key={idx} className={`block select-text ${i.done ? 'line-through opacity-40' : ''}`}>
+                          {dateGroup.items.map((i, groupItemIndex) => (
+                             <span key={groupItemIndex} className={`block select-text ${i.isLocationChecked ? 'line-through opacity-40' : ''}`}>
                                {i.order}. {i.name}（{i.startTimeStr} - {i.endTimeStr}）
                              </span>
                           ))}
@@ -1052,31 +1052,31 @@ const App = () => {
                     </div>
 
                     <div className="relative space-y-0">
-                      {group.items.map((item, idx) => (
-                        <div key={item.id} id={`card-${item.id}`} className="relative mb-0">
+                      {dateGroup.items.map((item, groupItemIndex) => (
+                        <div key={item.id} id={`location-${item.id}`} className="relative mb-0">
                           
-                          {idx < group.items.length - 1 && (
-                            <div className={`absolute left-[27px] top-[36px] -bottom-[40px] z-0 transition-colors duration-[400ms] ${(group.date < currentDateStr || (group.date === currentDateStr && item.endTimeStr <= currentHourMin)) ? `border-l-[2px] border-dotted w-0 ${isDarkMode ? 'border-white/30' : 'border-gray-400'} bg-transparent` : `w-[2px] ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`}`} />
+                          {groupItemIndex < dateGroup.items.length - 1 && (
+                            <div className={`absolute left-[27px] top-[36px] -bottom-[40px] z-0 transition-colors duration-[400ms] ${(dateGroup.date < currentDateStr || (dateGroup.date === currentDateStr && item.endTimeStr <= currentTimeStr)) ? `border-l-[2px] border-dotted w-0 ${isDarkMode ? 'border-white/30' : 'border-gray-400'} bg-transparent` : `w-[2px] ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`}`} />
                           )}
 
                           <div className={`relative flex ${isMobileView ? 'gap-2' : 'gap-4'} group z-10 pt-2`}>
                             <div className="flex flex-col items-center w-14 shrink-0 bg-transparent">
                               <button 
-                                onPointerDown={() => setActiveScaleId(item.id)}
-                                onPointerUp={() => setActiveScaleId(null)}
-                                onPointerLeave={() => setActiveScaleId(null)}
-                                onPointerCancel={() => setActiveScaleId(null)}
+                                onPointerDown={() => setActivePressId(item.id)}
+                                onPointerUp={() => setActivePressId(null)}
+                                onPointerLeave={() => setActivePressId(null)}
+                                onPointerCancel={() => setActivePressId(null)}
                                 onClick={() => handleLocationCheck(item.id)} 
                                 className="relative z-10 w-10 h-10 flex items-center justify-center cursor-pointer outline-none touch-manipulation bg-transparent border-none p-0 appearance-none"
                               >
-                                <div className={`relative w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 ${activeScaleId === item.id ? 'scale-90' : 'scale-100'} ${
-                                  item.done 
+                                <div className={`relative w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 ${activePressId === item.id ? 'scale-90' : 'scale-100'} ${
+                                  item.isLocationChecked 
                                     ? 'bg-gray-500 border-gray-500/20 text-white' 
                                     : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')
                                 }`}>
                                   <span 
                                     className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                                      item.done ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
+                                      item.isLocationChecked ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
                                     }`}
                                   >
                                     <CheckCircle className="w-5 h-5"/>
@@ -1084,7 +1084,7 @@ const App = () => {
 
                                   <span 
                                     className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                                      item.done ? 'opacity-0 scale-150' : 'opacity-100 scale-100'
+                                      item.isLocationChecked ? 'opacity-0 scale-150' : 'opacity-100 scale-100'
                                     }`}
                                   >
                                     {item.order}
@@ -1096,10 +1096,10 @@ const App = () => {
                               </div>
                             </div>
 
-                            <div className={`relative z-20 flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all duration-300 transform-gpu ${activeScaleId === item.id ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.done ? 'opacity-50' : ''}`}>
+                            <div className={`relative z-20 flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all duration-300 transform-gpu ${activePressId === item.id ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.isLocationChecked ? 'opacity-50' : ''}`}>
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1 min-w-0 pr-2">
-                                  <h3 className={`font-semibold text-sm leading-snug select-text ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
+                                  <h3 className={`font-semibold text-sm leading-snug select-text ${item.isLocationChecked ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
                                   {item.city && (
                                     <div className="flex items-center gap-1 mt-1 opacity-80">
                                       <MapPin className="w-3 h-3" />
@@ -1124,7 +1124,7 @@ const App = () => {
                                 if (!urls) {
                                   return (
                                     <div 
-                                      onClick={() => setNotePreview(item.note)}
+                                      onClick={() => setNotePreviewText(item.note)}
                                       className={`mt-3 mb-3 text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-white/5 hover:bg-white/10 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'}`}
                                     >
                                       {item.note}
@@ -1138,14 +1138,14 @@ const App = () => {
                                   <div className="mt-3 mb-3 flex flex-col gap-2 items-start w-full min-w-0">
                                     {textPart && (
                                       <div 
-                                        onClick={() => setNotePreview(item.note)}
+                                        onClick={() => setNotePreviewText(item.note)}
                                         className={`w-full text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-pre-wrap break-words leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-white/5 hover:bg-white/10 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'}`}
                                       >
                                         {textPart}
                                       </div>
                                     )}
                                     {urls.map((url, i) => (
-                                      <div key={i} onClick={() => setPreviewIframeUrl(url)} className={`text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate w-full block select-text ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
+                                      <div key={i} onClick={() => setMapPreviewUrl(url)} className={`text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate w-full block select-text ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
                                         {url.length > 28 ? url.substring(0, 20) + '...' + url.slice(-8) : url}
                                       </div>
                                     ))}
@@ -1155,7 +1155,7 @@ const App = () => {
                               
                               <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
                                 <div className="flex gap-3 text-[10px] font-bold">
-                                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}><Clock className="w-3 h-3" /> {item.duration >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : item.duration + 'm'}</div>
+                                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}><Clock className="w-3 h-3" /> {item.locationDuration >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : item.locationDuration + 'm'}</div>
                                   {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><Wallet className="w-3 h-3" /> {item.cost >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999+' : '999999+') : item.cost} {item.currency}</div>}
                                 </div>
                                 
@@ -1171,25 +1171,25 @@ const App = () => {
                             </div>
                           </div>
 
-                          {idx < group.items.length - 1 && (
+                          {groupItemIndex < dateGroup.items.length - 1 && (
                             <div key={`transport-${item.id}`} id={`transport-${item.id}`} className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-1.5 items-center relative z-10 group`}>
                               <div className="w-14 shrink-0 bg-transparent flex flex-col items-center justify-center relative z-20 -translate-y-5">
                                 <button 
-                                  onPointerDown={() => setActiveScaleId(`transport-${item.id}`)}
-                                  onPointerUp={() => setActiveScaleId(null)}
-                                  onPointerLeave={() => setActiveScaleId(null)}
-                                  onPointerCancel={() => setActiveScaleId(null)}
+                                  onPointerDown={() => setActivePressId(`transport-${item.id}`)}
+                                  onPointerUp={() => setActivePressId(null)}
+                                  onPointerLeave={() => setActivePressId(null)}
+                                  onPointerCancel={() => setActivePressId(null)}
                                   onClick={() => handleTransportCheck(item.id)} 
                                   className="relative z-20 w-10 h-10 flex items-center justify-center cursor-pointer outline-none touch-manipulation bg-transparent border-none p-0 appearance-none"
                                 >
-                                  <div className={`relative w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 ${activeScaleId === `transport-${item.id}` ? 'scale-90' : 'scale-100'} ${
-                                    item.transportDone 
+                                  <div className={`relative w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 ${activePressId === `transport-${item.id}` ? 'scale-90' : 'scale-100'} ${
+                                    item.isTransportChecked 
                                       ? 'bg-gray-500 border-gray-500/20 text-white' 
                                       : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')
                                   }`}>
                                     <span 
                                       className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                                        item.transportDone ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
+                                        item.isTransportChecked ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
                                       }`}
                                     >
                                       <CheckCircle className="w-4 h-4"/>
@@ -1200,7 +1200,7 @@ const App = () => {
                                   {item.endTimeStr}
                                 </div>
                               </div>
-                              <div className={`relative z-20 flex-1 flex items-center justify-between px-3 py-3.5 rounded-xl border border-dashed shadow-sm transition-all duration-300 transform-gpu ${activeScaleId === `transport-${item.id}` ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
+                              <div className={`relative z-20 flex-1 flex items-center justify-between px-3 py-3.5 rounded-xl border border-dashed shadow-sm transition-all duration-300 transform-gpu ${activePressId === `transport-${item.id}` ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.isTransportChecked ? 'opacity-50' : ''}`}>
                                 <div className="flex items-center min-w-0">
                                   <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
                                     <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : (item.transportDuration || 0) + 'm'}
@@ -1211,7 +1211,7 @@ const App = () => {
                                     <SquarePen className="w-3.5 h-3.5" />
                                   </button>
                                   <div className="flex gap-1 shrink-0">
-                                    {Object.entries(TRANSPORT_ESTIMATES).map(([mode, config]) => {
+                                    {Object.entries(TRANSPORT_MODE).map(([mode, config]) => {
                                       const isActive = item.transportMode === mode;
                                       const Icon = config.icon;
                                       return (
@@ -1229,15 +1229,15 @@ const App = () => {
                                   
                                   <button 
                                     onClick={() => {
-                                      const endItem = group.items[idx+1];
+                                      const endItem = dateGroup.items[groupItemIndex+1];
                                       const origin = encodeURIComponent(`${item.name} ${item.city || ''}`);
                                       const dest = encodeURIComponent(`${endItem.name} ${endItem.city || ''}`);
                                       const dirflgMap = { walk: 'w', car: 'd', train: 'r' };
                                       const dirflg = dirflgMap[item.transportMode || 'train'];
-                                      setPreviewIframeUrl(`https://maps.google.com/maps?saddr=${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
+                                      setMapPreviewUrl(`https://maps.google.com/maps?saddr=${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
                                     }}
                                     className={`${isMobileView ? 'px-2.5' : 'px-4'} py-1.5 rounded-lg text-[11px] font-black transition hover:scale-105 flex items-center gap-1 shrink-0 ${
-                                      isDarkMode ? TRANSPORT_ESTIMATES[item.transportMode || 'walk'].darkClass : TRANSPORT_ESTIMATES[item.transportMode || 'walk'].lightClass
+                                      isDarkMode ? TRANSPORT_MODE[item.transportMode || 'walk'].darkClass : TRANSPORT_MODE[item.transportMode || 'walk'].lightClass
                                     }`}
                                   >
                                     <Route className="w-3.5 h-3.5" />
@@ -1265,7 +1265,7 @@ const App = () => {
             </button>
           </div>
 
-          {showModal && (
+          {showLocationModal && (
             <>
               <div className={`fixed bottom-0 left-0 right-0 h-[max(env(safe-area-inset-bottom),20px)] z-[111] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
               
@@ -1274,8 +1274,8 @@ const App = () => {
                 <div className="w-full max-w-md relative">
                   <form onSubmit={handleLocationSave} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
-                      <h2 className={`text-xl font-black transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
-                      <button type="button" onClick={() => { setShowModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
+                      <h2 className={`text-xl font-black transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{locationModalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
+                      <button type="button" onClick={() => { setShowLocationModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
                     </div>
                     
                     <div className="space-y-4">
@@ -1291,7 +1291,7 @@ const App = () => {
                             onInvalid={e => e.target.setCustomValidity('请填写')}
                             onInput={e => e.target.setCustomValidity('')}
                             className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                            value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                            value={locationData.name} onChange={e => setLocationData({...locationData, name: e.target.value})} />
                         </div>
                         <div className="flex flex-col gap-1.5">
                           <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>序号</label>
@@ -1302,7 +1302,7 @@ const App = () => {
                               }, 300);
                             }}
                             className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                            value={formData.order} onChange={e => setFormData({...formData, order: e.target.value.replace(/[^0-9]/g, '')})} />
+                            value={locationData.order} onChange={e => setLocationData({...locationData, order: e.target.value.replace(/[^0-9]/g, '')})} />
                         </div>
                       </div>
 
@@ -1320,7 +1320,7 @@ const App = () => {
                             onInvalid={e => e.target.setCustomValidity('请填写')}
                             onInput={e => e.target.setCustomValidity('')}
                             className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-[400ms] [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                            value={formData.date} onChange={e => setFormData({...formData, date: sanitizeDate(e.target.value)})} />
+                            value={locationData.date} onChange={e => setLocationData({...locationData, date: sanitizeDate(e.target.value)})} />
                         </div>
                         <div className="flex flex-col gap-1.5 min-w-0">
                           <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>城市</label>
@@ -1330,7 +1330,7 @@ const App = () => {
                                 e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                               }, 300);
                             }}
-                            value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
+                            value={locationData.city} onChange={e => setLocationData({...locationData, city: e.target.value})} />
                         </div>
                       </div>
 
@@ -1344,7 +1344,7 @@ const App = () => {
                               }, 300);
                             }}
                             className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                            value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value.replace(/[^0-9]/g, '')})} />
+                            value={locationData.locationDuration} onChange={e => setLocationData({...locationData, locationDuration: e.target.value.replace(/[^0-9]/g, '')})} />
                         </div>
                         <div className="flex flex-col gap-1.5">
                           <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>花销</label>
@@ -1357,13 +1357,13 @@ const App = () => {
                               }, 300);
                             }}
                             className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                            value={formData.cost} onChange={e => setFormData({...formData, cost: e.target.value.replace(/[^0-9.]/g, '')})} />
+                            value={locationData.cost} onChange={e => setLocationData({...locationData, cost: e.target.value.replace(/[^0-9.]/g, '')})} />
                         </div>
                         <div className="flex flex-col gap-1.5 relative">
                           <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>币种</label>
                           <div className="relative h-12">
                             <select 
-                              required={parseFloat(formData.cost) > 0}
+                              required={parseFloat(locationData.cost) > 0}
                               onFocus={(e) => {
                                 setTimeout(() => {
                                   e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1372,7 +1372,7 @@ const App = () => {
                               onInvalid={e => e.target.setCustomValidity('请填写')}
                               onInput={e => e.target.setCustomValidity('')}
                               className={`w-full h-full px-4 pr-8 rounded-2xl text-base font-medium outline-none appearance-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                              value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})}>
+                              value={locationData.currency} onChange={e => setLocationData({...locationData, currency: e.target.value})}>
                               <option value=""></option>
                               <option value="USD">USD</option>
                               <option value="GBP">GBP</option>
@@ -1397,7 +1397,7 @@ const App = () => {
                             }, 300);
                           }}
                           placeholder="例如：住宿、交通、门票、营业时间等信息"
-                          value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} />
+                          value={locationData.note} onChange={e => setLocationData({...locationData, note: e.target.value})} />
                       </div>
                     </div>
 
@@ -1410,7 +1410,7 @@ const App = () => {
             </>
           )}
 
-          {showTimeModal && (
+          {showStartTimeModal && (
             <>
               <div className={`fixed bottom-0 left-0 right-0 h-[max(env(safe-area-inset-bottom),20px)] z-[111] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
               
@@ -1419,16 +1419,16 @@ const App = () => {
                 <div className="w-full max-w-md relative">
                   <form onSubmit={(e) => {
                     e.preventDefault();
-                    setDailyStartTimes(prev => ({
+                    setDailyStartTime(prev => ({
                       ...prev,
-                      [activeTrip]: { ...(prev[activeTrip] || {}), [timeEditData.date]: timeEditData.time }
+                      [tripName]: { ...(prev[tripName] || {}), [startTimeData.date]: startTimeData.time }
                     }));
-                    setShowTimeModal(false);
+                    setShowStartTimeModal(false);
                     restoreZoom();
                   }} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
                       <h2 className={`text-xl font-black transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑时间</h2>
-                      <button type="button" onClick={() => { setShowTimeModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
+                      <button type="button" onClick={() => { setShowStartTimeModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
                     </div>
                     
                     <div className="space-y-4">
@@ -1445,7 +1445,7 @@ const App = () => {
                           onInvalid={e => e.target.setCustomValidity('请填写')}
                           onInput={e => e.target.setCustomValidity('')}
                           className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-[400ms] [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                          value={timeEditData.time} onChange={e => setTimeEditData({...timeEditData, time: e.target.value})} />
+                          value={startTimeData.time} onChange={e => setStartTimeData({...startTimeData, time: e.target.value})} />
                       </div>
                     </div>
 
@@ -1481,7 +1481,7 @@ const App = () => {
                             }, 300);
                           }}
                           className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                          value={transportEditDuration} onChange={e => setTransportEditDuration(e.target.value.replace(/[^0-9]/g, ''))} />
+                          value={transportData} onChange={e => setTransportData(e.target.value.replace(/[^0-9]/g, ''))} />
                       </div>
                     </div>
 
@@ -1501,8 +1501,8 @@ const App = () => {
                 <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Download className="w-8 h-8 text-blue-500" />
                 </div>
-                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>识别到 {pendingImportData.length} 个地点</h2>
-                <p className="text-[11px] opacity-80 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{activeTrip}</span></p>
+                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>识别到 {pendingImportedData.length} 个地点</h2>
+                <p className="text-[11px] opacity-80 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{tripName}</span></p>
                 
                 <div className="grid gap-3">
                   <button onClick={() => handleImportConfirm('append')} className="w-full h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_0_10px_rgb(37,99,235,0.4)] sm:shadow-[0_0_20px_rgb(37,99,235,0.4)]">追加到当前行程末尾</button>
@@ -1517,9 +1517,9 @@ const App = () => {
         <style>{`
           html, body {
             background-color: ${isDarkMode ? '#000000' : '#e8e4d9'} !important;
-            ${isLoaded ? 'transition: background-color 0.4s ease;' : ''}
+            ${isAppLoaded ? 'transition: background-color 0.4s ease;' : ''}
           }
-          ${!isLoaded ? '* { transition: none !important; }' : ''}
+          ${!isAppLoaded ? '* { transition: none !important; }' : ''}
           .transition-colors {
             transition-property: background-color, border-color, text-decoration-color, fill, stroke !important;
             transition-duration: 0.4s !important;
