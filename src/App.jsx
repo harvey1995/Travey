@@ -202,6 +202,7 @@ const App = () => {
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success', id: 0 });
   const [weatherData, setWeatherData] = useState({});
+  const [weatherRefreshTrigger, setWeatherRefreshTrigger] = useState(0);
 
   const [dailyStartTimes, setDailyStartTimes] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -282,6 +283,10 @@ const App = () => {
   }, [toast.show, toast.id]);
 
   const handleRefresh = () => {
+    setSearchQuery('');
+    setExpandedDates({});
+    setWeatherData({});
+    setWeatherRefreshTrigger(prev => prev + 1);
     showMessage("已刷新", "refresh");
   };
 
@@ -454,7 +459,7 @@ const App = () => {
     };
     fetchWeather();
     return () => { isMounted = false; };
-  }, [activeTab]);
+  }, [activeTab, weatherRefreshTrigger]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
