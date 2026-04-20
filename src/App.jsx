@@ -43,7 +43,6 @@ if (typeof document !== 'undefined') {
   metaTheme.content = bgColor;
 }
 
-// --- 工具函数 ---
 const getTodayDate = () => new Date().toISOString().split('T')[0];
 
 const sanitizeDate = (dateStr) => {
@@ -85,7 +84,6 @@ const TOKYO_TRIP = [
 const INITIAL_TRIPS = { "东京跨年三日游": TOKYO_TRIP };
 
 const App = () => {
-  // 1. 数据与缓存
   const [trips, setTrips] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('travey_data_v1');
@@ -102,7 +100,6 @@ const App = () => {
     return "东京跨年三日游";
   });
 
-  // 2. 撤销与重做
   const [past, setPast] = useState([]);
   const [future, setFuture] = useState([]);
 
@@ -361,9 +358,6 @@ const App = () => {
     }
   }, [previewIframeUrl, notePreview, showModal, showTimeModal, showTransportModal, showImportModal]);
 
-  // =========================================================================
-  // 1. 全局状态与工具方法 (Global Tools)
-  // =========================================================================
   const updateTrip = (newTrips, newActiveTrip = activeTrip) => {
     setPast(p => [...p, { trips, activeTrip }].slice(-20));
     setFuture([]);
@@ -403,9 +397,6 @@ const App = () => {
     }
   };
 
-  // =========================================================================
-  // 2. 顶部操作 (Top Bar Interactions)
-  // =========================================================================
   const handleTripRename = () => {
     if (newTitle.trim() && newTitle !== activeTrip) {
       const newTrips = { ...trips };
@@ -652,16 +643,10 @@ const App = () => {
     showMessage("已全部打卡", "allDone");
   };
 
-  // =========================================================================
-  // 3. 列表与视图控制 (List & View Controls)
-  // =========================================================================
   const handleOverviewToggle = (date) => {
     setExpandedDates(prev => ({ ...prev, [date]: !prev[date] }));
   };
 
-  // =========================================================================
-  // 4. 地点实体操作 (Location Card Actions)
-  // =========================================================================
   const handleLocationCheck = (id) => {
     const idx = currentTripData.findIndex(item => item.id === id);
     if (idx === -1) return;
@@ -789,9 +774,6 @@ const App = () => {
     window.open(`https://maps.google.com/maps?q=${query}`, '_blank');
   };
 
-  // =========================================================================
-  // 5. 交通实体操作 (Transport Card Actions)
-  // =========================================================================
   const handleTransportCheck = (id) => {
     const updated = currentTripData.map(item => item.id === id ? { ...item, transportDone: !item.transportDone } : item);
     updateTrip({ ...trips, [activeTrip]: updated });
