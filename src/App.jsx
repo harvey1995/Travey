@@ -1,27 +1,27 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  // 1. 地图与位置
-  Map, MapPin, Locate, ZoomIn, 
-  MapPinCheckInside, MapPinPlusInside, MapPinXInside, Route,
+  // 1. 视图与主题
+  Moon, Sun, Monitor, Smartphone,
 
-  // 2. 出行方式
-  Car, Train, Footprints,
+  // 2. 输入与输出
+  Download, Upload,
 
-  // 3. 交互与操作
+  // 3. 编辑与历史
+  SquarePen, NotebookPen, Trash2, Undo2, Redo2,
+
+  // 4. 交互与操作
   Plus, X, CheckCircle, ChevronDown, ChevronUp, 
   Search, RefreshCw, Sparkles, ExternalLink,
 
-  // 4. 数据属性
-  Clock, Wallet,
+  // 5. 地图与位置
+  Map, MapPin, Locate, ZoomIn, 
+  MapPinCheckInside, MapPinPlusInside, MapPinXInside, Route,
 
-  // 5. 编辑与历史
-  SquarePen, NotebookPen, Trash2, Undo2, Redo2,
+  // 6. 出行方式
+  Car, Train, Footprints,
 
-  // 6. 输入与输出
-  Download, Upload,
-
-  // 7. 视图与主题
-  Moon, Sun, Monitor, Smartphone
+  // 7. 数据属性
+  Clock, Wallet
 } from 'lucide-react';
 
 if (typeof document !== 'undefined') {
@@ -105,51 +105,6 @@ const App = () => {
   // 2. 撤销与重做
   const [past, setPast] = useState([]);
   const [future, setFuture] = useState([]);
-
-  const updateTrips = (newTrips, newActiveTrip = activeTrip) => {
-    setPast(p => [...p, { trips, activeTrip }].slice(-20));
-    setFuture([]);
-    setTrips(newTrips);
-    if (newActiveTrip !== activeTrip) {
-      setActiveTrip(newActiveTrip);
-    }
-  };
-
-  const handleUndo = () => {
-    if (past.length === 0) return;
-    const previous = past[past.length - 1];
-    setPast(p => p.slice(0, -1));
-    setFuture(f => [{ trips, activeTrip }, ...f]);
-    setTrips(previous.trips);
-    setActiveTrip(previous.activeTrip);
-    showMessage("已撤销", "undo");
-  };
-
-  const handleRedo = () => {
-    if (future.length === 0) return;
-    const next = future[0];
-    setFuture(f => f.slice(1));
-    setPast(p => [...p, { trips, activeTrip }]);
-    setTrips(next.trips);
-    setActiveTrip(next.activeTrip);
-    showMessage("已重做", "redo");
-  };
-
-  const restoreZoom = () => {
-    if (typeof document !== 'undefined') {
-      let meta = document.querySelector('meta[name="viewport"]');
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.name = 'viewport';
-        document.head.appendChild(meta);
-      }
-      const originalContent = meta.content;
-      meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-      setTimeout(() => {
-        meta.content = originalContent || 'width=device-width, initial-scale=1.0';
-      }, 300);
-    }
-  };
 
   useEffect(() => {
     localStorage.setItem('travey_data_v1', JSON.stringify(trips));
@@ -269,10 +224,6 @@ const App = () => {
     localStorage.setItem('travey_view_v1', viewMode);
   }, [viewMode]);
 
-  const showMessage = (msg, type = 'success') => {
-    setToast({ show: true, message: msg, type, id: Date.now() });
-  };
-
   useEffect(() => {
     if (toast.show) {
       const timer = setTimeout(() => {
@@ -281,77 +232,6 @@ const App = () => {
       return () => clearTimeout(timer);
     }
   }, [toast.show, toast.id]);
-
-  const handleRefresh = () => {
-    setSearchQuery('');
-    setExpandedDates({});
-    setWeatherData({});
-    setWeatherRefreshTrigger(prev => prev + 1);
-    showMessage("已刷新", "refresh");
-  };
-
-  const handleLocate = () => {
-    const getAllGroupedData = (tabName) => {
-      const sorted = [...(trips[activeTrip] || [])].map(item => ({ ...item, date: sanitizeDate(item.date) })).sort((a, b) => {
-        if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
-        return (a.order || 0) - (b.order || 0);
-      });
-      const groups = {};
-      sorted.forEach(item => {
-        if (!groups[item.date]) groups[item.date] = { date: item.date, items: [] };
-        groups[item.date].items.push(item);
-      });
-      let result = Object.values(groups).sort((a, b) => new Date(a.date) - new Date(b.date));
-      if (tabName !== "Total") result = result.filter(g => g.date === tabName);
-      return result;
-    };
-
-    const currentTabGroups = getAllGroupedData(activeTab);
-    for (const group of currentTabGroups) {
-      for (const [idx, item] of group.items.entries()) {
-        if (!item.done) {
-          scrollToElement(`card-${item.id}`);
-          return;
-        }
-        if (idx < group.items.length - 1 && !item.transportDone) {
-          scrollToElement(`transport-${item.id}`);
-          return;
-        }
-      }
-    }
-
-    const allGroups = getAllGroupedData("Total");
-    for (const group of allGroups) {
-      for (const [idx, item] of group.items.entries()) {
-        if (!item.done) {
-          setActiveTab(group.date);
-          setTimeout(() => scrollToElement(`card-${item.id}`), 100);
-          return;
-        }
-        if (idx < group.items.length - 1 && !item.transportDone) {
-          setActiveTab(group.date);
-          setTimeout(() => scrollToElement(`transport-${item.id}`), 100);
-          return;
-        }
-      }
-    }
-
-    showMessage("已全部打卡", "allDone");
-  };
-
-  const scrollToElement = (id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      const rect = el.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const targetY = rect.top + scrollTop - (window.innerHeight * 0.3);
-      window.scrollTo({ top: targetY, behavior: 'smooth' });
-    }
-  };
-
-  const handleThemeToggle = () => {
-    setIsDarkMode(!isDarkMode);
-  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -481,7 +361,68 @@ const App = () => {
     }
   }, [previewIframeUrl, notePreview, showModal, showTimeModal, showTransportModal, showImportModal]);
 
-  const handleFileSelect = (e) => {
+  // =========================================================================
+  // 1. 全局状态与工具方法 (Global Tools)
+  // =========================================================================
+  const updateTrip = (newTrips, newActiveTrip = activeTrip) => {
+    setPast(p => [...p, { trips, activeTrip }].slice(-20));
+    setFuture([]);
+    setTrips(newTrips);
+    if (newActiveTrip !== activeTrip) {
+      setActiveTrip(newActiveTrip);
+    }
+  };
+
+  const showMessage = (msg, type = 'success') => {
+    setToast({ show: true, message: msg, type, id: Date.now() });
+  };
+
+  const restoreZoom = () => {
+    if (typeof document !== 'undefined') {
+      let meta = document.querySelector('meta[name="viewport"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.name = 'viewport';
+        document.head.appendChild(meta);
+      }
+      const originalContent = meta.content;
+      meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+      setTimeout(() => {
+        meta.content = originalContent || 'width=device-width, initial-scale=1.0';
+      }, 300);
+    }
+  };
+
+  const scrollToElement = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const targetY = rect.top + scrollTop - (window.innerHeight * 0.3);
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    }
+  };
+
+  // =========================================================================
+  // 2. 顶部操作 (Top Bar Interactions)
+  // =========================================================================
+  const handleTripRename = () => {
+    if (newTitle.trim() && newTitle !== activeTrip) {
+      const newTrips = { ...trips };
+      newTrips[newTitle] = newTrips[activeTrip];
+      delete newTrips[activeTrip];
+      updateTrip(newTrips, newTitle);
+      showMessage("已保存", "rename");
+    }
+    setIsEditingTitle(false);
+    restoreZoom();
+  };
+
+  const handleThemeToggle = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
+  const handleImportSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -586,11 +527,11 @@ const App = () => {
     e.target.value = null;
   };
 
-  const confirmImport = (mode) => {
+  const handleImportConfirm = (mode) => {
     if (mode === 'overwrite') {
-      updateTrips({ ...trips, [activeTrip]: pendingImportData });
+      updateTrip({ ...trips, [activeTrip]: pendingImportData });
     } else {
-      updateTrips({ ...trips, [activeTrip]: [...(currentTripData || []), ...pendingImportData] });
+      updateTrip({ ...trips, [activeTrip]: [...(currentTripData || []), ...pendingImportData] });
     }
     setShowImportModal(false);
     setPendingImportData([]);
@@ -634,17 +575,94 @@ const App = () => {
     showMessage("导出成功", "export");
   };
 
-  const handleUpdateTransport = (id, mode) => {
-    const updated = currentTripData.map(item => item.id === id ? { ...item, transportMode: mode } : item);
-    updateTrips({ ...trips, [activeTrip]: updated });
+  const handleUndo = () => {
+    if (past.length === 0) return;
+    const previous = past[past.length - 1];
+    setPast(p => p.slice(0, -1));
+    setFuture(f => [{ trips, activeTrip }, ...f]);
+    setTrips(previous.trips);
+    setActiveTrip(previous.activeTrip);
+    showMessage("已撤销", "undo");
   };
 
-  const handleUpdateTransitRoute = (id, route) => {
-    const updated = currentTripData.map(item => item.id === id ? { ...item, transitRoute: route } : item);
-    updateTrips({ ...trips, [activeTrip]: updated });
+  const handleRedo = () => {
+    if (future.length === 0) return;
+    const next = future[0];
+    setFuture(f => f.slice(1));
+    setPast(p => [...p, { trips, activeTrip }]);
+    setTrips(next.trips);
+    setActiveTrip(next.activeTrip);
+    showMessage("已重做", "redo");
   };
 
-  const toggleCheck = (id) => {
+  const handleRefresh = () => {
+    setSearchQuery('');
+    setExpandedDates({});
+    setWeatherData({});
+    setWeatherRefreshTrigger(prev => prev + 1);
+    showMessage("已刷新", "refresh");
+  };
+
+  const handleLocate = () => {
+    const getAllGroupedData = (tabName) => {
+      const sorted = [...(trips[activeTrip] || [])].map(item => ({ ...item, date: sanitizeDate(item.date) })).sort((a, b) => {
+        if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
+        return (a.order || 0) - (b.order || 0);
+      });
+      const groups = {};
+      sorted.forEach(item => {
+        if (!groups[item.date]) groups[item.date] = { date: item.date, items: [] };
+        groups[item.date].items.push(item);
+      });
+      let result = Object.values(groups).sort((a, b) => new Date(a.date) - new Date(b.date));
+      if (tabName !== "Total") result = result.filter(g => g.date === tabName);
+      return result;
+    };
+
+    const currentTabGroups = getAllGroupedData(activeTab);
+    for (const group of currentTabGroups) {
+      for (const [idx, item] of group.items.entries()) {
+        if (!item.done) {
+          scrollToElement(`card-${item.id}`);
+          return;
+        }
+        if (idx < group.items.length - 1 && !item.transportDone) {
+          scrollToElement(`transport-${item.id}`);
+          return;
+        }
+      }
+    }
+
+    const allGroups = getAllGroupedData("Total");
+    for (const group of allGroups) {
+      for (const [idx, item] of group.items.entries()) {
+        if (!item.done) {
+          setActiveTab(group.date);
+          setTimeout(() => scrollToElement(`card-${item.id}`), 100);
+          return;
+        }
+        if (idx < group.items.length - 1 && !item.transportDone) {
+          setActiveTab(group.date);
+          setTimeout(() => scrollToElement(`transport-${item.id}`), 100);
+          return;
+        }
+      }
+    }
+
+    showMessage("已全部打卡", "allDone");
+  };
+
+  // =========================================================================
+  // 3. 列表与视图控制 (List & View Controls)
+  // =========================================================================
+  const handleOverviewToggle = (date) => {
+    setExpandedDates(prev => ({ ...prev, [date]: !prev[date] }));
+  };
+
+  // =========================================================================
+  // 4. 地点实体操作 (Location Card Actions)
+  // =========================================================================
+  const handleLocationCheck = (id) => {
     const idx = currentTripData.findIndex(item => item.id === id);
     if (idx === -1) return;
     const newDone = !currentTripData[idx].done;
@@ -665,38 +683,31 @@ const App = () => {
       if (prev) updated = updated.map(i => i.id === prev.id ? { ...i, transportDone: false } : i);
       updated = updated.map(i => i.id === item.id ? { ...i, transportDone: false } : i);
     }
-    updateTrips({ ...trips, [activeTrip]: updated });
+    updateTrip({ ...trips, [activeTrip]: updated });
   };
 
-  const toggleTransportCheck = (id) => {
-    const updated = currentTripData.map(item => item.id === id ? { ...item, transportDone: !item.transportDone } : item);
-    updateTrips({ ...trips, [activeTrip]: updated });
+  const handleLocationAdd = () => {
+    setModalMode('add'); 
+    const dateToUse = activeTab !== 'Total' ? activeTab : getTodayDate();
+    setFormData({ name: '', date: dateToUse, duration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'walk', transitRoute: '' }); 
+    setShowModal(true); 
   };
 
-  const handleDelete = (id) => {
-    const remainingItems = currentTripData.filter(item => item.id !== id).map(item => ({...item}));
-    
-    const groupedByDate = {};
-    remainingItems.forEach(item => {
-      if (!groupedByDate[item.date]) groupedByDate[item.date] = [];
-      groupedByDate[item.date].push(item);
+  const handleLocationEdit = (item) => {
+    setModalMode('edit');
+    setEditingId(item.id);
+    setFormData({ 
+      ...item, 
+      duration: String(item.duration), 
+      cost: item.cost ? String(item.cost) : '', 
+      currency: item.cost ? item.currency : '',
+      order: String(item.order),
+      transitRoute: item.transitRoute || ''
     });
-    
-    Object.keys(groupedByDate).forEach(date => {
-      groupedByDate[date].sort((a, b) => parseInt(a.order || 0) - parseInt(b.order || 0));
-      let counter = 1;
-      groupedByDate[date].forEach(item => {
-        if (parseInt(item.order) !== 0) {
-          item.order = counter++;
-        }
-      });
-    });
-    
-    updateTrips({ ...trips, [activeTrip]: remainingItems });
-    showMessage("已删除", "delete");
+    setShowModal(true);
   };
 
-  const handleSubmitForm = (e) => {
+  const handleLocationSave = (e) => {
     e.preventDefault();
     const payload = {
       ...formData,
@@ -740,32 +751,59 @@ const App = () => {
       showMessage("已保存", "edit");
     }
     
-    updateTrips({ ...trips, [activeTrip]: updatedData });
+    updateTrip({ ...trips, [activeTrip]: updatedData });
     setShowModal(false);
     restoreZoom();
   };
 
-  const openEditModal = (item) => {
-    setModalMode('edit');
-    setEditingId(item.id);
-    setFormData({ 
-      ...item, 
-      duration: String(item.duration), 
-      cost: item.cost ? String(item.cost) : '', 
-      currency: item.cost ? item.currency : '',
-      order: String(item.order),
-      transitRoute: item.transitRoute || ''
+  const handleLocationDelete = (id) => {
+    const remainingItems = currentTripData.filter(item => item.id !== id).map(item => ({...item}));
+    
+    const groupedByDate = {};
+    remainingItems.forEach(item => {
+      if (!groupedByDate[item.date]) groupedByDate[item.date] = [];
+      groupedByDate[item.date].push(item);
     });
-    setShowModal(true);
+    
+    Object.keys(groupedByDate).forEach(date => {
+      groupedByDate[date].sort((a, b) => parseInt(a.order || 0) - parseInt(b.order || 0));
+      let counter = 1;
+      groupedByDate[date].forEach(item => {
+        if (parseInt(item.order) !== 0) {
+          item.order = counter++;
+        }
+      });
+    });
+    
+    updateTrip({ ...trips, [activeTrip]: remainingItems });
+    showMessage("已删除", "delete");
   };
 
-  const openTransportModal = (item) => {
+  const handleLocationPreviewMap = (name, city) => {
+    const query = encodeURIComponent(`${name} ${city}`);
+    setPreviewIframeUrl(`https://maps.google.com/maps?q=${query}&output=embed`);
+  };
+
+  const handleLocationOpenMap = (name, city) => {
+    const query = encodeURIComponent(`${name} ${city}`);
+    window.open(`https://maps.google.com/maps?q=${query}`, '_blank');
+  };
+
+  // =========================================================================
+  // 5. 交通实体操作 (Transport Card Actions)
+  // =========================================================================
+  const handleTransportCheck = (id) => {
+    const updated = currentTripData.map(item => item.id === id ? { ...item, transportDone: !item.transportDone } : item);
+    updateTrip({ ...trips, [activeTrip]: updated });
+  };
+
+  const handleTransportEdit = (item) => {
     setTransportEditId(item.id);
     setTransportEditDuration(String(item.transportDuration || 0));
     setShowTransportModal(true);
   };
 
-  const handleSaveTransportDuration = (e) => {
+  const handleTransportSave = (e) => {
     e.preventDefault();
     const updatedData = currentTripData.map(item => {
       if (item.id === transportEditId) {
@@ -773,43 +811,15 @@ const App = () => {
       }
       return item;
     });
-    updateTrips({ ...trips, [activeTrip]: updatedData });
+    updateTrip({ ...trips, [activeTrip]: updatedData });
     setShowTransportModal(false);
     restoreZoom();
     showMessage("已保存", "edit");
   };
 
-  const renameTrip = () => {
-    if (newTitle.trim() && newTitle !== activeTrip) {
-      const newTrips = { ...trips };
-      newTrips[newTitle] = newTrips[activeTrip];
-      delete newTrips[activeTrip];
-      updateTrips(newTrips, newTitle);
-      showMessage("已保存", "rename");
-    }
-    setIsEditingTitle(false);
-    restoreZoom();
-  };
-
-  const openInGoogleMaps = (name, city) => {
-    const query = encodeURIComponent(`${name} ${city}`);
-    window.open(`https://maps.google.com/maps?q=${query}`, '_blank');
-  };
-
-  const openMapPreview = (name, city) => {
-    const query = encodeURIComponent(`${name} ${city}`);
-    setPreviewIframeUrl(`https://maps.google.com/maps?q=${query}&output=embed`);
-  };
-
-  const toggleOverview = (date) => {
-    setExpandedDates(prev => ({ ...prev, [date]: !prev[date] }));
-  };
-
-  const handleOpenAddModal = () => {
-    setModalMode('add'); 
-    const dateToUse = activeTab !== 'Total' ? activeTab : getTodayDate();
-    setFormData({ name: '', date: dateToUse, duration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'walk', transitRoute: '' }); 
-    setShowModal(true); 
+  const handleTransportChangeMode = (id, mode) => {
+    const updated = currentTripData.map(item => item.id === id ? { ...item, transportMode: mode } : item);
+    updateTrip({ ...trips, [activeTrip]: updated });
   };
 
   const isMobileView = viewMode === 'mobile' || isNarrow;
@@ -911,8 +921,8 @@ const App = () => {
                     className={`w-1/2 min-w-0 flex-1 bg-transparent border-b border-blue-500 outline-none text-2xl font-semibold truncate transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    onBlur={renameTrip}
-                    onKeyDown={(e) => e.key === 'Enter' && renameTrip()}
+                    onBlur={handleTripRename}
+                    onKeyDown={(e) => e.key === 'Enter' && handleTripRename()}
                   />
                 ) : (
                   <div className="flex items-center gap-2 flex-1 min-w-0 group cursor-pointer" onClick={() => { setNewTitle(activeTrip); setIsEditingTitle(true); }}>
@@ -934,7 +944,7 @@ const App = () => {
               <div className="flex gap-2">
                 <label className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500/10 text-blue-500 border border-blue-500/20 text-xs font-black cursor-pointer hover:bg-blue-500/20 transition-all">
                   <Download className="w-4 h-4" /> 导入
-                  <input type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
+                  <input type="file" accept=".csv" onChange={handleImportSelect} className="hidden" />
                 </label>
                 <button onClick={handleExport} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500/10 text-green-600 dark:text-green-500 border border-green-500/20 text-xs font-black hover:bg-green-500/20 transition-all">
                   <Upload className="w-4 h-4" /> 导出
@@ -989,7 +999,7 @@ const App = () => {
               <button onClick={handleRefresh} className={`group p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
                 <RefreshCw className="w-4 h-4 opacity-50 group-hover:opacity-100" />
               </button>
-              <button onClick={handleOpenAddModal} className={`group p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
+              <button onClick={handleLocationAdd} className={`group p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
                 <Plus className="w-4 h-4 opacity-50 group-hover:opacity-100" />
               </button>
             </div>
@@ -1026,7 +1036,7 @@ const App = () => {
                       </div>
                       
                       <div className="flex gap-2">
-                        <button onClick={() => toggleOverview(group.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/60'}`}>
+                        <button onClick={() => handleOverviewToggle(group.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/60'}`}>
                            <span className="text-xs font-semibold opacity-80">当日行程总览（{group.items.length}个地点）</span>
                            {isOverviewExpanded ? <ChevronUp className="w-4 h-4 opacity-60"/> : <ChevronDown className="w-4 h-4 opacity-60"/>}
                         </button>
@@ -1074,7 +1084,7 @@ const App = () => {
                                 onPointerUp={() => setActiveScaleId(null)}
                                 onPointerLeave={() => setActiveScaleId(null)}
                                 onPointerCancel={() => setActiveScaleId(null)}
-                                onClick={() => toggleCheck(item.id)} 
+                                onClick={() => handleLocationCheck(item.id)} 
                                 className="relative z-10 w-10 h-10 flex items-center justify-center cursor-pointer outline-none touch-manipulation bg-transparent border-none p-0 appearance-none"
                               >
                                 <div className={`relative w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 ${activeScaleId === item.id ? 'scale-90' : 'scale-100'} ${
@@ -1117,10 +1127,10 @@ const App = () => {
                                 </div>
                                 
                                 <div className="flex gap-1.5 shrink-0">
-                                  <button onClick={() => openMapPreview(item.name, item.city)} className={`p-2 rounded-xl hover:scale-105 transition-all flex items-center ${isDarkMode ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'}`}>
+                                  <button onClick={() => handleLocationPreviewMap(item.name, item.city)} className={`p-2 rounded-xl hover:scale-105 transition-all flex items-center ${isDarkMode ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'}`}>
                                     <ZoomIn className="w-3.5 h-3.5" />
                                   </button>
-                                  <button onClick={() => openInGoogleMaps(item.name, item.city)} className={`p-2 rounded-xl hover:scale-105 transition-all flex items-center ${isDarkMode ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}>
+                                  <button onClick={() => handleLocationOpenMap(item.name, item.city)} className={`p-2 rounded-xl hover:scale-105 transition-all flex items-center ${isDarkMode ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}>
                                     <Map className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
@@ -1168,10 +1178,10 @@ const App = () => {
                                 </div>
                                 
                                 <div className="flex gap-1.5">
-                                  <button onClick={() => openEditModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition-all flex items-center justify-center ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
+                                  <button onClick={() => handleLocationEdit(item)} className={`p-1.5 rounded-lg hover:scale-105 transition-all flex items-center justify-center ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
                                     <SquarePen className="w-3.5 h-3.5" />
                                   </button>
-                                  <button onClick={() => handleDelete(item.id)} className={`p-1.5 rounded-lg hover:scale-105 transition-all flex items-center justify-center ${isDarkMode ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>
+                                  <button onClick={() => handleLocationDelete(item.id)} className={`p-1.5 rounded-lg hover:scale-105 transition-all flex items-center justify-center ${isDarkMode ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
@@ -1187,7 +1197,7 @@ const App = () => {
                                   onPointerUp={() => setActiveScaleId(null)}
                                   onPointerLeave={() => setActiveScaleId(null)}
                                   onPointerCancel={() => setActiveScaleId(null)}
-                                  onClick={() => toggleTransportCheck(item.id)} 
+                                  onClick={() => handleTransportCheck(item.id)} 
                                   className="relative z-20 w-10 h-10 flex items-center justify-center cursor-pointer outline-none touch-manipulation bg-transparent border-none p-0 appearance-none"
                                 >
                                   <div className={`relative w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 ${activeScaleId === `transport-${item.id}` ? 'scale-90' : 'scale-100'} ${
@@ -1215,7 +1225,7 @@ const App = () => {
                                   </div>
                                 </div>
                                 <div className={`flex items-center shrink-0 ${isMobileView ? 'gap-2' : 'gap-3'}`}>
-                                  <button onClick={() => openTransportModal(item)} className={`p-1.5 rounded-lg hover:scale-105 transition flex items-center justify-center ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
+                                  <button onClick={() => handleTransportEdit(item)} className={`p-1.5 rounded-lg hover:scale-105 transition flex items-center justify-center ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
                                     <SquarePen className="w-3.5 h-3.5" />
                                   </button>
                                   <div className="flex gap-1 shrink-0">
@@ -1225,7 +1235,7 @@ const App = () => {
                                       return (
                                         <button 
                                           key={mode} 
-                                          onClick={() => handleUpdateTransport(item.id, mode)} 
+                                          onClick={() => handleTransportChangeMode(item.id, mode)} 
                                           className={`p-1.5 rounded-lg transition transform-gpu flex items-center justify-center ${isActive ? `${isDarkMode ? config.darkClass : config.lightClass} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100 hover:scale-105'}`}
                                           style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
                                         >
@@ -1280,7 +1290,7 @@ const App = () => {
               <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
                 <div className={`fixed -inset-[200px] backdrop-blur-sm -z-10 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`}></div>
                 <div className="w-full max-w-md relative">
-                  <form onSubmit={handleSubmitForm} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                  <form onSubmit={handleLocationSave} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
                       <h2 className={`text-xl font-black transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{modalMode === 'add' ? '添加地点' : '编辑地点'}</h2>
                       <button type="button" onClick={() => { setShowModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
@@ -1473,7 +1483,7 @@ const App = () => {
               <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
                 <div className={`fixed -inset-[200px] backdrop-blur-sm -z-10 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`}></div>
                 <div className="w-full max-w-md relative">
-                  <form onSubmit={handleSaveTransportDuration} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                  <form onSubmit={handleTransportSave} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
                       <h2 className={`text-xl font-black transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑交通</h2>
                       <button type="button" onClick={() => { setShowTransportModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
@@ -1513,8 +1523,8 @@ const App = () => {
                 <p className="text-[11px] opacity-80 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{activeTrip}</span></p>
                 
                 <div className="grid gap-3">
-                  <button onClick={() => confirmImport('append')} className="w-full h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_0_10px_rgb(37,99,235,0.4)] sm:shadow-[0_0_20px_rgb(37,99,235,0.4)]">追加到当前行程末尾</button>
-                  <button onClick={() => confirmImport('overwrite')} className="w-full h-12 rounded-2xl border border-red-500/30 text-red-500 font-black hover:bg-red-500/10 transition-all active:scale-[0.98]">覆盖当前行程</button>
+                  <button onClick={() => handleImportConfirm('append')} className="w-full h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_0_10px_rgb(37,99,235,0.4)] sm:shadow-[0_0_20px_rgb(37,99,235,0.4)]">追加到当前行程末尾</button>
+                  <button onClick={() => handleImportConfirm('overwrite')} className="w-full h-12 rounded-2xl border border-red-500/30 text-red-500 font-black hover:bg-red-500/10 transition-all active:scale-[0.98]">覆盖当前行程</button>
                   <button onClick={() => setShowImportModal(false)} className="mt-2 text-xs font-black opacity-70 uppercase tracking-widest hover:opacity-100 p-2">取消</button>
                 </div>
               </div>
