@@ -989,8 +989,8 @@ const App = () => {
               <button onClick={handleRefresh} className={`group p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
                 <RefreshCw className="w-4 h-4 opacity-50 group-hover:opacity-100" />
               </button>
-              <button onClick={handleLocate} className={`group p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
-                <Locate className="w-4 h-4 opacity-50 group-hover:opacity-100" />
+              <button onClick={handleOpenAddModal} className={`group p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
+                <Plus className="w-4 h-4 opacity-50 group-hover:opacity-100" />
               </button>
             </div>
 
@@ -1266,10 +1266,10 @@ const App = () => {
 
           <div className={`fixed bottom-[20px] sm:bottom-6 flex justify-end ${isMobileView ? 'px-3' : 'px-6'} pointer-events-none z-[60] left-1/2 -translate-x-1/2 ${isMobileView ? 'max-w-[430px] w-full' : 'w-full'}`}>
             <button 
-              onClick={handleOpenAddModal} 
+              onClick={handleLocate} 
               className={`pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-[0_4px_15px_rgb(37,99,235,0.4)] sm:shadow-[0_8px_30px_rgb(37,99,235,0.4)] flex items-center justify-center hover:scale-110 active:scale-90 transition-all ${isMobileView ? 'mr-3' : 'mr-6'}`}
             >
-              <Plus className="w-6 h-6" />
+              <Locate className="w-6 h-6" />
             </button>
           </div>
 
