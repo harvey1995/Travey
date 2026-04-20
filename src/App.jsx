@@ -1070,7 +1070,7 @@ const App = () => {
                                 onPointerLeave={() => setActiveScaleId(null)}
                                 onPointerCancel={() => setActiveScaleId(null)}
                                 onClick={() => toggleCheck(item.id)} 
-                                className="relative z-10 w-14 h-12 flex items-center justify-center cursor-pointer outline-none touch-manipulation bg-transparent border-none p-0 appearance-none"
+                                className="relative z-10 w-10 h-10 flex items-center justify-center cursor-pointer outline-none touch-manipulation bg-transparent border-none p-0 appearance-none"
                               >
                                 <div className={`relative w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 ${activeScaleId === item.id ? 'scale-90' : 'scale-100'} ${
                                   item.done 
@@ -1099,7 +1099,7 @@ const App = () => {
                               </div>
                             </div>
 
-                            <div className={`flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all duration-300 transform-gpu ${activeScaleId === item.id ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.done ? 'opacity-50' : ''}`}>
+                            <div className={`relative z-20 flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all duration-300 transform-gpu ${activeScaleId === item.id ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.done ? 'opacity-50' : ''}`}>
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1 min-w-0 pr-2">
                                   <h3 className={`font-semibold text-sm leading-snug select-text ${item.done ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
@@ -1183,7 +1183,7 @@ const App = () => {
                                   onPointerLeave={() => setActiveScaleId(null)}
                                   onPointerCancel={() => setActiveScaleId(null)}
                                   onClick={() => toggleTransportCheck(item.id)} 
-                                  className="relative z-20 w-14 h-12 flex items-center justify-center cursor-pointer outline-none touch-manipulation bg-transparent border-none p-0 appearance-none"
+                                  className="relative z-20 w-10 h-10 flex items-center justify-center cursor-pointer outline-none touch-manipulation bg-transparent border-none p-0 appearance-none"
                                 >
                                   <div className={`relative w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 ${activeScaleId === `transport-${item.id}` ? 'scale-90' : 'scale-100'} ${
                                     item.transportDone 
@@ -1203,7 +1203,7 @@ const App = () => {
                                   {item.endTimeStr}
                                 </div>
                               </div>
-                              <div className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed shadow-sm transition-all duration-300 transform-gpu ${activeScaleId === `transport-${item.id}` ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
+                              <div className={`relative z-20 flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-dashed shadow-sm transition-all duration-300 transform-gpu ${activeScaleId === `transport-${item.id}` ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.transportDone ? 'opacity-50' : ''}`}>
                                 <div className="flex items-center min-w-0">
                                   <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
                                     <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : (item.transportDuration || 0) + 'm'}
