@@ -367,7 +367,7 @@ const App = () => {
     }
   };
 
-  const showToastMessage = (msg, type = 'success') => {
+  const showMessage = (msg, type = 'success') => {
     setToastState({ show: true, message: msg, type, id: Date.now() });
   };
 
@@ -403,7 +403,7 @@ const App = () => {
       newTrips[draftTripName] = newTrips[tripName];
       delete newTrips[tripName];
       updateTrip(newTrips, draftTripName);
-      showToastMessage("已保存", "rename");
+      showMessage("已保存", "rename");
     }
     setIsEditingTripName(false);
     restoreZoom();
@@ -439,7 +439,7 @@ const App = () => {
         if (csvImportColumnMap.date === -1) csvImportMissingHeaders.push("日期");
         if (csvImportColumnMap.name === -1) csvImportMissingHeaders.push("地点名称");
         if (csvImportMissingHeaders.length > 0) {
-          showToastMessage(`缺少${csvImportMissingHeaders.join('、')}`, "error");
+          showMessage(`缺少${csvImportMissingHeaders.join('、')}`, "error");
           return;
         }
 
@@ -508,10 +508,10 @@ const App = () => {
           setPendingImportData(csvImportProcessedItems);
           setShowImportModal(true); 
         } else {
-          showToastMessage("无有效地点", "emptyImport");
+          showMessage("无有效地点", "emptyImport");
         }
       } catch (err) {
-        showToastMessage("格式解析失败", "importError");
+        showMessage("格式解析失败", "importError");
       }
     };
     csvImportReader.readAsArrayBuffer(csvImportFile);
@@ -526,7 +526,7 @@ const App = () => {
     }
     setShowImportModal(false);
     setPendingImportData([]);
-    showToastMessage("导入成功", "import");
+    showMessage("导入成功", "import");
   };
 
   const handleExport = () => {
@@ -563,7 +563,7 @@ const App = () => {
     csvExportLink.href = URL.createObjectURL(csvExportBlob);
     csvExportLink.download = `${tripName}_${getCurrentDate()}.csv`;
     csvExportLink.click();
-    showToastMessage("导出成功", "export");
+    showMessage("导出成功", "export");
   };
 
   const handleUndo = () => {
@@ -573,7 +573,7 @@ const App = () => {
     setRedoStack(f => [{ tripData, tripName }, ...f]);
     setTripData(previous.tripData);
     setTripName(previous.tripName);
-    showToastMessage("已撤销", "undo");
+    showMessage("已撤销", "undo");
   };
 
   const handleRedo = () => {
@@ -583,7 +583,7 @@ const App = () => {
     setUndoStack(p => [...p, { tripData, tripName }]);
     setTripData(next.tripData);
     setTripName(next.tripName);
-    showToastMessage("已重做", "redo");
+    showMessage("已重做", "redo");
   };
 
   const handleRefresh = () => {
@@ -591,7 +591,7 @@ const App = () => {
     setExpandedOverviewDateMap({});
     setWeatherDataMap({});
     setWeatherRefreshTrigger(prev => prev + 1);
-    showToastMessage("已刷新", "refresh");
+    showMessage("已刷新", "refresh");
   };
 
   const handleLocate = () => {
@@ -640,7 +640,7 @@ const App = () => {
       }
     }
 
-    showToastMessage("已全部打卡", "allDone");
+    showMessage("已全部打卡", "allDone");
   };
 
   const handleOverviewToggle = (date) => {
@@ -726,14 +726,14 @@ const App = () => {
       const newLocation = { ...editedLocationPayload, id: `manual-${Date.now()}`, isLocationChecked: false };
       editedTripData = editedTripData.map(item => updatedOrderMap[item.id] !== undefined ? { ...item, order: updatedOrderMap[item.id] } : item);
       editedTripData.push(newLocation);
-      showToastMessage("已添加", "add");
+      showMessage("已添加", "add");
     } else {
       editedTripData = editedTripData.map(item => {
         if (item.id === editingLocationId) return { ...item, ...editedLocationPayload };
         if (updatedOrderMap[item.id] !== undefined) return { ...item, order: updatedOrderMap[item.id] };
         return item;
       });
-      showToastMessage("已保存", "edit");
+      showMessage("已保存", "edit");
     }
     
     updateTrip({ ...tripData, [tripName]: editedTripData });
@@ -761,7 +761,7 @@ const App = () => {
     });
     
     updateTrip({ ...tripData, [tripName]: remainingItems });
-    showToastMessage("已删除", "delete");
+    showMessage("已删除", "delete");
   };
 
   const handleLocationPreviewMap = (name, city) => {
@@ -796,7 +796,7 @@ const App = () => {
     updateTrip({ ...tripData, [tripName]: editedTripData });
     setShowTransportModal(false);
     restoreZoom();
-    showToastMessage("已保存", "edit");
+    showMessage("已保存", "edit");
   };
 
   const handleTransportChangeMode = (id, mode) => {
@@ -1002,12 +1002,12 @@ const App = () => {
             </div>
 
             <main className={`${isMobileView ? 'px-3' : 'px-6'} py-6`}>
-              {filteredTimelineResult.length === 0 ? (
+              {tripDataTimeline.length === 0 ? (
                 <div className="py-20 text-center opacity-60 flex flex-col items-center gap-4">
                    <Sparkles className="w-12 h-12" />
                    <p className="text-xs font-bold uppercase tracking-widest">暂无行程计划，开始添加吧</p>
                 </div>
-              ) : filteredTimelineResult.map((dailyTripData) => {
+              ) : tripDataTimeline.map((dailyTripData) => {
                 const isOverviewExpanded = expandedOverviewDateMap[dailyTripData.date]; 
                 const formattedDateString = dailyTripData.date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日');
                 
