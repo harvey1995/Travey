@@ -24,11 +24,11 @@ import {
   Clock, Wallet
 } from 'lucide-react';
 
-const CACHE_KEY_TRIP_DATA = 'travey_data_v1';
-const CACHE_KEY_TRIP_NAME = 'travey_active_v1';
-const CACHE_KEY_DARK_MODE = 'travey_theme_v1';
-const CACHE_KEY_VIEW_MODE = 'travey_view_v1';
-const CACHE_KEY_START_TIME = 'travey_start_times_v1';
+const CACHE_KEY_TRIP_DATA = 'travey_trip_data_v1';
+const CACHE_KEY_TRIP_NAME = 'travey_trip_name_v1';
+const CACHE_KEY_DARK_MODE = 'travey_dark_mode_v1';
+const CACHE_KEY_VIEW_MODE = 'travey_view_mode_v1';
+const CACHE_KEY_START_TIMES = 'travey_start_times_v1';
 
 const TRANSPORT_MODE = {
   car: { label: '打车', icon: Car, lightClass: 'text-orange-600 bg-orange-100 hover:bg-orange-200', darkClass: 'text-orange-400 bg-orange-500/10 hover:bg-orange-500/20', alert: null },
@@ -72,12 +72,12 @@ const isValidUrl = (str) => {
 
 if (typeof document !== 'undefined') {
   const initialThemeCache = localStorage.getItem(CACHE_KEY_DARK_MODE);
-  const isInitialDark = initialThemeCache !== null ? JSON.parse(initialThemeCache) : true;
-  const initialBgColor = isInitialDark ? '#000000' : '#e8e4d9';
-  document.documentElement.style.backgroundColor = initialBgColor;
+  const isInitialDarkMode = initialThemeCache !== null ? JSON.parse(initialThemeCache) : true;
+  const initialBackgroundColor = isInitialDarkMode ? '#000000' : '#e8e4d9';
+  document.documentElement.style.backgroundColor = initialBackgroundColor;
   const themeStyleTag = document.createElement('style');
   themeStyleTag.id = 'travey-theme-style';
-  themeStyleTag.innerHTML = `html, body { background-color: ${initialBgColor} !important; }`;
+  themeStyleTag.innerHTML = `html, body { background-color: ${initialBackgroundColor} !important; }`;
   document.head.appendChild(themeStyleTag);
 
   let themeMetaTag = document.querySelector('meta[name="theme-color"]');
@@ -86,7 +86,7 @@ if (typeof document !== 'undefined') {
     themeMetaTag.name = 'theme-color';
     document.head.appendChild(themeMetaTag);
   }
-  themeMetaTag.content = initialBgColor;
+  themeMetaTag.content = initialBackgroundColor;
 }
 
 const App = () => {
@@ -108,9 +108,9 @@ const App = () => {
   const [redoStack, setRedoStack] = useState([]);
   const [isEditingTripName, setIsEditingTripName] = useState(false);
   const [draftTripName, setDraftTripName] = useState("");
-  const [dailyStartTime, setDailyStartTime] = useState(() => {
+  const [dailyStartTimeMap, setDailyStartTimeMap] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(CACHE_KEY_START_TIME);
+      const saved = localStorage.getItem(CACHE_KEY_START_TIMES);
       if (saved) return JSON.parse(saved);
     }
     return {};
@@ -145,28 +145,28 @@ const App = () => {
   const [toastState, setToastState] = useState({ show: false, message: '', type: 'success', id: 0 });
   const [activeDateTab, setActiveDateTab] = useState("Total"); 
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedOverviewDate, setExpandedOverviewDate] = useState({});
-  const [weatherForecast, setWeatherForecast] = useState({});
+  const [expandedOverviewDateMap, setExpandedOverviewDateMap] = useState({});
+  const [weatherDataMap, setWeatherDataMap] = useState({});
   const [weatherRefreshTrigger, setWeatherRefreshTrigger] = useState(0);
 
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationModalMode, setLocationModalMode] = useState('add');
   const [editingLocationId, setEditingLocationId] = useState(null);
-  const [locationData, setLocationData] = useState({ 
+  const [locationFormData, setLocationFormData] = useState({ 
     name: '', date: getCurrentDate(), locationDuration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'walk', transportRoute: '' 
   });
 
   const [showTransportModal, setShowTransportModal] = useState(false);
   const [editingTransportId, setEditingTransportId] = useState(null);
-  const [transportData, setTransportData] = useState('');
+  const [transportFormData, setTransportFormData] = useState('');
 
   const [showStartTimeModal, setShowStartTimeModal] = useState(false);
-  const [startTimeData, setStartTimeData] = useState({ date: '', time: '08:00' });
+  const [startTimeFormData, setStartTimeFormData] = useState({ date: '', time: '08:00' });
 
   const [showImportModal, setShowImportModal] = useState(false);
-  const [pendingImportedData, setPendingImportedData] = useState([]);
+  const [pendingImportData, setPendingImportData] = useState([]);
 
-  const [mapPreviewUrl, setMapPreviewUrl] = useState(null);
+  const [iframePreviewUrl, setIframePreviewUrl] = useState(null);
   const [notePreviewText, setNotePreviewText] = useState(null);
   const [activePressId, setActivePressId] = useState(null);
 
@@ -176,7 +176,7 @@ const App = () => {
     return currentTripData.map(item => ({ ...item, date: sanitizeDate(item.date) }));
   }, [currentTripData]);
 
-  const tripDate = useMemo(() => {
+  const tripDataDates = useMemo(() => {
     const uniqueDates = [...new Set(sanitizedTripData.map(item => item.date))];
     return uniqueDates.sort((a, b) => new Date(a) - new Date(b));
   }, [sanitizedTripData]);
@@ -187,41 +187,41 @@ const App = () => {
       return (a.order || 0) - (b.order || 0);
     });
 
-    const dataByDateWithTime = {};
+    const groupedTripDataWithTime = {};
     sortedTripData.forEach(item => {
-      const formattedDateStr = item.date;
-      if (!dataByDateWithTime[formattedDateStr]) dataByDateWithTime[formattedDateStr] = { date: formattedDateStr, items: [], startTime: dailyStartTime[tripName]?.[formattedDateStr] || "08:00" };
+      const formattedDateString = item.date;
+      if (!groupedTripDataWithTime[formattedDateString]) groupedTripDataWithTime[formattedDateString] = { date: formattedDateString, items: [], startTime: dailyStartTimeMap[tripName]?.[formattedDateString] || "08:00" };
       
-      const sameDateItems = dataByDateWithTime[formattedDateStr].items;
-      let currentArrivalTime = dataByDateWithTime[formattedDateStr].startTime;
+      const sameDayLocationsForTimeline = groupedTripDataWithTime[formattedDateString].items;
+      let currentArrivalTime = groupedTripDataWithTime[formattedDateString].startTime;
 
-      if (sameDateItems.length > 0) {
-        const previousItem = sameDateItems[sameDateItems.length - 1];
-        const currentTravelTime = previousItem.transportDuration || 0; 
-        const [hour, minute] = previousItem.endTimeStr.split(':').map(Number);
+      if (sameDayLocationsForTimeline.length > 0) {
+        const previousLocationNode = sameDayLocationsForTimeline[sameDayLocationsForTimeline.length - 1];
+        const currentTravelTime = previousLocationNode.transportDuration || 0; 
+        const [hour, minute] = previousLocationNode.endTimeString.split(':').map(Number);
         const dateObj = new Date(2000, 0, 1, hour, minute + currentTravelTime);
         currentArrivalTime = isNaN(dateObj.getTime()) ? '--:--' : `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
-        previousItem.nextTravelTime = "?";
+        previousLocationNode.nextTravelTime = "?";
       }
 
       const [hours, minutes] = currentArrivalTime.split(':').map(Number);
       const startDate = new Date(2000, 0, 1, hours, minutes);
       const endDate = new Date(startDate.getTime() + (item.locationDuration || 0) * 60000);
-      const endTimeStr = isNaN(endDate.getTime()) ? '--:--' : `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+      const endTimeString = isNaN(endDate.getTime()) ? '--:--' : `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
       
-      sameDateItems.push({ ...item, startTimeStr: currentArrivalTime, endTimeStr });
+      sameDayLocationsForTimeline.push({ ...item, startTimeString: currentArrivalTime, endTimeString });
     });
 
-    let result = Object.values(dataByDateWithTime).sort((a, b) => new Date(a.date) - new Date(b.date));
-    if (activeDateTab !== "Total") result = result.filter(g => g.date === activeDateTab);
+    let filteredTimelineResult = Object.values(groupedTripDataWithTime).sort((a, b) => new Date(a.date) - new Date(b.date));
+    if (activeDateTab !== "Total") filteredTimelineResult = filteredTimelineResult.filter(g => g.date === activeDateTab);
     if (searchQuery) {
-      result = result.map(g => ({
+      filteredTimelineResult = filteredTimelineResult.map(g => ({
         ...g,
         items: g.items.filter(it => it.name.toLowerCase().includes(searchQuery.toLowerCase()) || (it.city||'').toLowerCase().includes(searchQuery.toLowerCase()))
       })).filter(g => g.items.length > 0);
     }
-    return result;
-  }, [sanitizedTripData, activeDateTab, searchQuery, dailyStartTime, tripName]);
+    return filteredTimelineResult;
+  }, [sanitizedTripData, activeDateTab, searchQuery, dailyStartTimeMap, tripName]);
 
   useEffect(() => {
     localStorage.setItem(CACHE_KEY_TRIP_DATA, JSON.stringify(tripData));
@@ -246,8 +246,8 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(CACHE_KEY_START_TIME, JSON.stringify(dailyStartTime));
-  }, [dailyStartTime]);
+    localStorage.setItem(CACHE_KEY_START_TIMES, JSON.stringify(dailyStartTimeMap));
+  }, [dailyStartTimeMap]);
 
   useEffect(() => {
     localStorage.setItem(CACHE_KEY_DARK_MODE, JSON.stringify(isDarkMode));
@@ -285,9 +285,9 @@ const App = () => {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const handleResize = () => setIsWindowNarrow(window.innerWidth < 768);
-      handleResize();
-      window.addEventListener('resize', handleResize);
+      const handleWindowResize = () => setIsWindowNarrow(window.innerWidth < 768);
+      handleWindowResize();
+      window.addEventListener('resize', handleWindowResize);
       
       const savedView = localStorage.getItem(CACHE_KEY_VIEW_MODE);
       if (!savedView) {
@@ -295,60 +295,60 @@ const App = () => {
         setDeviceViewMode(isMobile ? 'mobile' : 'web');
       }
       
-      return () => window.removeEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleWindowResize);
     }
   }, []);
 
   useEffect(() => {
     if (showLocationModal && locationModalMode === 'add') {
       const targetDataList = tripData[tripName] || [];
-      const sameDateItems = targetDataList.filter(item => sanitizeDate(item.date) === locationData.date);
-      const maxOrder = sameDateItems.reduce((max, item) => Math.max(max, parseInt(item.order) || 0), 0);
-      setLocationData(prev => ({ ...prev, order: String(maxOrder + 1) }));
+      const sameDayLocationsForTimeline = targetDataList.filter(item => sanitizeDate(item.date) === locationFormData.date);
+      const maxOrder = sameDayLocationsForTimeline.reduce((max, item) => Math.max(max, parseInt(item.order) || 0), 0);
+      setLocationFormData(prev => ({ ...prev, order: String(maxOrder + 1) }));
     }
-  }, [locationData.date, showLocationModal, locationModalMode, tripName, tripData]);
+  }, [locationFormData.date, showLocationModal, locationModalMode, tripName, tripData]);
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchWeather = async () => {
-      const weatherUpdates = {};
-      let hasNewWeather = false;
-      for (const dateGroup of tripDataTimeline) {
-        if (weatherForecast[dateGroup.date] === undefined && dateGroup.items[0]?.city) {
-          hasNewWeather = true;
+    let isAppMounted = true;
+    const fetchWeatherData = async () => {
+      const pendingWeatherData = {};
+      let isWeatherUpdated = false;
+      for (const dailyTripData of tripDataTimeline) {
+        if (weatherDataMap[dailyTripData.date] === undefined && dailyTripData.items[0]?.city) {
+          isWeatherUpdated = true;
           try {
-            const weatherResponse = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=9421165d458f483f88d15158261504&q=${dateGroup.items[0].city}&dt=${dateGroup.date}&lang=zh`);
-            const weatherJson = await weatherResponse.json();
-            if (weatherJson?.forecast?.forecastday?.[0]) {
-              const forecastDay = weatherJson.forecast.forecastday[0].day;
-              weatherUpdates[dateGroup.date] = `${forecastDay.condition.text} ${forecastDay.maxtemp_c}℃~${forecastDay.mintemp_c}℃`;
+            const weatherApiResponse = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=9421165d458f483f88d15158261504&q=${dailyTripData.items[0].city}&dt=${dailyTripData.date}&lang=zh`);
+            const weatherApiJson = await weatherApiResponse.json();
+            if (weatherApiJson?.forecast?.forecastday?.[0]) {
+              const dailyWeatherData = weatherApiJson.forecast.forecastday[0].day;
+              pendingWeatherData[dailyTripData.date] = `${dailyWeatherData.condition.text} ${dailyWeatherData.maxtemp_c}℃~${dailyWeatherData.mintemp_c}℃`;
             } else {
-              weatherUpdates[dateGroup.date] = "暂无当日天气预报";
+              pendingWeatherData[dailyTripData.date] = "暂无当日天气预报";
             }
           } catch {
-            weatherUpdates[dateGroup.date] = "暂无当日天气预报";
+            pendingWeatherData[dailyTripData.date] = "暂无当日天气预报";
           }
         }
       }
-      if (hasNewWeather && isMounted) {
-        setWeatherForecast(prev => ({ ...prev, ...weatherUpdates }));
+      if (isWeatherUpdated && isAppMounted) {
+        setWeatherDataMap(prev => ({ ...prev, ...pendingWeatherData }));
       }
     };
-    fetchWeather();
-    return () => { isMounted = false; };
+    fetchWeatherData();
+    return () => { isAppMounted = false; };
   }, [activeDateTab, weatherRefreshTrigger]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
     
-    const isModalOpen = mapPreviewUrl || notePreviewText || showLocationModal || showStartTimeModal || showTransportModal || showImportModal;
+    const isAnyModalOpen = iframePreviewUrl || notePreviewText || showLocationModal || showStartTimeModal || showTransportModal || showImportModal;
     
-    if (isModalOpen) {
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    if (isAnyModalOpen) {
+      const systemScrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       
       document.body.style.overflow = 'hidden';
       document.documentElement.style.overflow = 'hidden';
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.body.style.paddingRight = `${systemScrollbarWidth}px`;
       
       return () => {
         document.body.style.overflow = '';
@@ -356,7 +356,7 @@ const App = () => {
         document.body.style.paddingRight = '';
       };
     }
-  }, [mapPreviewUrl, notePreviewText, showLocationModal, showStartTimeModal, showTransportModal, showImportModal]);
+  }, [iframePreviewUrl, notePreviewText, showLocationModal, showStartTimeModal, showTransportModal, showImportModal]);
 
   const updateTrip = (newTrips, newActiveTrip = tripName) => {
     setUndoStack(p => [...p, { tripData, tripName }].slice(-20));
@@ -367,7 +367,7 @@ const App = () => {
     }
   };
 
-  const showMessage = (msg, type = 'success') => {
+  const showToastMessage = (msg, type = 'success') => {
     setToastState({ show: true, message: msg, type, id: Date.now() });
   };
 
@@ -388,12 +388,12 @@ const App = () => {
   };
 
   const scrollToElement = (id) => {
-    const domElement = document.getElementById(id);
-    if (domElement) {
-      const elementRect = domElement.getBoundingClientRect();
-      const windowScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const targetScrollY = elementRect.top + windowScrollTop - (window.innerHeight * 0.3);
-      window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+    const targetDomElement = document.getElementById(id);
+    if (targetDomElement) {
+      const targetElementRect = targetDomElement.getBoundingClientRect();
+      const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const targetScrollPosition = targetElementRect.top + currentScrollTop - (window.innerHeight * 0.3);
+      window.scrollTo({ top: targetScrollPosition, behavior: 'smooth' });
     }
   };
 
@@ -403,7 +403,7 @@ const App = () => {
       newTrips[draftTripName] = newTrips[tripName];
       delete newTrips[tripName];
       updateTrip(newTrips, draftTripName);
-      showMessage("已保存", "rename");
+      showToastMessage("已保存", "rename");
     }
     setIsEditingTripName(false);
     restoreZoom();
@@ -414,119 +414,119 @@ const App = () => {
   };
 
   const handleImportSelect = (e) => {
-    const selectedFile = e.target.files[0];
-    if (!selectedFile) return;
-    const fileReader = new FileReader();
-    fileReader.onload = (fileEvent) => {
+    const csvImportFile = e.target.files[0];
+    if (!csvImportFile) return;
+    const csvImportReader = new FileReader();
+    csvImportReader.onload = (csvImportEvent) => {
       try {
-        const csvImportText = new TextDecoder('utf-8').decode(new Uint8Array(fileEvent.target.result));
-        const csvImportRow = csvImportText.split(/\r?\n/).filter(importRowItem => importRowItem.trim());
-        const csvImportHeader = csvImportRow[0].split(',').map(h => h.trim());
+        const csvImportText = new TextDecoder('utf-8').decode(new Uint8Array(csvImportEvent.target.result));
+        const csvImportRows = csvImportText.split(/\r?\n/).filter(csvImportRowString => csvImportRowString.trim());
+        const csvImportHeaders = csvImportRows[0].split(',').map(h => h.trim());
         
-        const csvImportHeaderMap = {
-          date: csvImportHeader.indexOf("日期"),
-          order: csvImportHeader.indexOf("序号"),
-          city: csvImportHeader.indexOf("城市/交通"),
-          name: csvImportHeader.indexOf("地点名称/出行方式"),
-          locationDuration: csvImportHeader.indexOf("时间（分）"),
-          note: csvImportHeader.indexOf("备注"),
-          cost: csvImportHeader.indexOf("费用"),
-          currency: csvImportHeader.indexOf("币种"),
-          status: csvImportHeader.indexOf("打卡状态")
+        const csvImportColumnMap = {
+          date: csvImportHeaders.indexOf("日期"),
+          order: csvImportHeaders.indexOf("序号"),
+          city: csvImportHeaders.indexOf("城市/交通"),
+          name: csvImportHeaders.indexOf("地点名称/出行方式"),
+          locationDuration: csvImportHeaders.indexOf("时间（分）"),
+          note: csvImportHeaders.indexOf("备注"),
+          cost: csvImportHeaders.indexOf("费用"),
+          currency: csvImportHeaders.indexOf("币种"),
+          status: csvImportHeaders.indexOf("打卡状态")
         };
 
-        const missingCsvImportHeader = [];
-        if (csvImportHeaderMap.date === -1) missingCsvImportHeader.push("日期");
-        if (csvImportHeaderMap.name === -1) missingCsvImportHeader.push("地点名称");
-        if (missingCsvImportHeader.length > 0) {
-          showMessage(`缺少${missingCsvImportHeader.join('、')}`, "error");
+        const csvImportMissingHeaders = [];
+        if (csvImportColumnMap.date === -1) csvImportMissingHeaders.push("日期");
+        if (csvImportColumnMap.name === -1) csvImportMissingHeaders.push("地点名称");
+        if (csvImportMissingHeaders.length > 0) {
+          showToastMessage(`缺少${csvImportMissingHeaders.join('、')}`, "error");
           return;
         }
 
-        const rawImportedData = [];
-        csvImportRow.slice(1).forEach((importRowItem, rowIndex) => {
-          const rowValues = importRowItem.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
-          const getColumnValue = (col) => col !== -1 ? (rowValues[col] || "") : "";
+        const csvImportParsedItems = [];
+        csvImportRows.slice(1).forEach((csvImportRowString, csvImportRowIndex) => {
+          const csvImportRowValues = csvImportRowString.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+          const getCsvImportColumnValue = (col) => col !== -1 ? (csvImportRowValues[col] || "") : "";
           
-          rawImportedData.push({
-            date: sanitizeDate(getColumnValue(csvImportHeaderMap.date)),
-            order: parseInt(getColumnValue(csvImportHeaderMap.order)),
-            city: getColumnValue(csvImportHeaderMap.city),
-            name: getColumnValue(csvImportHeaderMap.name),
-            locationDuration: getColumnValue(csvImportHeaderMap.locationDuration) === "" ? null : (parseInt(getColumnValue(csvImportHeaderMap.locationDuration)) || 0),
-            note: getColumnValue(csvImportHeaderMap.note) || null,
-            cost: getColumnValue(csvImportHeaderMap.cost) === "" ? null : (parseFloat(getColumnValue(csvImportHeaderMap.cost)) || 0),
-            currency: getColumnValue(csvImportHeaderMap.currency) || null,
-            isLocationChecked: getColumnValue(csvImportHeaderMap.status) === "是"
+          csvImportParsedItems.push({
+            date: sanitizeDate(getCsvImportColumnValue(csvImportColumnMap.date)),
+            order: parseInt(getCsvImportColumnValue(csvImportColumnMap.order)),
+            city: getCsvImportColumnValue(csvImportColumnMap.city),
+            name: getCsvImportColumnValue(csvImportColumnMap.name),
+            locationDuration: getCsvImportColumnValue(csvImportColumnMap.locationDuration) === "" ? null : (parseInt(getCsvImportColumnValue(csvImportColumnMap.locationDuration)) || 0),
+            note: getCsvImportColumnValue(csvImportColumnMap.note) || null,
+            cost: getCsvImportColumnValue(csvImportColumnMap.cost) === "" ? null : (parseFloat(getCsvImportColumnValue(csvImportColumnMap.cost)) || 0),
+            currency: getCsvImportColumnValue(csvImportColumnMap.currency) || null,
+            isLocationChecked: getCsvImportColumnValue(csvImportColumnMap.status) === "是"
           });
         });
 
-        const processedImportedData = [];
-        const dataByDate = {};
-        rawImportedData.forEach(item => {
-          if (!dataByDate[item.date]) dataByDate[item.date] = [];
-          dataByDate[item.date].push(item);
+        const csvImportProcessedItems = [];
+        const csvImportItemByDate = {};
+        csvImportParsedItems.forEach(item => {
+          if (!csvImportItemByDate[item.date]) csvImportItemByDate[item.date] = [];
+          csvImportItemByDate[item.date].push(item);
         });
 
-        Object.keys(dataByDate).forEach(date => {
-          const sameDateItems = dataByDate[date];
-          let importLocationCounter = 1;
-          sameDateItems.forEach((importRowItem, importItemIndex) => {
-            const isTransportNode = importRowItem.city === "交通" || (importRowItem.name && (importRowItem.name.includes("步行") || importRowItem.name.includes("公交") || importRowItem.name.includes("打车")));
+        Object.keys(csvImportItemByDate).forEach(date => {
+          const sameDayLocationsForTimeline = csvImportItemByDate[date];
+          let csvImportLocationCounter = 1;
+          sameDayLocationsForTimeline.forEach((csvImportRowString, csvImportItemIndex) => {
+            const isTransportNode = csvImportRowString.city === "交通" || (csvImportRowString.name && (csvImportRowString.name.includes("步行") || csvImportRowString.name.includes("公交") || csvImportRowString.name.includes("打车")));
             
             if (isTransportNode) {
-              if (processedImportedData.length > 0) {
-                const previousLocation = processedImportedData[processedImportedData.length - 1];
-                if (importRowItem.name.includes("打车")) previousLocation.transportMode = 'car';
-                else if (importRowItem.name.includes("公交")) previousLocation.transportMode = 'train';
+              if (csvImportProcessedItems.length > 0) {
+                const previousLocation = csvImportProcessedItems[csvImportProcessedItems.length - 1];
+                if (csvImportRowString.name.includes("打车")) previousLocation.transportMode = 'car';
+                else if (csvImportRowString.name.includes("公交")) previousLocation.transportMode = 'train';
                 else previousLocation.transportMode = 'walk';
-                previousLocation.transportDuration = importRowItem.locationDuration || 0;
+                previousLocation.transportDuration = csvImportRowString.locationDuration || 0;
               }
             } else {
-              if (processedImportedData.length > 0) {
-                const previousLocation = processedImportedData[processedImportedData.length - 1];
-                if (previousLocation.date === importRowItem.date && previousLocation.transportDuration === undefined) {
+              if (csvImportProcessedItems.length > 0) {
+                const previousLocation = csvImportProcessedItems[csvImportProcessedItems.length - 1];
+                if (previousLocation.date === csvImportRowString.date && previousLocation.transportDuration === undefined) {
                   previousLocation.transportMode = 'walk';
                   previousLocation.transportDuration = 0;
                 }
               }
-              processedImportedData.push({
-                ...importRowItem,
-                id: `imported-${Date.now()}-${importItemIndex}`,
-                order: importLocationCounter++,
-                locationDuration: importRowItem.locationDuration === null ? 0 : importRowItem.locationDuration,
+              csvImportProcessedItems.push({
+                ...csvImportRowString,
+                id: `imported-${Date.now()}-${csvImportItemIndex}`,
+                order: csvImportLocationCounter++,
+                locationDuration: csvImportRowString.locationDuration === null ? 0 : csvImportRowString.locationDuration,
                 transportMode: 'walk',
                 transportDuration: 0,
                 transportRoute: '',
-                isLocationChecked: importRowItem.isLocationChecked || false
+                isLocationChecked: csvImportRowString.isLocationChecked || false
               });
             }
           });
         });
         
-        if (processedImportedData.length > 0) {
-          setPendingImportedData(processedImportedData);
+        if (csvImportProcessedItems.length > 0) {
+          setPendingImportData(csvImportProcessedItems);
           setShowImportModal(true); 
         } else {
-          showMessage("无有效地点", "emptyImport");
+          showToastMessage("无有效地点", "emptyImport");
         }
       } catch (err) {
-        showMessage("格式解析失败", "importError");
+        showToastMessage("格式解析失败", "importError");
       }
     };
-    fileReader.readAsArrayBuffer(selectedFile);
+    csvImportReader.readAsArrayBuffer(csvImportFile);
     e.target.value = null;
   };
 
   const handleImportConfirm = (mode) => {
     if (mode === 'overwrite') {
-      updateTrip({ ...tripData, [tripName]: pendingImportedData });
+      updateTrip({ ...tripData, [tripName]: pendingImportData });
     } else {
-      updateTrip({ ...tripData, [tripName]: [...(currentTripData || []), ...pendingImportedData] });
+      updateTrip({ ...tripData, [tripName]: [...(currentTripData || []), ...pendingImportData] });
     }
     setShowImportModal(false);
-    setPendingImportedData([]);
-    showMessage("导入成功", "import");
+    setPendingImportData([]);
+    showToastMessage("导入成功", "import");
   };
 
   const handleExport = () => {
@@ -538,32 +538,32 @@ const App = () => {
        csvExportGroups[item.date].push(item);
     });
     
-    const csvExportRow = [];
-    Object.values(csvExportGroups).forEach(csvExportGroupItems => {
-       csvExportGroupItems.forEach((item, groupItemIndex) => {
-          csvExportRow.push([
+    const csvExportRows = [];
+    Object.values(csvExportGroups).forEach(csvExportGroupedItems => {
+       csvExportGroupedItems.forEach((item, dailyTripDataItemIndex) => {
+          csvExportRows.push([
             item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.locationDuration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : "", item.isLocationChecked ? "是" : "否"
           ].join(','));
-          if (groupItemIndex < csvExportGroupItems.length - 1) {
-            const transportModeLabel = TRANSPORT_MODE[item.transportMode || 'walk'].label;
-            csvExportRow.push([
-              item.date, 0, "交通", transportModeLabel, item.transportDuration || 0, '""', "", "", item.isTransportChecked ? "是" : "否"
+          if (dailyTripDataItemIndex < csvExportGroupedItems.length - 1) {
+            const csvExportTransportMode = TRANSPORT_MODE[item.transportMode || 'walk'].label;
+            csvExportRows.push([
+              item.date, 0, "交通", csvExportTransportMode, item.transportDuration || 0, '""', "", "", item.isTransportChecked ? "是" : "否"
             ].join(','));
           }
        });
     });
 
-    const formattedCsvExport = [
+    const csvExportText = [
       csvExportHeaders.join(','),
-      ...csvExportRow
+      ...csvExportRows
     ].join('\n');
     
-    const csvBlob = new Blob(["\ufeff" + formattedCsvExport], { type: 'text/csv;charset=utf-8;' });
-    const csvDownloadLink = document.createElement("a");
-    csvDownloadLink.href = URL.createObjectURL(csvBlob);
-    csvDownloadLink.download = `${tripName}_${getCurrentDate()}.csv`;
-    csvDownloadLink.click();
-    showMessage("导出成功", "export");
+    const csvExportBlob = new Blob(["\ufeff" + csvExportText], { type: 'text/csv;charset=utf-8;' });
+    const csvExportLink = document.createElement("a");
+    csvExportLink.href = URL.createObjectURL(csvExportBlob);
+    csvExportLink.download = `${tripName}_${getCurrentDate()}.csv`;
+    csvExportLink.click();
+    showToastMessage("导出成功", "export");
   };
 
   const handleUndo = () => {
@@ -573,7 +573,7 @@ const App = () => {
     setRedoStack(f => [{ tripData, tripName }, ...f]);
     setTripData(previous.tripData);
     setTripName(previous.tripName);
-    showMessage("已撤销", "undo");
+    showToastMessage("已撤销", "undo");
   };
 
   const handleRedo = () => {
@@ -583,15 +583,15 @@ const App = () => {
     setUndoStack(p => [...p, { tripData, tripName }]);
     setTripData(next.tripData);
     setTripName(next.tripName);
-    showMessage("已重做", "redo");
+    showToastMessage("已重做", "redo");
   };
 
   const handleRefresh = () => {
     setSearchQuery('');
-    setExpandedOverviewDate({});
-    setWeatherForecast({});
+    setExpandedOverviewDateMap({});
+    setWeatherDataMap({});
     setWeatherRefreshTrigger(prev => prev + 1);
-    showMessage("已刷新", "refresh");
+    showToastMessage("已刷新", "refresh");
   };
 
   const handleLocate = () => {
@@ -600,88 +600,88 @@ const App = () => {
         if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
         return (a.order || 0) - (b.order || 0);
       });
-      const dataByDateWithTime = {};
+      const groupedTripDataWithTime = {};
       sortedTripData.forEach(item => {
-        if (!dataByDateWithTime[item.date]) dataByDateWithTime[item.date] = { date: item.date, items: [] };
-        dataByDateWithTime[item.date].items.push(item);
+        if (!groupedTripDataWithTime[item.date]) groupedTripDataWithTime[item.date] = { date: item.date, items: [] };
+        groupedTripDataWithTime[item.date].items.push(item);
       });
-      let result = Object.values(dataByDateWithTime).sort((a, b) => new Date(a.date) - new Date(b.date));
-      if (tabName !== "Total") result = result.filter(g => g.date === tabName);
-      return result;
+      let filteredTimelineResult = Object.values(groupedTripDataWithTime).sort((a, b) => new Date(a.date) - new Date(b.date));
+      if (tabName !== "Total") filteredTimelineResult = filteredTimelineResult.filter(g => g.date === tabName);
+      return filteredTimelineResult;
     };
 
-    const activeDateTabLocal = getGroupedTripData(activeDateTab);
-    for (const dateGroup of activeDateTabLocal) {
-      for (const [groupItemIndex, item] of dateGroup.items.entries()) {
+    const currentDateTabGroups = getGroupedTripData(activeDateTab);
+    for (const dailyTripData of currentDateTabGroups) {
+      for (const [dailyTripDataItemIndex, item] of dailyTripData.items.entries()) {
         if (!item.isLocationChecked) {
           scrollToElement(`location-${item.id}`);
           return;
         }
-        if (groupItemIndex < dateGroup.items.length - 1 && !item.isTransportChecked) {
+        if (dailyTripDataItemIndex < dailyTripData.items.length - 1 && !item.isTransportChecked) {
           scrollToElement(`transport-${item.id}`);
           return;
         }
       }
     }
 
-    const allDateGroups = getGroupedTripData("Total");
-    for (const dateGroup of allDateGroups) {
-      for (const [groupItemIndex, item] of dateGroup.items.entries()) {
+    const totalTripData = getGroupedTripData("Total");
+    for (const dailyTripData of totalTripData) {
+      for (const [dailyTripDataItemIndex, item] of dailyTripData.items.entries()) {
         if (!item.isLocationChecked) {
-          setActiveDateTab(dateGroup.date);
+          setActiveDateTab(dailyTripData.date);
           setTimeout(() => scrollToElement(`location-${item.id}`), 100);
           return;
         }
-        if (groupItemIndex < dateGroup.items.length - 1 && !item.isTransportChecked) {
-          setActiveDateTab(dateGroup.date);
+        if (dailyTripDataItemIndex < dailyTripData.items.length - 1 && !item.isTransportChecked) {
+          setActiveDateTab(dailyTripData.date);
           setTimeout(() => scrollToElement(`transport-${item.id}`), 100);
           return;
         }
       }
     }
 
-    showMessage("已全部打卡", "allDone");
+    showToastMessage("已全部打卡", "allDone");
   };
 
   const handleOverviewToggle = (date) => {
-    setExpandedOverviewDate(prev => ({ ...prev, [date]: !prev[date] }));
+    setExpandedOverviewDateMap(prev => ({ ...prev, [date]: !prev[date] }));
   };
 
   const handleLocationCheck = (id) => {
-    const itemIndex = currentTripData.findIndex(item => item.id === id);
-    if (itemIndex === -1) return;
-    const toggledCheckState = !currentTripData[itemIndex].isLocationChecked;
-    let updatedCheckData = currentTripData.map(item => item.id === id ? { ...item, isLocationChecked: toggledCheckState } : item);
-    if (toggledCheckState) {
-      const item = updatedCheckData[itemIndex];
-      const sameDateItems = updatedCheckData.filter(i => i.date === item.date).sort((a,b) => (a.order||0) - (b.order||0));
-      const sameDateItemIndex = sameDateItems.findIndex(i => i.id === id);
-      const previousItem = sameDateItems[sameDateItemIndex - 1];
-      const nextItem = sameDateItems[sameDateItemIndex + 1];
-      if (previousItem && previousItem.isLocationChecked) updatedCheckData = updatedCheckData.map(i => i.id === previousItem.id ? { ...i, isTransportChecked: true } : i);
-      if (nextItem && nextItem.isLocationChecked) updatedCheckData = updatedCheckData.map(i => i.id === item.id ? { ...i, isTransportChecked: true } : i);
+    const checkedLocationIndex = currentTripData.findIndex(item => item.id === id);
+    if (checkedLocationIndex === -1) return;
+    const newCheckState = !currentTripData[checkedLocationIndex].isLocationChecked;
+    let checkedTripData = currentTripData.map(item => item.id === id ? { ...item, isLocationChecked: newCheckState } : item);
+    if (newCheckState) {
+      const item = checkedTripData[checkedLocationIndex];
+      const sameDayLocationsForTimeline = checkedTripData.filter(i => i.date === item.date).sort((a,b) => (a.order||0) - (b.order||0));
+      const checkedLocationIndexByDate = sameDayLocationsForTimeline.findIndex(i => i.id === id);
+      const previousLocationNode = sameDayLocationsForTimeline[checkedLocationIndexByDate - 1];
+      const nextLocationNode = sameDayLocationsForTimeline[checkedLocationIndexByDate + 1];
+      if (previousLocationNode && previousLocationNode.isLocationChecked) checkedTripData = checkedTripData.map(i => i.id === previousLocationNode.id ? { ...i, isTransportChecked: true } : i);
+      if (nextLocationNode && nextLocationNode.isLocationChecked) checkedTripData = checkedTripData.map(i => i.id === item.id ? { ...i, isTransportChecked: true } : i);
     } else {
-      const item = updatedCheckData[itemIndex];
-      const sameDateItems = updatedCheckData.filter(i => i.date === item.date).sort((a,b) => (a.order||0) - (b.order||0));
-      const sameDateItemIndex = sameDateItems.findIndex(i => i.id === id);
-      const previousItem = sameDateItems[sameDateItemIndex - 1];
-      if (previousItem) updatedCheckData = updatedCheckData.map(i => i.id === previousItem.id ? { ...i, isTransportChecked: false } : i);
-      updatedCheckData = updatedCheckData.map(i => i.id === item.id ? { ...i, isTransportChecked: false } : i);
+      const item = checkedTripData[checkedLocationIndex];
+      const sameDayLocationsForTimeline = checkedTripData.filter(i => i.date === item.date).sort((a,b) => (a.order||0) - (b.order||0));
+      const checkedLocationIndexByDate = sameDayLocationsForTimeline.findIndex(i => i.id === id);
+      const previousLocationNode = sameDayLocationsForTimeline[checkedLocationIndexByDate - 1];
+      if (previousLocationNode) checkedTripData = checkedTripData.map(i => i.id === previousLocationNode.id ? { ...i, isTransportChecked: false } : i);
+      checkedTripData = checkedTripData.map(i => i.id === item.id ? { ...i, isTransportChecked: false } : i);
     }
-    updateTrip({ ...tripData, [tripName]: updatedCheckData });
+    updateTrip({ ...tripData, [tripName]: checkedTripData });
   };
 
   const handleLocationAdd = () => {
     setLocationModalMode('add'); 
-    const targetLocationDate = activeDateTab !== 'Total' ? activeDateTab : getCurrentDate();
-    setLocationData({ name: '', date: targetLocationDate, locationDuration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'walk', transportRoute: '' }); 
+    const editedLocationDate = activeDateTab !== 'Total' ? activeDateTab : getCurrentDate();
+    setLocationFormData({ name: '', date: editedLocationDate, locationDuration: '60', city: '', note: '', cost: '', currency: '', order: '1', transportMode: 'walk', transportRoute: '' }); 
     setShowLocationModal(true); 
   };
 
   const handleLocationEdit = (item) => {
     setLocationModalMode('edit');
     setEditingLocationId(item.id);
-    setLocationData({ 
+    setLocationFormData({ 
       ...item, 
       locationDuration: String(item.locationDuration), 
       cost: item.cost ? String(item.cost) : '', 
@@ -694,49 +694,49 @@ const App = () => {
 
   const handleLocationSave = (e) => {
     e.preventDefault();
-    const locationPayload = {
-      ...locationData,
-      locationDuration: locationData.locationDuration === "" ? 0 : (parseInt(locationData.locationDuration) || 0),
-      cost: parseFloat(locationData.cost) || 0,
-      order: parseInt(locationData.order) || 1,
+    const editedLocationPayload = {
+      ...locationFormData,
+      locationDuration: locationFormData.locationDuration === "" ? 0 : (parseInt(locationFormData.locationDuration) || 0),
+      cost: parseFloat(locationFormData.cost) || 0,
+      order: parseInt(locationFormData.order) || 1,
     };
-    setLastSelectedCurrency(locationData.currency);
+    setLastSelectedCurrency(locationFormData.currency);
 
-    const targetLocationDate = sanitizeDate(locationData.date);
-    const targetLocationOrder = locationPayload.order;
-    let updatedTripData = [...currentTripData];
+    const editedLocationDate = sanitizeDate(locationFormData.date);
+    const editedLocationOrder = editedLocationPayload.order;
+    let editedTripData = [...currentTripData];
 
-    let sameDayLocation = currentTripData.filter(item => sanitizeDate(item.date) === targetLocationDate && item.id !== (locationModalMode === 'edit' ? editingLocationId : null));
+    let sameDayLocations = currentTripData.filter(item => sanitizeDate(item.date) === editedLocationDate && item.id !== (locationModalMode === 'edit' ? editingLocationId : null));
     
-    let precedingLocation = sameDayLocation.filter(item => item.order < targetLocationOrder).sort((a,b) => a.order - b.order);
-    let succeedingLocation = sameDayLocation.filter(item => item.order >= targetLocationOrder).sort((a,b) => a.order - b.order);
+    let precedingLocations = sameDayLocations.filter(item => item.order < editedLocationOrder).sort((a,b) => a.order - b.order);
+    let succeedingLocations = sameDayLocations.filter(item => item.order >= editedLocationOrder).sort((a,b) => a.order - b.order);
     
-    let precedingLocationCount = precedingLocation.length;
+    let precedingLocationCount = precedingLocations.length;
     let updatedOrderMap = {};
     
-    let currentOrderCounter = 1;
-    precedingLocation.forEach(item => { updatedOrderMap[item.id] = currentOrderCounter++; });
+    let currentOrderIndex = 1;
+    precedingLocations.forEach(item => { updatedOrderMap[item.id] = currentOrderIndex++; });
     
-    locationPayload.order = precedingLocationCount + 1;
+    editedLocationPayload.order = precedingLocationCount + 1;
     
-    currentOrderCounter = precedingLocationCount + 2;
-    succeedingLocation.forEach(item => { updatedOrderMap[item.id] = currentOrderCounter++; });
+    currentOrderIndex = precedingLocationCount + 2;
+    succeedingLocations.forEach(item => { updatedOrderMap[item.id] = currentOrderIndex++; });
 
     if (locationModalMode === 'add') {
-      const newItem = { ...locationPayload, id: `manual-${Date.now()}`, isLocationChecked: false };
-      updatedTripData = updatedTripData.map(item => updatedOrderMap[item.id] !== undefined ? { ...item, order: updatedOrderMap[item.id] } : item);
-      updatedTripData.push(newItem);
-      showMessage("已添加", "add");
+      const newLocation = { ...editedLocationPayload, id: `manual-${Date.now()}`, isLocationChecked: false };
+      editedTripData = editedTripData.map(item => updatedOrderMap[item.id] !== undefined ? { ...item, order: updatedOrderMap[item.id] } : item);
+      editedTripData.push(newLocation);
+      showToastMessage("已添加", "add");
     } else {
-      updatedTripData = updatedTripData.map(item => {
-        if (item.id === editingLocationId) return { ...item, ...locationPayload };
+      editedTripData = editedTripData.map(item => {
+        if (item.id === editingLocationId) return { ...item, ...editedLocationPayload };
         if (updatedOrderMap[item.id] !== undefined) return { ...item, order: updatedOrderMap[item.id] };
         return item;
       });
-      showMessage("已保存", "edit");
+      showToastMessage("已保存", "edit");
     }
     
-    updateTrip({ ...tripData, [tripName]: updatedTripData });
+    updateTrip({ ...tripData, [tripName]: editedTripData });
     setShowLocationModal(false);
     restoreZoom();
   };
@@ -744,16 +744,16 @@ const App = () => {
   const handleLocationDelete = (id) => {
     const remainingItems = currentTripData.filter(item => item.id !== id).map(item => ({...item}));
     
-    const dataByDate = {};
+    const csvImportItemByDate = {};
     remainingItems.forEach(item => {
-      if (!dataByDate[item.date]) dataByDate[item.date] = [];
-      dataByDate[item.date].push(item);
+      if (!csvImportItemByDate[item.date]) csvImportItemByDate[item.date] = [];
+      csvImportItemByDate[item.date].push(item);
     });
     
-    Object.keys(dataByDate).forEach(date => {
-      dataByDate[date].sort((a, b) => parseInt(a.order || 0) - parseInt(b.order || 0));
+    Object.keys(csvImportItemByDate).forEach(date => {
+      csvImportItemByDate[date].sort((a, b) => parseInt(a.order || 0) - parseInt(b.order || 0));
       let counter = 1;
-      dataByDate[date].forEach(item => {
+      csvImportItemByDate[date].forEach(item => {
         if (parseInt(item.order) !== 0) {
           item.order = counter++;
         }
@@ -761,12 +761,12 @@ const App = () => {
     });
     
     updateTrip({ ...tripData, [tripName]: remainingItems });
-    showMessage("已删除", "delete");
+    showToastMessage("已删除", "delete");
   };
 
   const handleLocationPreviewMap = (name, city) => {
     const query = encodeURIComponent(`${name} ${city}`);
-    setMapPreviewUrl(`https://maps.google.com/maps?q=${query}&output=embed`);
+    setIframePreviewUrl(`https://maps.google.com/maps?q=${query}&output=embed`);
   };
 
   const handleLocationOpenMap = (name, city) => {
@@ -775,53 +775,68 @@ const App = () => {
   };
 
   const handleTransportCheck = (id) => {
-    const updatedCheckData = currentTripData.map(item => item.id === id ? { ...item, isTransportChecked: !item.isTransportChecked } : item);
-    updateTrip({ ...tripData, [tripName]: updatedCheckData });
+    const checkedTripData = currentTripData.map(item => item.id === id ? { ...item, isTransportChecked: !item.isTransportChecked } : item);
+    updateTrip({ ...tripData, [tripName]: checkedTripData });
   };
 
   const handleTransportEdit = (item) => {
     setEditingTransportId(item.id);
-    setTransportData(String(item.transportDuration || 0));
+    setTransportFormData(String(item.transportDuration || 0));
     setShowTransportModal(true);
   };
 
   const handleTransportSave = (e) => {
     e.preventDefault();
-    const updatedTripData = currentTripData.map(item => {
+    const editedTripData = currentTripData.map(item => {
       if (item.id === editingTransportId) {
-        return { ...item, transportDuration: parseInt(transportData) || 0 };
+        return { ...item, transportDuration: parseInt(transportFormData) || 0 };
       }
       return item;
     });
-    updateTrip({ ...tripData, [tripName]: updatedTripData });
+    updateTrip({ ...tripData, [tripName]: editedTripData });
     setShowTransportModal(false);
     restoreZoom();
-    showMessage("已保存", "edit");
+    showToastMessage("已保存", "edit");
   };
 
   const handleTransportChangeMode = (id, mode) => {
-    const updatedTripData = currentTripData.map(item => item.id === id ? { ...item, transportMode: mode } : item);
-    updateTrip({ ...tripData, [tripName]: updatedTripData });
+    const editedTripData = currentTripData.map(item => item.id === id ? { ...item, transportMode: mode } : item);
+    updateTrip({ ...tripData, [tripName]: editedTripData });
+  };
+
+  const handleStartTimeEdit = (date) => {
+    setStartTimeFormData({ date: date, time: dailyStartTimeMap[tripName]?.[date] || "08:00" });
+    setShowStartTimeModal(true);
+  };
+
+  const handleStartTimeSave = (e) => {
+    e.preventDefault();
+    setDailyStartTimeMap(prev => ({
+      ...prev,
+      [tripName]: { ...(prev[tripName] || {}), [startTimeFormData.date]: startTimeFormData.time }
+    }));
+    setShowStartTimeModal(false);
+    restoreZoom();
   };
 
   const isMobileView = deviceViewMode === 'mobile' || isWindowNarrow;
   
-  const themeBodyClass = isDarkMode ? 'bg-[#000000] text-white' : 'bg-[#e8e4d9] text-[#2c241b]';
-  const themeContainerClass = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
+  const bodyThemeClasses = isDarkMode ? 'bg-[#000000] text-white' : 'bg-[#e8e4d9] text-[#2c241b]';
+  const containerThemeClasses = isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]';
   
-  const appContainerClass = isMobileView 
-    ? `max-w-[430px] w-full mx-auto min-h-[100dvh] relative shadow-2xl transition-colors duration-[400ms] overflow-hidden ${themeContainerClass}` 
-    : `w-full min-h-[100dvh] relative transition-colors duration-[400ms] overflow-hidden ${themeContainerClass}`;
+  const containerWrapperClasses = isMobileView 
+    ? `max-w-[430px] w-full mx-auto min-h-[100dvh] relative shadow-2xl transition-colors duration-[400ms] overflow-hidden ${containerThemeClasses}` 
+    : `w-full min-h-[100dvh] relative transition-colors duration-[400ms] overflow-hidden ${containerThemeClasses}`;
 
   const currentYear = currentTime.getFullYear();
   const currentMonth = String(currentTime.getMonth() + 1).padStart(2, '0');
   const currentDay = String(currentTime.getDate()).padStart(2, '0');
-  const currentDateStr = `${currentYear}-${currentMonth}-${currentDay}`;
-  const currentTimeStr = `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
+  const currentDateString = `${currentYear}-${currentMonth}-${currentDay}`;
+  const currentTimeString = `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
 
   return (
-    <div className={`font-sans transition-colors duration-[400ms] flex justify-center select-none ${themeBodyClass}`}>
-      <div className={appContainerClass}>
+    <div className={`font-sans transition-colors duration-[400ms] flex justify-center select-none ${bodyThemeClasses}`}>
+      <div className={containerWrapperClasses}>
         
         {isAppLoading && (
           <div className="fixed inset-0 flex items-center justify-center z-[999] bg-inherit">
@@ -856,15 +871,15 @@ const App = () => {
             </div>
           )}
 
-          {mapPreviewUrl && (
+          {iframePreviewUrl && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in zoom-in-95 fade-in duration-300">
-               <div className={`fixed -inset-[200px] backdrop-blur-sm ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`} onClick={() => setMapPreviewUrl(null)}></div>
+               <div className={`fixed -inset-[200px] backdrop-blur-sm ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`} onClick={() => setIframePreviewUrl(null)}></div>
                <div className={`relative w-[95vw] h-[75dvh] rounded-[2rem] overflow-hidden border-4 transition-colors duration-[400ms] ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
-                  <button onClick={() => setMapPreviewUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
+                  <button onClick={() => setIframePreviewUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
                   <iframe 
-                    key={mapPreviewUrl}
+                    key={iframePreviewUrl}
                     title="Preview"
                     width="100%" 
                     height="100%" 
@@ -872,7 +887,7 @@ const App = () => {
                     style={{ 
                       border: 0
                     }} 
-                    src={mapPreviewUrl} 
+                    src={iframePreviewUrl} 
                     allowFullScreen>
                   </iframe>
                </div>
@@ -952,7 +967,7 @@ const App = () => {
                 全部
               </button>
 
-              {tripDate.map(date => (
+              {tripDataDates.map(date => (
                 <button 
                   key={date} 
                   onClick={() => setActiveDateTab(date)} 
@@ -987,64 +1002,64 @@ const App = () => {
             </div>
 
             <main className={`${isMobileView ? 'px-3' : 'px-6'} py-6`}>
-              {tripDataTimeline.length === 0 ? (
+              {filteredTimelineResult.length === 0 ? (
                 <div className="py-20 text-center opacity-60 flex flex-col items-center gap-4">
                    <Sparkles className="w-12 h-12" />
                    <p className="text-xs font-bold uppercase tracking-widest">暂无行程计划，开始添加吧</p>
                 </div>
-              ) : tripDataTimeline.map((dateGroup) => {
-                const isOverviewExpanded = expandedOverviewDate[dateGroup.date]; 
-                const formattedDateStr = dateGroup.date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日');
+              ) : filteredTimelineResult.map((dailyTripData) => {
+                const isOverviewExpanded = expandedOverviewDateMap[dailyTripData.date]; 
+                const formattedDateString = dailyTripData.date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日');
                 
                 return (
-                  <div key={dateGroup.date} className="mb-[18px]">
+                  <div key={dailyTripData.date} className="mb-[18px]">
                     <div className="mb-[12px]">
                       <div className="flex items-center mb-[20px]">
-                        <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{dateGroup.date}</span>
+                        <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{dailyTripData.date}</span>
                         <div className={`h-px flex-1 mx-3 transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
-                        {weatherForecast[dateGroup.date] && (
+                        {weatherDataMap[dailyTripData.date] && (
                           <div 
                             className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
                             onClick={() => {
-                              if (dateGroup.items[0]?.city) {
-                                setMapPreviewUrl(`https://www.google.com/search?q=${encodeURIComponent(dateGroup.items[0].city + ' ' + formattedDateStr + ' 天气')}&igu=1&hl=zh-CN&gl=CN`);
+                              if (dailyTripData.items[0]?.city) {
+                                setIframePreviewUrl(`https://www.google.com/search?q=${encodeURIComponent(dailyTripData.items[0].city + ' ' + formattedDateString + ' 天气')}&igu=1&hl=zh-CN&gl=CN`);
                               }
                             }}
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
-                            <span className="text-xs font-black whitespace-nowrap">{weatherForecast[dateGroup.date]}</span>
+                            <span className="text-xs font-black whitespace-nowrap">{weatherDataMap[dailyTripData.date]}</span>
                           </div>
                         )}
                       </div>
                       
                       <div className="flex gap-2">
-                        <button onClick={() => handleOverviewToggle(dateGroup.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/60'}`}>
-                           <span className="text-xs font-semibold opacity-80">当日行程总览（{dateGroup.items.length}个地点）</span>
+                        <button onClick={() => handleOverviewToggle(dailyTripData.date)} className={`flex-1 flex justify-between items-center px-4 py-3 rounded-2xl border border-dashed transition-all ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/60'}`}>
+                           <span className="text-xs font-semibold opacity-80">当日行程总览（{dailyTripData.items.length}个地点）</span>
                            {isOverviewExpanded ? <ChevronUp className="w-4 h-4 opacity-60"/> : <ChevronDown className="w-4 h-4 opacity-60"/>}
                         </button>
-                        <button onClick={() => { setStartTimeData({ date: dateGroup.date, time: dailyStartTime[tripName]?.[dateGroup.date] || "08:00" }); setShowStartTimeModal(true); }} className={`px-3 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed transition-all shrink-0 ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
+                        <button onClick={() => handleStartTimeEdit(dailyTripData.date)} className={`px-3 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed transition-all shrink-0 ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
                            <Clock className="w-4 h-4 opacity-60"/>
-                           <span className="text-xs font-black opacity-80">{dailyStartTime[tripName]?.[dateGroup.date] || "08:00"}</span>
+                           <span className="text-xs font-black opacity-80">{dailyStartTimeMap[tripName]?.[dailyTripData.date] || "08:00"}</span>
                         </button>
                       </div>
                       
                       {isOverviewExpanded && (
                         <div className={`mt-2 p-4 rounded-2xl shadow-sm text-[11px] font-bold leading-loose flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-white/5' : 'bg-white'}`}>
-                          {dateGroup.items.length >= 2 && (
+                          {dailyTripData.items.length >= 2 && (
                             <div className={`w-full ${isMobileView ? 'aspect-[4/3]' : 'h-[75dvh]'} rounded-xl overflow-hidden mb-2 border-4 transition-colors duration-[400ms] ${isDarkMode ? 'border-white/10 bg-[#1a1d23]' : 'border-gray-200 bg-white'} shadow-2xl`}>
                               <iframe 
                                 title="Daily Route"
                                 width="100%" 
                                 height="100%" 
                                 frameBorder="0" 
-                                src={`https://maps.google.com/maps?saddr=${encodeURIComponent(dateGroup.items[0].name + ' ' + (dateGroup.items[0].city || ''))}&daddr=${encodeURIComponent(dateGroup.items.slice(1).map(i => i.name + ' ' + (i.city || '')).join(' to:'))}&output=embed`} 
+                                src={`https://maps.google.com/maps?saddr=${encodeURIComponent(dailyTripData.items[0].name + ' ' + (dailyTripData.items[0].city || ''))}&daddr=${encodeURIComponent(dailyTripData.items.slice(1).map(i => i.name + ' ' + (i.city || '')).join(' to:'))}&output=embed`} 
                                 allowFullScreen
                               ></iframe>
                             </div>
                           )}
-                          {dateGroup.items.map((i, groupItemIndex) => (
-                             <span key={groupItemIndex} className={`block select-text ${i.isLocationChecked ? 'line-through opacity-40' : ''}`}>
-                               {i.order}. {i.name}（{i.startTimeStr} - {i.endTimeStr}）
+                          {dailyTripData.items.map((i, dailyTripDataItemIndex) => (
+                             <span key={dailyTripDataItemIndex} className={`block select-text ${i.isLocationChecked ? 'line-through opacity-40' : ''}`}>
+                               {i.order}. {i.name}（{i.startTimeString} - {i.endTimeString}）
                              </span>
                           ))}
                         </div>
@@ -1052,11 +1067,11 @@ const App = () => {
                     </div>
 
                     <div className="relative space-y-0">
-                      {dateGroup.items.map((item, groupItemIndex) => (
+                      {dailyTripData.items.map((item, dailyTripDataItemIndex) => (
                         <div key={item.id} id={`location-${item.id}`} className="relative mb-0">
                           
-                          {groupItemIndex < dateGroup.items.length - 1 && (
-                            <div className={`absolute left-[27px] top-[36px] -bottom-[40px] z-0 transition-colors duration-[400ms] ${(dateGroup.date < currentDateStr || (dateGroup.date === currentDateStr && item.endTimeStr <= currentTimeStr)) ? `border-l-[2px] border-dotted w-0 ${isDarkMode ? 'border-white/30' : 'border-gray-400'} bg-transparent` : `w-[2px] ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`}`} />
+                          {dailyTripDataItemIndex < dailyTripData.items.length - 1 && (
+                            <div className={`absolute left-[27px] top-[36px] -bottom-[40px] z-0 transition-colors duration-[400ms] ${(dailyTripData.date < currentDateString || (dailyTripData.date === currentDateString && item.endTimeString <= currentTimeString)) ? `border-l-[2px] border-dotted w-0 ${isDarkMode ? 'border-white/30' : 'border-gray-400'} bg-transparent` : `w-[2px] ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`}`} />
                           )}
 
                           <div className={`relative flex ${isMobileView ? 'gap-2' : 'gap-4'} group z-10 pt-2`}>
@@ -1092,7 +1107,7 @@ const App = () => {
                                 </div>
                               </button>
                               <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/5 border-white/[0.08]' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
-                                {item.startTimeStr}
+                                {item.startTimeString}
                               </div>
                             </div>
 
@@ -1145,7 +1160,7 @@ const App = () => {
                                       </div>
                                     )}
                                     {urls.map((url, i) => (
-                                      <div key={i} onClick={() => setMapPreviewUrl(url)} className={`text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate w-full block select-text ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
+                                      <div key={i} onClick={() => setIframePreviewUrl(url)} className={`text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate w-full block select-text ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
                                         {url.length > 28 ? url.substring(0, 20) + '...' + url.slice(-8) : url}
                                       </div>
                                     ))}
@@ -1171,7 +1186,7 @@ const App = () => {
                             </div>
                           </div>
 
-                          {groupItemIndex < dateGroup.items.length - 1 && (
+                          {dailyTripDataItemIndex < dailyTripData.items.length - 1 && (
                             <div key={`transport-${item.id}`} id={`transport-${item.id}`} className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-1.5 items-center relative z-10 group`}>
                               <div className="w-14 shrink-0 bg-transparent flex flex-col items-center justify-center relative z-20 -translate-y-5">
                                 <button 
@@ -1197,7 +1212,7 @@ const App = () => {
                                   </div>
                                 </button>
                                 <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/5 border-white/[0.08]' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
-                                  {item.endTimeStr}
+                                  {item.endTimeString}
                                 </div>
                               </div>
                               <div className={`relative z-20 flex-1 flex items-center justify-between px-3 py-3.5 rounded-xl border border-dashed shadow-sm transition-all duration-300 transform-gpu ${activePressId === `transport-${item.id}` ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.isTransportChecked ? 'opacity-50' : ''}`}>
@@ -1229,12 +1244,12 @@ const App = () => {
                                   
                                   <button 
                                     onClick={() => {
-                                      const endItem = dateGroup.items[groupItemIndex+1];
-                                      const origin = encodeURIComponent(`${item.name} ${item.city || ''}`);
-                                      const dest = encodeURIComponent(`${endItem.name} ${endItem.city || ''}`);
-                                      const dirflgMap = { walk: 'w', car: 'd', train: 'r' };
-                                      const dirflg = dirflgMap[item.transportMode || 'train'];
-                                      setMapPreviewUrl(`https://maps.google.com/maps?saddr=${origin}&daddr=${dest}&dirflg=${dirflg}&output=embed`);
+                                      const endItem = dailyTripData.items[dailyTripDataItemIndex+1];
+                                      const transportMapOrigin = encodeURIComponent(`${item.name} ${item.city || ''}`);
+                                      const transportMapDestination = encodeURIComponent(`${endItem.name} ${endItem.city || ''}`);
+                                      const directionFlagMap = { walk: 'w', car: 'd', train: 'r' };
+                                      const currentDirectionFlag = directionFlagMap[item.transportMode || 'train'];
+                                      setIframePreviewUrl(`https://maps.google.com/maps?saddr=${transportMapOrigin}&daddr=${transportMapDestination}&dirflg=${currentDirectionFlag}&output=embed`);
                                     }}
                                     className={`${isMobileView ? 'px-2.5' : 'px-4'} py-1.5 rounded-lg text-[11px] font-black transition hover:scale-105 flex items-center gap-1 shrink-0 ${
                                       isDarkMode ? TRANSPORT_MODE[item.transportMode || 'walk'].darkClass : TRANSPORT_MODE[item.transportMode || 'walk'].lightClass
@@ -1291,7 +1306,7 @@ const App = () => {
                             onInvalid={e => e.target.setCustomValidity('请填写')}
                             onInput={e => e.target.setCustomValidity('')}
                             className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                            value={locationData.name} onChange={e => setLocationData({...locationData, name: e.target.value})} />
+                            value={locationFormData.name} onChange={e => setLocationFormData({...locationFormData, name: e.target.value})} />
                         </div>
                         <div className="flex flex-col gap-1.5">
                           <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>序号</label>
@@ -1302,7 +1317,7 @@ const App = () => {
                               }, 300);
                             }}
                             className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                            value={locationData.order} onChange={e => setLocationData({...locationData, order: e.target.value.replace(/[^0-9]/g, '')})} />
+                            value={locationFormData.order} onChange={e => setLocationFormData({...locationFormData, order: e.target.value.replace(/[^0-9]/g, '')})} />
                         </div>
                       </div>
 
@@ -1320,7 +1335,7 @@ const App = () => {
                             onInvalid={e => e.target.setCustomValidity('请填写')}
                             onInput={e => e.target.setCustomValidity('')}
                             className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-[400ms] [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                            value={locationData.date} onChange={e => setLocationData({...locationData, date: sanitizeDate(e.target.value)})} />
+                            value={locationFormData.date} onChange={e => setLocationFormData({...locationFormData, date: sanitizeDate(e.target.value)})} />
                         </div>
                         <div className="flex flex-col gap-1.5 min-w-0">
                           <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>城市</label>
@@ -1330,7 +1345,7 @@ const App = () => {
                                 e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                               }, 300);
                             }}
-                            value={locationData.city} onChange={e => setLocationData({...locationData, city: e.target.value})} />
+                            value={locationFormData.city} onChange={e => setLocationFormData({...locationFormData, city: e.target.value})} />
                         </div>
                       </div>
 
@@ -1344,7 +1359,7 @@ const App = () => {
                               }, 300);
                             }}
                             className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                            value={locationData.locationDuration} onChange={e => setLocationData({...locationData, locationDuration: e.target.value.replace(/[^0-9]/g, '')})} />
+                            value={locationFormData.locationDuration} onChange={e => setLocationFormData({...locationFormData, locationDuration: e.target.value.replace(/[^0-9]/g, '')})} />
                         </div>
                         <div className="flex flex-col gap-1.5">
                           <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>花销</label>
@@ -1357,13 +1372,13 @@ const App = () => {
                               }, 300);
                             }}
                             className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                            value={locationData.cost} onChange={e => setLocationData({...locationData, cost: e.target.value.replace(/[^0-9.]/g, '')})} />
+                            value={locationFormData.cost} onChange={e => setLocationFormData({...locationFormData, cost: e.target.value.replace(/[^0-9.]/g, '')})} />
                         </div>
                         <div className="flex flex-col gap-1.5 relative">
                           <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>币种</label>
                           <div className="relative h-12">
                             <select 
-                              required={parseFloat(locationData.cost) > 0}
+                              required={parseFloat(locationFormData.cost) > 0}
                               onFocus={(e) => {
                                 setTimeout(() => {
                                   e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1372,7 +1387,7 @@ const App = () => {
                               onInvalid={e => e.target.setCustomValidity('请填写')}
                               onInput={e => e.target.setCustomValidity('')}
                               className={`w-full h-full px-4 pr-8 rounded-2xl text-base font-medium outline-none appearance-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                              value={locationData.currency} onChange={e => setLocationData({...locationData, currency: e.target.value})}>
+                              value={locationFormData.currency} onChange={e => setLocationFormData({...locationFormData, currency: e.target.value})}>
                               <option value=""></option>
                               <option value="USD">USD</option>
                               <option value="GBP">GBP</option>
@@ -1397,7 +1412,7 @@ const App = () => {
                             }, 300);
                           }}
                           placeholder="例如：住宿、交通、门票、营业时间等信息"
-                          value={locationData.note} onChange={e => setLocationData({...locationData, note: e.target.value})} />
+                          value={locationFormData.note} onChange={e => setLocationFormData({...locationFormData, note: e.target.value})} />
                       </div>
                     </div>
 
@@ -1417,15 +1432,7 @@ const App = () => {
               <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
                 <div className={`fixed -inset-[200px] backdrop-blur-sm -z-10 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`}></div>
                 <div className="w-full max-w-md relative">
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    setDailyStartTime(prev => ({
-                      ...prev,
-                      [tripName]: { ...(prev[tripName] || {}), [startTimeData.date]: startTimeData.time }
-                    }));
-                    setShowStartTimeModal(false);
-                    restoreZoom();
-                  }} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                  <form onSubmit={handleStartTimeSave} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
                       <h2 className={`text-xl font-black transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑时间</h2>
                       <button type="button" onClick={() => { setShowStartTimeModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
@@ -1445,7 +1452,7 @@ const App = () => {
                           onInvalid={e => e.target.setCustomValidity('请填写')}
                           onInput={e => e.target.setCustomValidity('')}
                           className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-[400ms] [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                          value={startTimeData.time} onChange={e => setStartTimeData({...startTimeData, time: e.target.value})} />
+                          value={startTimeFormData.time} onChange={e => setStartTimeFormData({...startTimeFormData, time: e.target.value})} />
                       </div>
                     </div>
 
@@ -1481,7 +1488,7 @@ const App = () => {
                             }, 300);
                           }}
                           className={`w-full h-12 px-4 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border transition-colors duration-[400ms] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
-                          value={transportData} onChange={e => setTransportData(e.target.value.replace(/[^0-9]/g, ''))} />
+                          value={transportFormData} onChange={e => setTransportFormData(e.target.value.replace(/[^0-9]/g, ''))} />
                       </div>
                     </div>
 
@@ -1501,7 +1508,7 @@ const App = () => {
                 <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Download className="w-8 h-8 text-blue-500" />
                 </div>
-                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>识别到 {pendingImportedData.length} 个地点</h2>
+                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>识别到 {pendingImportData.length} 个地点</h2>
                 <p className="text-[11px] opacity-80 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{tripName}</span></p>
                 
                 <div className="grid gap-3">
