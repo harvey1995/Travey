@@ -36,7 +36,7 @@ const TRANSPORT_MODE = {
   walk: { label: '步行', icon: Footprints, lightClass: 'text-blue-600 bg-blue-100 hover:bg-blue-200', darkClass: 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20', alert: null }
 };
 
-const DEFAULT_TOKYO_TRIP = [
+const DEFAULT_TRIP_TOKYO = [
   { date: "2025-12-31", id: "tokyo-1", city: "Tokyo", name: "涩谷十字路口", locationDuration: 60, note: "感受世界最繁忙的交叉路口，看跨年倒计时准备", cost: 0, currency: "JPY", isLocationChecked: true, order: 1, transportMode: 'walk', transportRoute: '' },
   { date: "2025-12-31", id: "tokyo-2", city: "Tokyo", name: "SHIBUYA SKY", locationDuration: 90, note: "https://www.shibuya-scramble-square.com/sky/", cost: 2500, currency: "JPY", isLocationChecked: false, order: 2, transportMode: 'train', transportRoute: '山手线' },
   { date: "2025-12-31", id: "tokyo-3", city: "Tokyo", name: "明治神宫", locationDuration: 120, note: "参加「初诣」，体验日本传统跨年参拜", cost: 0, currency: "JPY", isLocationChecked: false, order: 3, transportMode: 'walk', transportRoute: '' },
@@ -46,7 +46,7 @@ const DEFAULT_TOKYO_TRIP = [
   { date: "2026-01-02", id: "tokyo-7", city: "Tokyo", name: "银座", locationDuration: 240, note: "新年大特卖「福袋」抢购，买伴手礼", cost: 20000, currency: "JPY", isLocationChecked: false, order: 2, transportMode: 'walk', transportRoute: '' },
 ];
 
-const DEFAULT_TRIP = { "东京跨年三日游": DEFAULT_TOKYO_TRIP };
+const DEFAULT_TRIP = { "东京跨年三日游": DEFAULT_TRIP_TOKYO };
 
 const getCurrentDate = () => new Date().toISOString().split('T')[0];
 
