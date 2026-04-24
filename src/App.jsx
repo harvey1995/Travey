@@ -1067,7 +1067,7 @@ const App = () => {
                                 width="100%" 
                                 height="100%" 
                                 frameBorder="0" 
-                                src={`https://maps.google.com/maps?saddr=${encodeURIComponent(dailyTripData.items[0].name + ' ' + (dailyTripData.items[0].city || ''))}&daddr=${encodeURIComponent(dailyTripData.items.slice(1).map(i => i.name + ' ' + (i.city || '')).join(' to:'))}&output=embed`} 
+                                src={`https://maps.google.com/maps?q=${encodeURIComponent(dailyTripData.items[0].name + ' ' + (dailyTripData.items[0].city || ''))}&daddr=${encodeURIComponent(dailyTripData.items.slice(1).map(i => i.name + ' ' + (i.city || '')).join(' to:'))}&output=embed`} 
                                 allowFullScreen
                               ></iframe>
                             </div>
@@ -1264,7 +1264,7 @@ const App = () => {
                                       const transportMapDestination = encodeURIComponent(`${endItem.name} ${endItem.city || ''}`);
                                       const directionFlagMap = { walk: 'w', car: 'd', train: 'r' };
                                       const currentDirectionFlag = directionFlagMap[item.transportMode || 'train'];
-                                      setIframePreviewUrl(`https://maps.google.com/maps?saddr=${transportMapOrigin}&daddr=${transportMapDestination}&dirflg=${currentDirectionFlag}&output=embed`);
+                                      setIframePreviewUrl(`https://maps.google.com/maps?q=${transportMapOrigin}&daddr=${transportMapDestination}&dirflg=${currentDirectionFlag}&output=embed`);
                                     }}
                                     className={`${isMobileView ? 'px-2.5' : 'px-4'} py-1.5 rounded-lg text-[11px] font-black transition hover:scale-105 flex items-center gap-1 shrink-0 ${
                                       isDarkMode ? TRANSPORT_MODE[item.transportMode || 'walk'].darkClass : TRANSPORT_MODE[item.transportMode || 'walk'].lightClass
