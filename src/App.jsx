@@ -890,7 +890,7 @@ const App = () => {
                   <button onClick={() => setIframePreviewUrl(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
-                  <button onClick={() => window.open(iframePreviewUrl, '_blank')} className="absolute top-4 left-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
+                  <button onClick={() => window.open(iframePreviewUrl, '_blank')} className="absolute bottom-4 right-4 z-10 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors">
                     <ExternalLink className="w-5 h-5" />
                   </button>
                   <iframe 
