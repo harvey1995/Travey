@@ -170,6 +170,9 @@ const App = () => {
   const [showStartTimeModal, setShowStartTimeModal] = useState(false);
   const [startTimeFormData, setStartTimeFormData] = useState({ date: '', time: '08:00' });
 
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [dateFormData, setDateFormData] = useState({ oldDate: '', newDate: '' });
+
   const [showImportModal, setShowImportModal] = useState(false);
   const [pendingImportData, setPendingImportData] = useState(null);
 
@@ -387,7 +390,7 @@ const App = () => {
   useEffect(() => {
     if (typeof document === 'undefined') return;
     
-    const isAnyModalOpen = iframePreviewUrl || notePreviewText || showLocationModal || showStartTimeModal || showTransportModal || showImportModal;
+    const isAnyModalOpen = iframePreviewUrl || notePreviewText || showLocationModal || showStartTimeModal || showTransportModal || showImportModal || showDateModal;
     
     if (isAnyModalOpen) {
       const systemScrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -413,7 +416,7 @@ const App = () => {
         }
       };
     }
-  }, [iframePreviewUrl, notePreviewText, showLocationModal, showStartTimeModal, showTransportModal, showImportModal]);
+  }, [iframePreviewUrl, notePreviewText, showLocationModal, showStartTimeModal, showTransportModal, showImportModal, showDateModal]);
 
   const updateTrip = (newTrips, newActiveTrip = tripName) => {
     setUndoStack(p => [...p, { tripData, tripName }].slice(-20));
@@ -981,6 +984,42 @@ const App = () => {
     restoreZoom();
   };
 
+  const handleDateEdit = (date) => {
+    setDateFormData({ oldDate: date, newDate: date });
+    setShowDateModal(true);
+  };
+
+  const handleDateSave = (e) => {
+    e.preventDefault();
+    const { oldDate, newDate } = dateFormData;
+    if (oldDate !== newDate && newDate) {
+      const formattedNewDate = sanitizeDate(newDate);
+
+      const updatedTripData = currentTripData.map(item => {
+        if (item.date === oldDate) {
+          return { ...item, date: formattedNewDate };
+        }
+        return item;
+      });
+      updateTrip({ ...tripData, [tripName]: updatedTripData });
+
+      setDailyStartTimeMap(prev => {
+        const currentMap = prev[tripName] || {};
+        if (currentMap[oldDate]) {
+          const newMap = { ...currentMap, [formattedNewDate]: currentMap[oldDate] };
+          delete newMap[oldDate];
+          return { ...prev, [tripName]: newMap };
+        }
+        return prev;
+      });
+
+      setActiveDateTab(formattedNewDate);
+    }
+    setShowDateModal(false);
+    restoreZoom();
+    showMessage("已修改日期", "edit");
+  };
+
   const isMobileView = deviceViewMode === 'mobile' || isWindowNarrow;
   
   const bodyThemeClasses = isDarkMode ? 'bg-[#000000] text-white' : 'bg-[#e8e4d9] text-[#2c241b]';
@@ -1135,7 +1174,13 @@ const App = () => {
               {tripDataDates.map(date => (
                 <button 
                   key={date} 
-                  onClick={() => setActiveDateTab(date)} 
+                  onClick={() => {
+                    if (activeDateTab === date) {
+                      handleDateEdit(date);
+                    } else {
+                      setActiveDateTab(date);
+                    }
+                  }} 
                   className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] w-[72px] rounded-xl text-xs font-black transition-all border border-solid box-border ${
                     activeDateTab === date 
                       ? (isDarkMode ? 'bg-white text-black shadow-lg border-transparent' : 'bg-gray-800 text-white shadow-lg border-transparent') 
@@ -1632,6 +1677,43 @@ const App = () => {
                         onInput={e => e.target.setCustomValidity('')}
                         className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-[400ms] [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                         value={startTimeFormData.time} onChange={e => setStartTimeFormData({...startTimeFormData, time: e.target.value})} />
+                    </div>
+                  </div>
+
+                  <button type="submit" className="w-full mt-6 h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_0_10px_rgb(37,99,235,0.4)] sm:shadow-[0_0_20px_rgb(37,99,235,0.4)]">
+                    保存
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {showDateModal && (
+            <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center animate-in fade-in">
+              <div className={`fixed -inset-[200px] backdrop-blur-sm -z-10 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'}`}></div>
+              <div className={`absolute -bottom-[50vh] left-0 right-0 h-[50vh] ${isDarkMode ? 'bg-[#1a1d23]' : 'bg-white'} sm:hidden`}></div>
+              <div className="w-full max-w-md relative">
+                <form onSubmit={handleDateSave} className={`relative z-[112] w-full max-h-[90dvh] overflow-y-auto overscroll-none rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border-t border-white/10' : 'bg-white'}`}>
+                  <div className="flex justify-between items-center mb-[14px] sticky top-0 bg-inherit py-2 z-10">
+                    <h2 className={`text-xl font-black transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>编辑日期</h2>
+                    <button type="button" onClick={() => { setShowDateModal(false); restoreZoom(); }} className={`p-2 rounded-full transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X className={`w-5 h-5 transition-opacity ${isDarkMode ? 'opacity-80' : 'text-gray-700'}`} /></button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1.5 min-w-0">
+                      <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>日期</label>
+                      <input 
+                        type="date" 
+                        required 
+                        onFocus={(e) => {
+                          setTimeout(() => {
+                            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }, 300);
+                        }}
+                        onInvalid={e => e.target.setCustomValidity('请填写')}
+                        onInput={e => e.target.setCustomValidity('')}
+                        className={`w-full min-w-0 h-12 pl-4 pr-3 rounded-2xl text-base font-medium outline-none focus:ring-2 focus:ring-blue-500 box-border border appearance-none transition-colors duration-[400ms] [&::-webkit-calendar-picker-indicator]:invert-[0.6] ${isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                        value={dateFormData.newDate} onChange={e => setDateFormData({...dateFormData, newDate: e.target.value})} />
                     </div>
                   </div>
 
