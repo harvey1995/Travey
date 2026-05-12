@@ -1022,11 +1022,17 @@ const App = () => {
                   }`}
                 >
                   {date.split('-').slice(1).join('/')}
-                  {checkedTripDataMap[date] && (
-                    <div className={`absolute -bottom-1.5 -right-1.5 w-[18px] h-[18px] rounded-full flex items-center justify-center ${isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]'}`}>
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                    </div>
-                  )}
+                  <div className={`absolute -bottom-1.5 -right-1.5 w-[18px] h-[18px] rounded-full flex items-center justify-center transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]'}`}>
+                    <span className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
+                      checkedTripDataMap[date] ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45 pointer-events-none'
+                    }`}>
+                      <CheckCircle className={`w-4 h-4 transition-colors duration-[400ms] ${
+                        activeDateTab === date 
+                          ? (isDarkMode ? 'text-white' : 'text-gray-800') 
+                          : (isDarkMode ? 'text-transparent' : 'text-white')
+                      }`} />
+                    </span>
+                  </div>
                 </button>
               ))}
             </nav>
