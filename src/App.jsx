@@ -390,7 +390,7 @@ const App = () => {
   useEffect(() => {
     if (typeof document === 'undefined') return;
     
-    const isAnyModalOpen = iframePreviewUrl || notePreviewText || showLocationModal || showStartTimeModal || showTransportModal || showImportModal || showDateModal;
+    const isAnyModalOpen = showLocationModal || showTransportModal || showStartTimeModal || showDateModal || showImportModal || iframePreviewUrl || notePreviewText;
     
     if (isAnyModalOpen) {
       const systemScrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -416,7 +416,7 @@ const App = () => {
         }
       };
     }
-  }, [iframePreviewUrl, notePreviewText, showLocationModal, showStartTimeModal, showTransportModal, showImportModal, showDateModal]);
+  }, [showLocationModal, showTransportModal, showStartTimeModal, showDateModal, showImportModal, iframePreviewUrl, notePreviewText]);
 
   const updateTrip = (newTrips, newActiveTrip = tripName) => {
     setUndoStack(p => [...p, { tripData, tripName }].slice(-20));
