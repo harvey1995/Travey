@@ -181,35 +181,6 @@ const App = () => {
     return uniqueDates.sort((a, b) => new Date(a) - new Date(b));
   }, [sanitizedTripData]);
 
-  const completedDatesMap = useMemo(() => {
-    const map = {};
-    const grouped = {};
-    sanitizedTripData.forEach(item => {
-      if (!grouped[item.date]) grouped[item.date] = [];
-      grouped[item.date].push(item);
-    });
-    Object.keys(grouped).forEach(date => {
-      const items = grouped[date].sort((a,b) => (a.order||0) - (b.order||0));
-      if (items.length === 0) {
-        map[date] = false;
-        return;
-      }
-      let isComplete = true;
-      for (let i = 0; i < items.length; i++) {
-        if (!items[i].isLocationChecked) {
-          isComplete = false;
-          break;
-        }
-        if (i < items.length - 1 && !items[i].isTransportChecked) {
-          isComplete = false;
-          break;
-        }
-      }
-      map[date] = isComplete;
-    });
-    return map;
-  }, [sanitizedTripData]);
-
   const tripDataTimeline = useMemo(() => {
     const sortedTripData = [...sanitizedTripData].sort((a, b) => {
       if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
@@ -251,6 +222,35 @@ const App = () => {
     }
     return filteredTimelineResult;
   }, [sanitizedTripData, activeDateTab, searchQuery, dailyStartTimeMap, tripName]);
+
+  const checkedTripDataMap = useMemo(() => {
+    const checkedStatusMap = {};
+    const groupedTripDataByDate = {};
+    sanitizedTripData.forEach(item => {
+      if (!groupedTripDataByDate[item.date]) groupedTripDataByDate[item.date] = [];
+      groupedTripDataByDate[item.date].push(item);
+    });
+    Object.keys(groupedTripDataByDate).forEach(date => {
+      const items = groupedTripDataByDate[date].sort((a,b) => (a.order||0) - (b.order||0));
+      if (items.length === 0) {
+        checkedStatusMap[date] = false;
+        return;
+      }
+      let isComplete = true;
+      for (let i = 0; i < items.length; i++) {
+        if (!items[i].isLocationChecked) {
+          isComplete = false;
+          break;
+        }
+        if (i < items.length - 1 && !items[i].isTransportChecked) {
+          isComplete = false;
+          break;
+        }
+      }
+      checkedStatusMap[date] = isComplete;
+    });
+    return checkedStatusMap;
+  }, [sanitizedTripData]);
 
   useEffect(() => {
     localStorage.setItem(CACHE_KEY_TRIP_DATA, JSON.stringify(tripData));
@@ -1022,7 +1022,7 @@ const App = () => {
                   }`}
                 >
                   {date.split('-').slice(1).join('/')}
-                  {completedDatesMap[date] && (
+                  {checkedTripDataMap[date] && (
                     <div className={`absolute -bottom-1.5 -right-1.5 w-[18px] h-[18px] rounded-full flex items-center justify-center ${isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]'}`}>
                       <CheckCircle className="w-4 h-4 text-green-500" />
                     </div>
