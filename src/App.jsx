@@ -694,19 +694,19 @@ const App = () => {
       return timeStr;
     };
 
-    const csvExportHeaders = ["日期", "序号", "城市/交通", "地点名称/出行方式", "时间（分）", "备注", "费用", "币种", "打卡状态", "开始时间", "结束时间"];
+    const csvExportHeaders = ["日期", "序号", "城市/交通", "地点名称/出行方式", "开始时间", "结束时间", "时间（分）", "备注", "费用", "币种", "打卡状态"];
     const csvExportRows = [];
     
     Object.values(csvExportTimeline).forEach(group => {
        group.items.forEach((item, dailyTripDataItemIndex) => {
           csvExportRows.push([
-            item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.locationDuration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : "", item.isLocationChecked ? "是" : "否", formatExportTime(item.startTimeString), formatExportTime(item.endTimeString)
+            item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, formatExportTime(item.startTimeString), formatExportTime(item.endTimeString), item.locationDuration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : "", item.isLocationChecked ? "是" : "否"
           ].join(','));
           if (dailyTripDataItemIndex < group.items.length - 1) {
             const nextItem = group.items[dailyTripDataItemIndex + 1];
             const csvExportTransportMode = TRANSPORT_MODE[item.transportMode || 'walk'].label;
             csvExportRows.push([
-              item.date, 0, "交通", csvExportTransportMode, item.transportDuration || 0, '""', "", "", item.isTransportChecked ? "是" : "否", formatExportTime(item.endTimeString), formatExportTime(nextItem.startTimeString)
+              item.date, 0, "交通", csvExportTransportMode, formatExportTime(item.endTimeString), formatExportTime(nextItem.startTimeString), item.transportDuration || 0, '""', "", "", item.isTransportChecked ? "是" : "否"
             ].join(','));
           }
        });
@@ -770,16 +770,18 @@ const App = () => {
       return filteredTimelineResult;
     };
 
-    const currentDateTabGroups = getGroupedTripData(activeDateTab);
-    for (const dailyTripData of currentDateTabGroups) {
-      for (const [dailyTripDataItemIndex, item] of dailyTripData.items.entries()) {
-        if (!item.isLocationChecked) {
-          scrollToElement(`location-${item.id}`);
-          return;
-        }
-        if (dailyTripDataItemIndex < dailyTripData.items.length - 1 && !item.isTransportChecked) {
-          scrollToElement(`transport-${item.id}`);
-          return;
+    if (activeDateTab !== 'Total') {
+      const currentDateTabGroups = getGroupedTripData(activeDateTab);
+      for (const dailyTripData of currentDateTabGroups) {
+        for (const [dailyTripDataItemIndex, item] of dailyTripData.items.entries()) {
+          if (!item.isLocationChecked) {
+            scrollToElement(`location-${item.id}`);
+            return;
+          }
+          if (dailyTripDataItemIndex < dailyTripData.items.length - 1 && !item.isTransportChecked) {
+            scrollToElement(`transport-${item.id}`);
+            return;
+          }
         }
       }
     }
@@ -1186,11 +1188,8 @@ const App = () => {
                         <span 
                           onClick={() => {
                             if (activeDateTab === 'Total') {
-                              const el = document.getElementById(`date-section-${dailyTripData.date}`);
-                              if (el) {
-                                const y = el.getBoundingClientRect().top + window.scrollY - 80;
-                                window.scrollTo({ top: y, behavior: 'smooth' });
-                              }
+                              setActiveDateTab(dailyTripData.date);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
                             }
                           }}
                           className={`text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest ${activeDateTab === 'Total' ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
