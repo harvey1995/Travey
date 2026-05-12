@@ -1022,17 +1022,11 @@ const App = () => {
                   }`}
                 >
                   {date.split('-').slice(1).join('/')}
-                  <div className={`absolute -bottom-1.5 -right-1.5 w-[18px] h-[18px] rounded-full flex items-center justify-center transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]'}`}>
-                    <span className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                      checkedTripDataMap[date] ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45 pointer-events-none'
-                    }`}>
-                      <CheckCircle className={`w-4 h-4 transition-colors duration-[400ms] ${
-                        activeDateTab === date 
-                          ? (isDarkMode ? 'text-white' : 'text-gray-800') 
-                          : (isDarkMode ? 'text-transparent' : 'text-white')
-                      }`} />
-                    </span>
-                  </div>
+                  {checkedTripDataMap[date] && (
+                    <div className={`absolute -bottom-1.5 -right-1.5 w-[18px] h-[18px] rounded-full flex items-center justify-center transition-colors duration-[400ms] animate-in zoom-in-50 fade-in duration-300 ${isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]'}`}>
+                      <CheckCircle className={`w-4 h-4 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-gray-800'}`} />
+                    </div>
+                  )}
                 </button>
               ))}
             </nav>
@@ -1070,7 +1064,16 @@ const App = () => {
                   <div key={dailyTripData.date} className="mb-[18px]">
                     <div className="mb-[12px]">
                       <div className="flex items-center mb-[20px]">
-                        <span className="text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest">{dailyTripData.date}</span>
+                        <span 
+                          onClick={() => {
+                            if (activeDateTab === 'Total') {
+                              setActiveDateTab(dailyTripData.date);
+                            }
+                          }}
+                          className={`text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest ${activeDateTab === 'Total' ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                        >
+                          {dailyTripData.date}
+                        </span>
                         <div className={`h-px flex-1 mx-3 transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
                         {weatherDataMap[dailyTripData.date] && (
                           <div 
@@ -1121,205 +1124,207 @@ const App = () => {
                       )}
                     </div>
 
-                    <div className="relative space-y-0">
-                      {dailyTripData.items.map((item, dailyTripDataItemIndex) => (
-                        <div key={item.id} id={`location-${item.id}`} className="relative mb-0">
-                          
-                          {dailyTripDataItemIndex < dailyTripData.items.length - 1 && (
-                            <div className={`absolute left-[27px] top-[36px] -bottom-[40px] z-0 transition-colors duration-[400ms] ${(dailyTripData.date < currentDateString || (dailyTripData.date === currentDateString && item.endTimeString <= currentTimeString)) ? `border-l-[2px] border-dotted w-0 ${isDarkMode ? 'border-white/30' : 'border-gray-400'} bg-transparent` : `w-[2px] ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`}`} />
-                          )}
+                    {activeDateTab !== 'Total' && (
+                      <div className="relative space-y-0">
+                        {dailyTripData.items.map((item, dailyTripDataItemIndex) => (
+                          <div key={item.id} id={`location-${item.id}`} className="relative mb-0">
+                            
+                            {dailyTripDataItemIndex < dailyTripData.items.length - 1 && (
+                              <div className={`absolute left-[27px] top-[36px] -bottom-[40px] z-0 transition-colors duration-[400ms] ${(dailyTripData.date < currentDateString || (dailyTripData.date === currentDateString && item.endTimeString <= currentTimeString)) ? `border-l-[2px] border-dotted w-0 ${isDarkMode ? 'border-white/30' : 'border-gray-400'} bg-transparent` : `w-[2px] ${isDarkMode ? 'bg-white/10' : 'bg-gray-300'}`}`} />
+                            )}
 
-                          <div className={`relative flex ${isMobileView ? 'gap-2' : 'gap-4'} group z-10 pt-2`}>
-                            <div className="flex flex-col items-center w-14 shrink-0 bg-transparent">
-                              <button 
-                                onPointerDown={() => setActivePressId(item.id)}
-                                onPointerUp={() => setActivePressId(null)}
-                                onPointerLeave={() => setActivePressId(null)}
-                                onPointerCancel={() => setActivePressId(null)}
-                                onClick={() => handleLocationCheck(item.id)} 
-                                className="relative z-10 w-10 h-10 flex items-center justify-center cursor-pointer outline-none touch-manipulation bg-transparent border-none p-0 appearance-none"
-                              >
-                                <div className={`relative w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 ${activePressId === item.id ? 'scale-90' : 'scale-100'} ${
-                                  item.isLocationChecked 
-                                    ? 'bg-gray-500 border-gray-500/20 text-white' 
-                                    : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')
-                                }`}>
-                                  <span 
-                                    className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                                      item.isLocationChecked ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
-                                    }`}
-                                  >
-                                    <CheckCircle className="w-5 h-5"/>
-                                  </span>
-
-                                  <span 
-                                    className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                                      item.isLocationChecked ? 'opacity-0 scale-150' : 'opacity-100 scale-100'
-                                    }`}
-                                  >
-                                    {item.order}
-                                  </span>
-                                </div>
-                              </button>
-                              <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/5 border-white/[0.08]' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
-                                {item.startTimeString}
-                              </div>
-                            </div>
-
-                            <div className={`relative z-20 flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all duration-300 transform-gpu ${activePressId === item.id ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.isLocationChecked ? 'opacity-50' : ''}`}>
-                              <div className="flex justify-between items-start mb-2">
-                                <div className="flex-1 min-w-0 pr-2">
-                                  <h3 className={`font-semibold text-sm leading-snug select-text ${item.isLocationChecked ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
-                                  {item.city && (
-                                    <div className="flex items-center gap-1 mt-1 opacity-80">
-                                      <MapPin className="w-3 h-3" />
-                                      <span className="text-[9px] font-normal uppercase translate-y-[1px]">{item.city}</span>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                <div className="flex gap-1.5 shrink-0">
-                                  <button onClick={() => handleLocationPreviewMap(item.name, item.city)} className={`p-2 rounded-xl hover:scale-105 transition-all flex items-center ${isDarkMode ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'}`}>
-                                    <ZoomIn className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button onClick={() => handleLocationOpenMap(item.name, item.city)} className={`p-2 rounded-xl hover:scale-105 transition-all flex items-center ${isDarkMode ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}>
-                                    <Map className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              </div>
-
-                              {item.note && (() => {
-                                const urlRegex = /(https?:\/\/[^\s]+)/g;
-                                const urls = item.note.match(urlRegex);
-                                if (!urls) {
-                                  return (
-                                    <div 
-                                      onClick={() => setNotePreviewText(item.note)}
-                                      className={`mt-3 mb-3 text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-pre-wrap break-all leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-white/5 hover:bg-white/10 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'}`}
-                                    >
-                                      {item.note}
-                                    </div>
-                                  );
-                                }
-                                
-                                const textPart = item.note.replace(urlRegex, '\n').split('\n').map(s => s.trim()).filter(Boolean).join('\n');
-                                
-                                return (
-                                  <div className="mt-3 mb-3 flex flex-col gap-2 items-start w-full min-w-0">
-                                    {textPart && (
-                                      <div 
-                                        onClick={() => setNotePreviewText(item.note)}
-                                        className={`w-full text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-pre-wrap break-all leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-white/5 hover:bg-white/10 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'}`}
-                                      >
-                                        {textPart}
-                                      </div>
-                                    )}
-                                    {urls.map((url, i) => (
-                                      <div key={i} onClick={() => setIframePreviewUrl(url)} className={`text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate w-full block select-text ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
-                                        {url.length > 28 ? url.substring(0, 20) + '...' + url.slice(-8) : url}
-                                      </div>
-                                    ))}
-                                  </div>
-                                );
-                              })()}
-                              
-                              <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
-                                <div className="flex gap-3 text-[10px] font-bold">
-                                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}><Clock className="w-3 h-3" /> {item.locationDuration >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : item.locationDuration + 'm'}</div>
-                                  {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><Wallet className="w-3 h-3" /> {item.cost >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999+' : '999999+') : item.cost} {item.currency}</div>}
-                                </div>
-                                
-                                <div className="flex gap-1.5">
-                                  <button onClick={() => handleLocationEdit(item)} className={`p-1.5 rounded-lg hover:scale-105 transition-all flex items-center justify-center ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
-                                    <SquarePen className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button onClick={() => handleLocationDelete(item.id)} className={`p-1.5 rounded-lg hover:scale-105 transition-all flex items-center justify-center ${isDarkMode ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {dailyTripDataItemIndex < dailyTripData.items.length - 1 && (
-                            <div key={`transport-${item.id}`} id={`transport-${item.id}`} className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-1.5 items-center relative z-10 group`}>
-                              <div className="w-14 shrink-0 bg-transparent flex flex-col items-center justify-center relative z-20 -translate-y-5">
+                            <div className={`relative flex ${isMobileView ? 'gap-2' : 'gap-4'} group z-10 pt-2`}>
+                              <div className="flex flex-col items-center w-14 shrink-0 bg-transparent">
                                 <button 
-                                  onPointerDown={() => setActivePressId(`transport-${item.id}`)}
+                                  onPointerDown={() => setActivePressId(item.id)}
                                   onPointerUp={() => setActivePressId(null)}
                                   onPointerLeave={() => setActivePressId(null)}
                                   onPointerCancel={() => setActivePressId(null)}
-                                  onClick={() => handleTransportCheck(item.id)} 
-                                  className="relative z-20 w-10 h-10 flex items-center justify-center cursor-pointer outline-none touch-manipulation bg-transparent border-none p-0 appearance-none"
+                                  onClick={() => handleLocationCheck(item.id)} 
+                                  className="relative z-10 w-10 h-10 flex items-center justify-center cursor-pointer outline-none touch-manipulation bg-transparent border-none p-0 appearance-none"
                                 >
-                                  <div className={`relative w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 ${activePressId === `transport-${item.id}` ? 'scale-90' : 'scale-100'} ${
-                                    item.isTransportChecked 
+                                  <div className={`relative w-9 h-9 rounded-full border-4 flex items-center justify-center font-black text-xs transition-all duration-300 shadow-lg transform hover:scale-110 ${activePressId === item.id ? 'scale-90' : 'scale-100'} ${
+                                    item.isLocationChecked 
                                       ? 'bg-gray-500 border-gray-500/20 text-white' 
-                                      : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')
+                                      : (isDarkMode ? 'bg-[#0f1115] text-blue-500 border-blue-500' : 'bg-[#fdfbf7] text-blue-600 border-blue-500')
                                   }`}>
                                     <span 
                                       className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
-                                        item.isTransportChecked ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
+                                        item.isLocationChecked ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
                                       }`}
                                     >
-                                      <CheckCircle className="w-4 h-4"/>
+                                      <CheckCircle className="w-5 h-5"/>
+                                    </span>
+
+                                    <span 
+                                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
+                                        item.isLocationChecked ? 'opacity-0 scale-150' : 'opacity-100 scale-100'
+                                      }`}
+                                    >
+                                      {item.order}
                                     </span>
                                   </div>
                                 </button>
                                 <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/5 border-white/[0.08]' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
-                                  {item.endTimeString}
+                                  {item.startTimeString}
                                 </div>
                               </div>
-                              <div className={`relative z-20 flex-1 flex items-center justify-between px-3 py-3.5 rounded-xl border border-dashed shadow-sm transition-all duration-300 transform-gpu ${activePressId === `transport-${item.id}` ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.isTransportChecked ? 'opacity-50' : ''}`}>
-                                <div className="flex items-center min-w-0">
-                                  <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
-                                    <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : (item.transportDuration || 0) + 'm'}
-                                  </div>
-                                </div>
-                                <div className={`flex items-center shrink-0 ${isMobileView ? 'gap-2' : 'gap-3'}`}>
-                                  <button onClick={() => handleTransportEdit(item)} className={`p-1.5 rounded-lg hover:scale-105 transition flex items-center justify-center ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
-                                    <SquarePen className="w-3.5 h-3.5" />
-                                  </button>
-                                  <div className="flex gap-1 shrink-0">
-                                    {Object.entries(TRANSPORT_MODE).map(([mode, config]) => {
-                                      const isActive = item.transportMode === mode;
-                                      const Icon = config.icon;
-                                      return (
-                                        <button 
-                                          key={mode} 
-                                          onClick={() => handleTransportChangeMode(item.id, mode)} 
-                                          className={`p-1.5 rounded-lg transition transform-gpu flex items-center justify-center ${isActive ? `${isDarkMode ? config.darkClass : config.lightClass} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100 hover:scale-105'}`}
-                                          style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
-                                        >
-                                          <Icon className="w-3.5 h-3.5 block" />
-                                        </button>
-                                      );
-                                    })}
+
+                              <div className={`relative z-20 flex-1 mb-2 p-4 rounded-[1.5rem] border shadow-sm transition-all duration-300 transform-gpu ${activePressId === item.id ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'} ${item.isLocationChecked ? 'opacity-50' : ''}`}>
+                                <div className="flex justify-between items-start mb-2">
+                                  <div className="flex-1 min-w-0 pr-2">
+                                    <h3 className={`font-semibold text-sm leading-snug select-text ${item.isLocationChecked ? 'line-through opacity-70' : ''}`}>{item.name}</h3>
+                                    {item.city && (
+                                      <div className="flex items-center gap-1 mt-1 opacity-80">
+                                        <MapPin className="w-3 h-3" />
+                                        <span className="text-[9px] font-normal uppercase translate-y-[1px]">{item.city}</span>
+                                      </div>
+                                    )}
                                   </div>
                                   
-                                  <button 
-                                    onClick={() => {
-                                      const endItem = dailyTripData.items[dailyTripDataItemIndex+1];
-                                      const transportMapOrigin = encodeURIComponent(`${item.name} ${item.city || ''}`);
-                                      const transportMapDestination = encodeURIComponent(`${endItem.name} ${endItem.city || ''}`);
-                                      const directionFlagMap = { walk: 'w', car: 'd', train: 'r' };
-                                      const currentDirectionFlag = directionFlagMap[item.transportMode || 'train'];
-                                      setIframePreviewUrl(`https://maps.google.com/maps?q=${transportMapOrigin}&daddr=${transportMapDestination}&dirflg=${currentDirectionFlag}&output=embed`);
-                                    }}
-                                    className={`${isMobileView ? 'px-2.5' : 'px-4'} py-1.5 rounded-lg text-[11px] font-black transition hover:scale-105 flex items-center gap-1 shrink-0 ${
-                                      isDarkMode ? TRANSPORT_MODE[item.transportMode || 'walk'].darkClass : TRANSPORT_MODE[item.transportMode || 'walk'].lightClass
-                                    }`}
-                                  >
-                                    <Route className="w-3.5 h-3.5" />
-                                    路线
-                                  </button>
+                                  <div className="flex gap-1.5 shrink-0">
+                                    <button onClick={() => handleLocationPreviewMap(item.name, item.city)} className={`p-2 rounded-xl hover:scale-105 transition-all flex items-center ${isDarkMode ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'}`}>
+                                      <ZoomIn className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button onClick={() => handleLocationOpenMap(item.name, item.city)} className={`p-2 rounded-xl hover:scale-105 transition-all flex items-center ${isDarkMode ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}>
+                                      <Map className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {item.note && (() => {
+                                  const urlRegex = /(https?:\/\/[^\s]+)/g;
+                                  const urls = item.note.match(urlRegex);
+                                  if (!urls) {
+                                    return (
+                                      <div 
+                                        onClick={() => setNotePreviewText(item.note)}
+                                        className={`mt-3 mb-3 text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-pre-wrap break-all leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-white/5 hover:bg-white/10 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'}`}
+                                      >
+                                        {item.note}
+                                      </div>
+                                    );
+                                  }
+                                  
+                                  const textPart = item.note.replace(urlRegex, '\n').split('\n').map(s => s.trim()).filter(Boolean).join('\n');
+                                  
+                                  return (
+                                    <div className="mt-3 mb-3 flex flex-col gap-2 items-start w-full min-w-0">
+                                      {textPart && (
+                                        <div 
+                                          onClick={() => setNotePreviewText(item.note)}
+                                          className={`w-full text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all whitespace-pre-wrap break-all leading-relaxed border-l-2 select-text ${isDarkMode ? 'text-gray-300 bg-white/5 hover:bg-white/10 border-white/10' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'}`}
+                                        >
+                                          {textPart}
+                                        </div>
+                                      )}
+                                      {urls.map((url, i) => (
+                                        <div key={i} onClick={() => setIframePreviewUrl(url)} className={`text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all border-l-2 truncate w-full block select-text ${isDarkMode ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-300'}`}>
+                                          {url.length > 28 ? url.substring(0, 20) + '...' + url.slice(-8) : url}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
+                                
+                                <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
+                                  <div className="flex gap-3 text-[10px] font-bold">
+                                    <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}><Clock className="w-3 h-3" /> {item.locationDuration >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : item.locationDuration + 'm'}</div>
+                                    {item.cost > 0 && <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-orange-400 bg-orange-400/10' : 'text-orange-600 bg-orange-100'}`}><Wallet className="w-3 h-3" /> {item.cost >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999+' : '999999+') : item.cost} {item.currency}</div>}
+                                  </div>
+                                  
+                                  <div className="flex gap-1.5">
+                                    <button onClick={() => handleLocationEdit(item)} className={`p-1.5 rounded-lg hover:scale-105 transition-all flex items-center justify-center ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
+                                      <SquarePen className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button onClick={() => handleLocationDelete(item.id)} className={`p-1.5 rounded-lg hover:scale-105 transition-all flex items-center justify-center ${isDarkMode ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+
+                            {dailyTripDataItemIndex < dailyTripData.items.length - 1 && (
+                              <div key={`transport-${item.id}`} id={`transport-${item.id}`} className={`flex ${isMobileView ? 'gap-2' : 'gap-4'} py-1.5 items-center relative z-10 group`}>
+                                <div className="w-14 shrink-0 bg-transparent flex flex-col items-center justify-center relative z-20 -translate-y-5">
+                                  <button 
+                                    onPointerDown={() => setActivePressId(`transport-${item.id}`)}
+                                    onPointerUp={() => setActivePressId(null)}
+                                    onPointerLeave={() => setActivePressId(null)}
+                                    onPointerCancel={() => setActivePressId(null)}
+                                    onClick={() => handleTransportCheck(item.id)} 
+                                    className="relative z-20 w-10 h-10 flex items-center justify-center cursor-pointer outline-none touch-manipulation bg-transparent border-none p-0 appearance-none"
+                                  >
+                                    <div className={`relative w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 shadow-lg transform hover:scale-110 ${activePressId === `transport-${item.id}` ? 'scale-90' : 'scale-100'} ${
+                                      item.isTransportChecked 
+                                        ? 'bg-gray-500 border-gray-500/20 text-white' 
+                                        : (isDarkMode ? 'bg-[#0f1115] text-yellow-500 border-yellow-500' : 'bg-[#fdfbf7] text-yellow-600 border-yellow-500')
+                                    }`}>
+                                      <span 
+                                        className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
+                                          item.isTransportChecked ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-45'
+                                        }`}
+                                      >
+                                        <CheckCircle className="w-4 h-4"/>
+                                      </span>
+                                    </div>
+                                  </button>
+                                  <div className={`mt-2 text-[10px] font-black opacity-80 tabular-nums relative z-10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border ${isDarkMode ? 'bg-white/5 border-white/[0.08]' : 'bg-[#fdfbf7]/80 border-gray-200/80'}`}>
+                                    {item.endTimeString}
+                                  </div>
+                                </div>
+                                <div className={`relative z-20 flex-1 flex items-center justify-between px-3 py-3.5 rounded-xl border border-dashed shadow-sm transition-all duration-300 transform-gpu ${activePressId === `transport-${item.id}` ? 'scale-95' : 'scale-100'} ${isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-white/60 border-gray-200'} ${item.isTransportChecked ? 'opacity-50' : ''}`}>
+                                  <div className="flex items-center min-w-0">
+                                    <div className={`ml-1 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors duration-[400ms] ${isDarkMode ? 'text-green-500 bg-green-500/10' : 'text-green-700 bg-green-100'} text-[10px] font-bold`}>
+                                      <Clock className="w-3 h-3" /> {(item.transportDuration || 0) >= (isMobileView ? 1000 : 1000000) ? (isMobileView ? '999m+' : '999999m+') : (item.transportDuration || 0) + 'm'}
+                                    </div>
+                                  </div>
+                                  <div className={`flex items-center shrink-0 ${isMobileView ? 'gap-2' : 'gap-3'}`}>
+                                    <button onClick={() => handleTransportEdit(item)} className={`p-1.5 rounded-lg hover:scale-105 transition flex items-center justify-center ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`}>
+                                      <SquarePen className="w-3.5 h-3.5" />
+                                    </button>
+                                    <div className="flex gap-1 shrink-0">
+                                      {Object.entries(TRANSPORT_MODE).map(([mode, config]) => {
+                                        const isActive = item.transportMode === mode;
+                                        const Icon = config.icon;
+                                        return (
+                                          <button 
+                                            key={mode} 
+                                            onClick={() => handleTransportChangeMode(item.id, mode)} 
+                                            className={`p-1.5 rounded-lg transition transform-gpu flex items-center justify-center ${isActive ? `${isDarkMode ? config.darkClass : config.lightClass} scale-110 shadow-sm` : 'text-gray-500 opacity-70 hover:opacity-100 hover:scale-105'}`}
+                                            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                                          >
+                                            <Icon className="w-3.5 h-3.5 block" />
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                    
+                                    <button 
+                                      onClick={() => {
+                                        const endItem = dailyTripData.items[dailyTripDataItemIndex+1];
+                                        const transportMapOrigin = encodeURIComponent(`${item.name} ${item.city || ''}`);
+                                        const transportMapDestination = encodeURIComponent(`${endItem.name} ${endItem.city || ''}`);
+                                        const directionFlagMap = { walk: 'w', car: 'd', train: 'r' };
+                                        const currentDirectionFlag = directionFlagMap[item.transportMode || 'train'];
+                                        setIframePreviewUrl(`https://maps.google.com/maps?q=${transportMapOrigin}&daddr=${transportMapDestination}&dirflg=${currentDirectionFlag}&output=embed`);
+                                      }}
+                                      className={`${isMobileView ? 'px-2.5' : 'px-4'} py-1.5 rounded-lg text-[11px] font-black transition hover:scale-105 flex items-center gap-1 shrink-0 ${
+                                        isDarkMode ? TRANSPORT_MODE[item.transportMode || 'walk'].darkClass : TRANSPORT_MODE[item.transportMode || 'walk'].lightClass
+                                      }`}
+                                    >
+                                      <Route className="w-3.5 h-3.5" />
+                                      路线
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
