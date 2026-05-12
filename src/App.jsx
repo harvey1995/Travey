@@ -181,6 +181,35 @@ const App = () => {
     return uniqueDates.sort((a, b) => new Date(a) - new Date(b));
   }, [sanitizedTripData]);
 
+  const completedDatesMap = useMemo(() => {
+    const map = {};
+    const grouped = {};
+    sanitizedTripData.forEach(item => {
+      if (!grouped[item.date]) grouped[item.date] = [];
+      grouped[item.date].push(item);
+    });
+    Object.keys(grouped).forEach(date => {
+      const items = grouped[date].sort((a,b) => (a.order||0) - (b.order||0));
+      if (items.length === 0) {
+        map[date] = false;
+        return;
+      }
+      let isComplete = true;
+      for (let i = 0; i < items.length; i++) {
+        if (!items[i].isLocationChecked) {
+          isComplete = false;
+          break;
+        }
+        if (i < items.length - 1 && !items[i].isTransportChecked) {
+          isComplete = false;
+          break;
+        }
+      }
+      map[date] = isComplete;
+    });
+    return map;
+  }, [sanitizedTripData]);
+
   const tripDataTimeline = useMemo(() => {
     const sortedTripData = [...sanitizedTripData].sort((a, b) => {
       if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
@@ -503,7 +532,7 @@ const App = () => {
               }
               csvImportProcessedItems.push({
                 ...csvImportRowString,
-                id: `imported-${Date.now()}-${csvImportItemIndex}`,
+                id: `imported-${Date.now()}-${date}-${csvImportItemIndex}`,
                 order: csvImportLocationCounter++,
                 locationDuration: csvImportRowString.locationDuration === null ? 0 : csvImportRowString.locationDuration,
                 transportMode: 'walk',
@@ -993,6 +1022,11 @@ const App = () => {
                   }`}
                 >
                   {date.split('-').slice(1).join('/')}
+                  {completedDatesMap[date] && (
+                    <div className={`absolute -bottom-1.5 -right-1.5 w-[18px] h-[18px] rounded-full flex items-center justify-center ${isDarkMode ? 'bg-[#0f1115]' : 'bg-[#fdfbf7]'}`}>
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                    </div>
+                  )}
                 </button>
               ))}
             </nav>
