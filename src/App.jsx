@@ -794,12 +794,12 @@ const App = () => {
       for (const [dailyTripDataItemIndex, item] of dailyTripData.items.entries()) {
         if (!item.isLocationChecked) {
           setActiveDateTab(dailyTripData.date);
-          setTimeout(() => scrollToElement(`location-${item.id}`), 100);
+          setTimeout(() => scrollToElement(`location-${item.id}`), 300);
           return;
         }
         if (dailyTripDataItemIndex < dailyTripData.items.length - 1 && !item.isTransportChecked) {
           setActiveDateTab(dailyTripData.date);
-          setTimeout(() => scrollToElement(`transport-${item.id}`), 100);
+          setTimeout(() => scrollToElement(`transport-${item.id}`), 300);
           return;
         }
       }
@@ -1174,13 +1174,7 @@ const App = () => {
               {tripDataDates.map(date => (
                 <button 
                   key={date} 
-                  onClick={() => {
-                    if (activeDateTab === date) {
-                      handleDateEdit(date);
-                    } else {
-                      setActiveDateTab(date);
-                    }
-                  }} 
+                  onClick={() => setActiveDateTab(date)} 
                   className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] w-[72px] rounded-xl text-xs font-black transition-all border border-solid box-border ${
                     activeDateTab === date 
                       ? (isDarkMode ? 'bg-white text-black shadow-lg border-transparent' : 'bg-gray-800 text-white shadow-lg border-transparent') 
@@ -1235,9 +1229,11 @@ const App = () => {
                             if (activeDateTab === 'Total') {
                               setActiveDateTab(dailyTripData.date);
                               window.scrollTo({ top: 0, behavior: 'smooth' });
+                            } else {
+                              handleDateEdit(dailyTripData.date);
                             }
                           }}
-                          className={`text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest ${activeDateTab === 'Total' ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                          className={`text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest cursor-pointer hover:opacity-80 transition-opacity`}
                         >
                           {dailyTripData.date}
                         </span>
@@ -1701,7 +1697,7 @@ const App = () => {
                   
                   <div className="space-y-4">
                     <div className="flex flex-col gap-1.5 min-w-0">
-                      <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>日期</label>
+                      <label className={`text-[10px] font-black uppercase ml-1 transition-colors duration-[400ms] ${isDarkMode ? 'opacity-80 text-white' : 'text-gray-700'}`}>当日行程日期</label>
                       <input 
                         type="date" 
                         required 
