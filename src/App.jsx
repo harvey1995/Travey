@@ -29,6 +29,7 @@ const CACHE_KEY_TRIP_NAME = 'travey_trip_name_v1';
 const CACHE_KEY_DARK_MODE = 'travey_dark_mode_v1';
 const CACHE_KEY_VIEW_MODE = 'travey_view_mode_v1';
 const CACHE_KEY_START_TIMES = 'travey_start_times_v1';
+const CACHE_KEY_ACTIVE_TAB = 'travey_active_tab_v1';
 
 const TRANSPORT_MODE = {
   car: { label: '打车', icon: Car, lightClass: 'text-orange-600 bg-orange-100 hover:bg-orange-200', darkClass: 'text-orange-400 bg-orange-500/10 hover:bg-orange-500/20', alert: null },
@@ -143,7 +144,13 @@ const App = () => {
   const [lastSelectedCurrency, setLastSelectedCurrency] = useState('USD');
 
   const [toastState, setToastState] = useState({ show: false, message: '', type: 'success', id: 0 });
-  const [activeDateTab, setActiveDateTab] = useState("Total"); 
+  const [activeDateTab, setActiveDateTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(CACHE_KEY_ACTIVE_TAB);
+      if (saved) return saved;
+    }
+    return "Total";
+  }); 
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedOverviewDateMap, setExpandedOverviewDateMap] = useState({});
   const [weatherDataMap, setWeatherDataMap] = useState({});
@@ -164,7 +171,7 @@ const App = () => {
   const [startTimeFormData, setStartTimeFormData] = useState({ date: '', time: '08:00' });
 
   const [showImportModal, setShowImportModal] = useState(false);
-  const [pendingImportData, setPendingImportData] = useState([]);
+  const [pendingImportData, setPendingImportData] = useState(null);
 
   const [iframePreviewUrl, setIframePreviewUrl] = useState(null);
   const [notePreviewText, setNotePreviewText] = useState(null);
@@ -256,6 +263,10 @@ const App = () => {
     localStorage.setItem(CACHE_KEY_TRIP_DATA, JSON.stringify(tripData));
     localStorage.setItem(CACHE_KEY_TRIP_NAME, tripName);
   }, [tripData, tripName]);
+
+  useEffect(() => {
+    localStorage.setItem(CACHE_KEY_ACTIVE_TAB, activeDateTab);
+  }, [activeDateTab]);
 
   useEffect(() => {
     const loadedTimer = setTimeout(() => setIsAppLoaded(true), 50);
@@ -472,7 +483,9 @@ const App = () => {
           note: csvImportHeaders.indexOf("备注"),
           cost: csvImportHeaders.indexOf("费用"),
           currency: csvImportHeaders.indexOf("币种"),
-          status: csvImportHeaders.indexOf("打卡状态")
+          status: csvImportHeaders.indexOf("打卡状态"),
+          startTime: csvImportHeaders.indexOf("开始时间"),
+          endTime: csvImportHeaders.indexOf("结束时间")
         };
 
         const csvImportMissingHeaders = [];
@@ -497,11 +510,21 @@ const App = () => {
             note: getCsvImportColumnValue(csvImportColumnMap.note) || null,
             cost: getCsvImportColumnValue(csvImportColumnMap.cost) === "" ? null : (parseFloat(getCsvImportColumnValue(csvImportColumnMap.cost)) || 0),
             currency: getCsvImportColumnValue(csvImportColumnMap.currency) || null,
-            isLocationChecked: getCsvImportColumnValue(csvImportColumnMap.status) === "是"
+            isLocationChecked: getCsvImportColumnValue(csvImportColumnMap.status) === "是",
+            startTime: getCsvImportColumnValue(csvImportColumnMap.startTime),
+            endTime: getCsvImportColumnValue(csvImportColumnMap.endTime)
           });
         });
 
+        const parseTimeToMins = (timeStr) => {
+          if (!timeStr) return null;
+          let match = timeStr.match(/(\d{1,2}):(\d{1,2})/);
+          if (match) return parseInt(match[1]) * 60 + parseInt(match[2]);
+          return null;
+        };
+
         const csvImportProcessedItems = [];
+        const newDailyStartTimes = {};
         const csvImportItemByDate = {};
         csvImportParsedItems.forEach(item => {
           if (!csvImportItemByDate[item.date]) csvImportItemByDate[item.date] = [];
@@ -509,43 +532,93 @@ const App = () => {
         });
 
         Object.keys(csvImportItemByDate).forEach(date => {
-          const sameDayLocationsForTimeline = csvImportItemByDate[date];
+          const dayRows = csvImportItemByDate[date];
+          let currentMinutes = null;
+          
+          for (let i = 0; i < dayRows.length; i++) {
+              let row = dayRows[i];
+              let sTime = parseTimeToMins(row.startTime);
+              let eTime = parseTimeToMins(row.endTime);
+              let duration = row.locationDuration;
+              
+              if (duration === null) {
+                  if (sTime !== null && eTime !== null) {
+                      let diff = eTime - sTime;
+                      if (diff < 0) diff += 24 * 60;
+                      duration = diff;
+                  } else {
+                      duration = 0;
+                  }
+              }
+              row.computedDuration = duration;
+              
+              if (sTime !== null) {
+                  row.computedStartTime = sTime;
+              } else {
+                  row.computedStartTime = currentMinutes !== null ? currentMinutes : (8 * 60);
+              }
+              
+              row.computedEndTime = row.computedStartTime + row.computedDuration;
+              
+              if (i > 0) {
+                  let prevRow = dayRows[i - 1];
+                  if (row.computedStartTime < prevRow.computedStartTime) {
+                      row.computedStartTime = prevRow.computedStartTime;
+                      row.computedEndTime = row.computedStartTime + row.computedDuration;
+                      prevRow.computedDuration = 0;
+                      prevRow.computedEndTime = prevRow.computedStartTime;
+                  } else if (row.computedStartTime < prevRow.computedEndTime) {
+                      prevRow.computedEndTime = row.computedStartTime;
+                      prevRow.computedDuration = prevRow.computedEndTime - prevRow.computedStartTime;
+                  }
+              }
+              currentMinutes = row.computedEndTime;
+          }
+
+          if (dayRows.length > 0) {
+              let firstStart = dayRows[0].computedStartTime;
+              let hh = String(Math.floor(firstStart / 60) % 24).padStart(2, '0');
+              let mm = String(firstStart % 60).padStart(2, '0');
+              newDailyStartTimes[date] = `${hh}:${mm}`;
+          }
+
           let csvImportLocationCounter = 1;
-          sameDayLocationsForTimeline.forEach((csvImportRowString, csvImportItemIndex) => {
-            const isTransportNode = csvImportRowString.city === "交通" || (csvImportRowString.name && (csvImportRowString.name.includes("步行") || csvImportRowString.name.includes("公交") || csvImportRowString.name.includes("打车")));
+          let lastLoc = null;
+
+          dayRows.forEach((row, csvImportItemIndex) => {
+            const isTransportNode = row.city === "交通" || (row.name && ["步行", "公交", "打车"].some(k => row.name.includes(k)));
             
             if (isTransportNode) {
-              if (csvImportProcessedItems.length > 0) {
-                const previousLocation = csvImportProcessedItems[csvImportProcessedItems.length - 1];
-                if (csvImportRowString.name.includes("打车")) previousLocation.transportMode = 'car';
-                else if (csvImportRowString.name.includes("公交")) previousLocation.transportMode = 'train';
-                else previousLocation.transportMode = 'walk';
-                previousLocation.transportDuration = csvImportRowString.locationDuration || 0;
+              if (lastLoc) {
+                if (row.name.includes("打车")) lastLoc.transportMode = 'car';
+                else if (row.name.includes("公交")) lastLoc.transportMode = 'train';
+                else lastLoc.transportMode = 'walk';
+                lastLoc.transportDuration = row.computedDuration;
               }
             } else {
-              if (csvImportProcessedItems.length > 0) {
-                const previousLocation = csvImportProcessedItems[csvImportProcessedItems.length - 1];
-                if (previousLocation.date === csvImportRowString.date && previousLocation.transportDuration === undefined) {
-                  previousLocation.transportMode = 'walk';
-                  previousLocation.transportDuration = 0;
-                }
+              if (lastLoc) {
+                let gap = row.computedStartTime - lastLoc.computedEndTime;
+                if (gap < 0) gap = 0;
+                lastLoc.transportDuration = gap;
               }
-              csvImportProcessedItems.push({
-                ...csvImportRowString,
+              const newItem = {
+                ...row,
                 id: `imported-${Date.now()}-${date}-${csvImportItemIndex}`,
                 order: csvImportLocationCounter++,
-                locationDuration: csvImportRowString.locationDuration === null ? 0 : csvImportRowString.locationDuration,
+                locationDuration: row.computedDuration,
                 transportMode: 'walk',
                 transportDuration: 0,
                 transportRoute: '',
-                isLocationChecked: csvImportRowString.isLocationChecked || false
-              });
+                isLocationChecked: row.status === "是"
+              };
+              csvImportProcessedItems.push(newItem);
+              lastLoc = newItem;
             }
           });
         });
         
         if (csvImportProcessedItems.length > 0) {
-          setPendingImportData(csvImportProcessedItems);
+          setPendingImportData({ items: csvImportProcessedItems, startTimes: newDailyStartTimes });
           setShowImportModal(true); 
         } else {
           showMessage("无有效地点", "emptyImport");
@@ -559,35 +632,63 @@ const App = () => {
   };
 
   const handleImportConfirm = (mode) => {
+    if (!pendingImportData) return;
     if (mode === 'overwrite') {
-      updateTrip({ ...tripData, [tripName]: pendingImportData });
+      updateTrip({ ...tripData, [tripName]: pendingImportData.items });
     } else {
-      updateTrip({ ...tripData, [tripName]: [...(currentTripData || []), ...pendingImportData] });
+      updateTrip({ ...tripData, [tripName]: [...(currentTripData || []), ...pendingImportData.items] });
     }
+    setDailyStartTimeMap(prev => ({
+      ...prev,
+      [tripName]: { ...(prev[tripName] || {}), ...pendingImportData.startTimes }
+    }));
     setShowImportModal(false);
-    setPendingImportData([]);
+    setPendingImportData(null);
     showMessage("导入成功", "import");
   };
 
   const handleExport = () => {
-    const csvExportHeaders = ["日期", "序号", "城市/交通", "地点名称/出行方式", "时间（分）", "备注", "费用", "币种", "打卡状态"];
-    
-    const csvExportGroups = {};
-    sanitizedTripData.sort((a,b) => new Date(a.date) - new Date(b.date) || a.order - b.order).forEach(item => {
-       if (!csvExportGroups[item.date]) csvExportGroups[item.date] = [];
-       csvExportGroups[item.date].push(item);
+    const sortedExportData = [...sanitizedTripData].sort((a, b) => {
+      if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
+      return (a.order || 0) - (b.order || 0);
     });
-    
+
+    const exportTimelineGroups = {};
+    sortedExportData.forEach(item => {
+      if (!exportTimelineGroups[item.date]) exportTimelineGroups[item.date] = { items: [], startTime: dailyStartTimeMap[tripName]?.[item.date] || "08:00" };
+      
+      const dayItems = exportTimelineGroups[item.date].items;
+      let currentArrivalTime = exportTimelineGroups[item.date].startTime;
+
+      if (dayItems.length > 0) {
+        const prevNode = dayItems[dayItems.length - 1];
+        const travelTime = prevNode.transportDuration || 0; 
+        const [hour, minute] = prevNode.endTimeString.split(':').map(Number);
+        const dateObj = new Date(2000, 0, 1, hour, minute + travelTime);
+        currentArrivalTime = isNaN(dateObj.getTime()) ? '--:--' : `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+      }
+
+      const [hours, minutes] = currentArrivalTime.split(':').map(Number);
+      const startDate = new Date(2000, 0, 1, hours, minutes);
+      const endDate = new Date(startDate.getTime() + (item.locationDuration || 0) * 60000);
+      const endTimeString = isNaN(endDate.getTime()) ? '--:--' : `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+      
+      dayItems.push({ ...item, startTimeString: currentArrivalTime, endTimeString });
+    });
+
+    const csvExportHeaders = ["日期", "序号", "城市/交通", "地点名称/出行方式", "时间（分）", "备注", "费用", "币种", "打卡状态", "开始时间", "结束时间"];
     const csvExportRows = [];
-    Object.values(csvExportGroups).forEach(csvExportGroupedItems => {
-       csvExportGroupedItems.forEach((item, dailyTripDataItemIndex) => {
+    
+    Object.values(exportTimelineGroups).forEach(group => {
+       group.items.forEach((item, dailyTripDataItemIndex) => {
           csvExportRows.push([
-            item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.locationDuration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : "", item.isLocationChecked ? "是" : "否"
+            item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.locationDuration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : "", item.isLocationChecked ? "是" : "否", item.startTimeString, item.endTimeString
           ].join(','));
-          if (dailyTripDataItemIndex < csvExportGroupedItems.length - 1) {
+          if (dailyTripDataItemIndex < group.items.length - 1) {
+            const nextItem = group.items[dailyTripDataItemIndex + 1];
             const csvExportTransportMode = TRANSPORT_MODE[item.transportMode || 'walk'].label;
             csvExportRows.push([
-              item.date, 0, "交通", csvExportTransportMode, item.transportDuration || 0, '""', "", "", item.isTransportChecked ? "是" : "否"
+              item.date, 0, "交通", csvExportTransportMode, item.transportDuration || 0, '""', "", "", item.isTransportChecked ? "是" : "否", item.endTimeString, nextItem.startTimeString
             ].join(','));
           }
        });
@@ -1061,13 +1162,17 @@ const App = () => {
                 const formattedDateString = dailyTripData.date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日');
                 
                 return (
-                  <div key={dailyTripData.date} className="mb-[18px]">
+                  <div key={dailyTripData.date} id={`date-section-${dailyTripData.date}`} className="mb-[18px]">
                     <div className="mb-[12px]">
-                      <div className="flex items-center mb-[20px]">
+                      <div className="flex items-center mb-[20px] min-h-[28px]">
                         <span 
                           onClick={() => {
                             if (activeDateTab === 'Total') {
-                              setActiveDateTab(dailyTripData.date);
+                              const el = document.getElementById(`date-section-${dailyTripData.date}`);
+                              if (el) {
+                                const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                                window.scrollTo({ top: y, behavior: 'smooth' });
+                              }
                             }
                           }}
                           className={`text-[10px] font-black px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-500 dark:text-blue-400 rounded uppercase tracking-widest ${activeDateTab === 'Total' ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
@@ -1075,7 +1180,7 @@ const App = () => {
                           {dailyTripData.date}
                         </span>
                         <div className={`h-px flex-1 mx-3 transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
-                        {weatherDataMap[dailyTripData.date] && (
+                        {weatherDataMap[dailyTripData.date] ? (
                           <div 
                             className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
                             onClick={() => {
@@ -1087,6 +1192,8 @@ const App = () => {
                             <ExternalLink className="w-3.5 h-3.5" />
                             <span className="text-xs font-black whitespace-nowrap">{weatherDataMap[dailyTripData.date]}</span>
                           </div>
+                        ) : (
+                          <div className="h-[24px]"></div>
                         )}
                       </div>
                       
@@ -1559,13 +1666,13 @@ const App = () => {
                 <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Download className="w-8 h-8 text-blue-500" />
                 </div>
-                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>识别到 {pendingImportData.length} 个地点</h2>
+                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>识别到 {pendingImportData?.items?.length || 0} 个地点</h2>
                 <p className="text-[11px] opacity-80 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{tripName}</span></p>
                 
                 <div className="grid gap-3">
                   <button onClick={() => handleImportConfirm('append')} className="w-full h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_0_10px_rgb(37,99,235,0.4)] sm:shadow-[0_0_20px_rgb(37,99,235,0.4)]">追加到当前行程末尾</button>
                   <button onClick={() => handleImportConfirm('overwrite')} className="w-full h-12 rounded-2xl border border-red-500/30 text-red-500 font-black hover:bg-red-500/10 transition-all active:scale-[0.98]">覆盖当前行程</button>
-                  <button onClick={() => setShowImportModal(false)} className="mt-2 text-xs font-black opacity-70 uppercase tracking-widest hover:opacity-100 p-2">取消</button>
+                  <button onClick={() => { setShowImportModal(false); setPendingImportData(null); }} className="mt-2 text-xs font-black opacity-70 uppercase tracking-widest hover:opacity-100 p-2">取消</button>
                 </div>
               </div>
             </div>
