@@ -28,8 +28,8 @@ const CACHE_KEY_TRIP_DATA = 'travey_trip_data_v1';
 const CACHE_KEY_TRIP_NAME = 'travey_trip_name_v1';
 const CACHE_KEY_DARK_MODE = 'travey_dark_mode_v1';
 const CACHE_KEY_VIEW_MODE = 'travey_view_mode_v1';
+const CACHE_KEY_DATE_TAB = 'travey_date_tab_v1';
 const CACHE_KEY_START_TIMES = 'travey_start_times_v1';
-const CACHE_KEY_ACTIVE_TAB = 'travey_active_tab_v1';
 
 const TRANSPORT_MODE = {
   car: { label: '打车', icon: Car, lightClass: 'text-orange-600 bg-orange-100 hover:bg-orange-200', darkClass: 'text-orange-400 bg-orange-500/10 hover:bg-orange-500/20', alert: null },
@@ -146,7 +146,7 @@ const App = () => {
   const [toastState, setToastState] = useState({ show: false, message: '', type: 'success', id: 0 });
   const [activeDateTab, setActiveDateTab] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(CACHE_KEY_ACTIVE_TAB);
+      const saved = localStorage.getItem(CACHE_KEY_DATE_TAB);
       if (saved) return saved;
     }
     return "Total";
@@ -205,16 +205,22 @@ const App = () => {
       if (sameDayLocationsForTimeline.length > 0) {
         const previousLocationNode = sameDayLocationsForTimeline[sameDayLocationsForTimeline.length - 1];
         const currentTravelTime = previousLocationNode.transportDuration || 0; 
-        const [hour, minute] = previousLocationNode.endTimeString.split(':').map(Number);
-        const dateObj = new Date(2000, 0, 1, hour, minute + currentTravelTime);
-        currentArrivalTime = isNaN(dateObj.getTime()) ? '--:--' : `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+        const [timePart, dayPart] = (previousLocationNode.endTimeString || "").split('+');
+        const [hour, minute] = (timePart || "00:00").split(':').map(Number);
+        const prevDays = dayPart ? parseInt(dayPart) : 0;
+        const dateObj = new Date(2000, 0, 1 + prevDays, hour, minute + currentTravelTime);
+        const offsetDays = dateObj.getDate() - 1;
+        currentArrivalTime = isNaN(dateObj.getTime()) ? '--:--' : `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}${offsetDays > 0 ? '+' + offsetDays : ''}`;
         previousLocationNode.nextTravelTime = "?";
       }
 
-      const [hours, minutes] = currentArrivalTime.split(':').map(Number);
-      const startDate = new Date(2000, 0, 1, hours, minutes);
+      const [arrTimePart, arrDayPart] = currentArrivalTime.split('+');
+      const [hours, minutes] = (arrTimePart || "00:00").split(':').map(Number);
+      const arrDays = arrDayPart ? parseInt(arrDayPart) : 0;
+      const startDate = new Date(2000, 0, 1 + arrDays, hours, minutes);
       const endDate = new Date(startDate.getTime() + (item.locationDuration || 0) * 60000);
-      const endTimeString = isNaN(endDate.getTime()) ? '--:--' : `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+      const endOffsetDays = endDate.getDate() - 1;
+      const endTimeString = isNaN(endDate.getTime()) ? '--:--' : `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}${endOffsetDays > 0 ? '+' + endOffsetDays : ''}`;
       
       sameDayLocationsForTimeline.push({ ...item, startTimeString: currentArrivalTime, endTimeString });
     });
@@ -265,7 +271,7 @@ const App = () => {
   }, [tripData, tripName]);
 
   useEffect(() => {
-    localStorage.setItem(CACHE_KEY_ACTIVE_TAB, activeDateTab);
+    localStorage.setItem(CACHE_KEY_DATE_TAB, activeDateTab);
   }, [activeDateTab]);
 
   useEffect(() => {
@@ -516,15 +522,15 @@ const App = () => {
           });
         });
 
-        const parseTimeToMins = (timeStr) => {
+        const parseCsvImportTime = (timeStr) => {
           if (!timeStr) return null;
-          let match = timeStr.match(/(\d{1,2}):(\d{1,2})/);
-          if (match) return parseInt(match[1]) * 60 + parseInt(match[2]);
+          let match = timeStr.match(/(\d{1,2}):(\d{1,2})(?:\+(\d+))?/);
+          if (match) return (match[3] ? parseInt(match[3]) : 0) * 24 * 60 + parseInt(match[1]) * 60 + parseInt(match[2]);
           return null;
         };
 
         const csvImportProcessedItems = [];
-        const newDailyStartTimes = {};
+        const csvImportDailyStartTimes = {};
         const csvImportItemByDate = {};
         csvImportParsedItems.forEach(item => {
           if (!csvImportItemByDate[item.date]) csvImportItemByDate[item.date] = [];
@@ -537,8 +543,8 @@ const App = () => {
           
           for (let i = 0; i < dayRows.length; i++) {
               let row = dayRows[i];
-              let sTime = parseTimeToMins(row.startTime);
-              let eTime = parseTimeToMins(row.endTime);
+              let sTime = parseCsvImportTime(row.startTime);
+              let eTime = parseCsvImportTime(row.endTime);
               let duration = row.locationDuration;
               
               if (duration === null) {
@@ -561,15 +567,15 @@ const App = () => {
               row.computedEndTime = row.computedStartTime + row.computedDuration;
               
               if (i > 0) {
-                  let prevRow = dayRows[i - 1];
-                  if (row.computedStartTime < prevRow.computedStartTime) {
-                      row.computedStartTime = prevRow.computedStartTime;
+                  let previousRow = dayRows[i - 1];
+                  if (row.computedStartTime < previousRow.computedStartTime) {
+                      row.computedStartTime = previousRow.computedStartTime;
                       row.computedEndTime = row.computedStartTime + row.computedDuration;
-                      prevRow.computedDuration = 0;
-                      prevRow.computedEndTime = prevRow.computedStartTime;
-                  } else if (row.computedStartTime < prevRow.computedEndTime) {
-                      prevRow.computedEndTime = row.computedStartTime;
-                      prevRow.computedDuration = prevRow.computedEndTime - prevRow.computedStartTime;
+                      previousRow.computedDuration = 0;
+                      previousRow.computedEndTime = previousRow.computedStartTime;
+                  } else if (row.computedStartTime < previousRow.computedEndTime) {
+                      previousRow.computedEndTime = row.computedStartTime;
+                      previousRow.computedDuration = previousRow.computedEndTime - previousRow.computedStartTime;
                   }
               }
               currentMinutes = row.computedEndTime;
@@ -579,7 +585,7 @@ const App = () => {
               let firstStart = dayRows[0].computedStartTime;
               let hh = String(Math.floor(firstStart / 60) % 24).padStart(2, '0');
               let mm = String(firstStart % 60).padStart(2, '0');
-              newDailyStartTimes[date] = `${hh}:${mm}`;
+              csvImportDailyStartTimes[date] = `${hh}:${mm}`;
           }
 
           let csvImportLocationCounter = 1;
@@ -618,7 +624,7 @@ const App = () => {
         });
         
         if (csvImportProcessedItems.length > 0) {
-          setPendingImportData({ items: csvImportProcessedItems, startTimes: newDailyStartTimes });
+          setPendingImportData({ items: csvImportProcessedItems, startTimes: csvImportDailyStartTimes });
           setShowImportModal(true); 
         } else {
           showMessage("无有效地点", "emptyImport");
@@ -648,47 +654,59 @@ const App = () => {
   };
 
   const handleExport = () => {
-    const sortedExportData = [...sanitizedTripData].sort((a, b) => {
+    const csvExportSortedData = [...sanitizedTripData].sort((a, b) => {
       if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
       return (a.order || 0) - (b.order || 0);
     });
 
-    const exportTimelineGroups = {};
-    sortedExportData.forEach(item => {
-      if (!exportTimelineGroups[item.date]) exportTimelineGroups[item.date] = { items: [], startTime: dailyStartTimeMap[tripName]?.[item.date] || "08:00" };
+    const csvExportTimeline = {};
+    csvExportSortedData.forEach(item => {
+      if (!csvExportTimeline[item.date]) csvExportTimeline[item.date] = { items: [], startTime: dailyStartTimeMap[tripName]?.[item.date] || "08:00" };
       
-      const dayItems = exportTimelineGroups[item.date].items;
-      let currentArrivalTime = exportTimelineGroups[item.date].startTime;
+      const dayItems = csvExportTimeline[item.date].items;
+      let currentArrivalTime = csvExportTimeline[item.date].startTime;
 
       if (dayItems.length > 0) {
         const prevNode = dayItems[dayItems.length - 1];
         const travelTime = prevNode.transportDuration || 0; 
-        const [hour, minute] = prevNode.endTimeString.split(':').map(Number);
-        const dateObj = new Date(2000, 0, 1, hour, minute + travelTime);
-        currentArrivalTime = isNaN(dateObj.getTime()) ? '--:--' : `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+        const [timePart, dayPart] = (prevNode.endTimeString || "").split('+');
+        const [hour, minute] = (timePart || "00:00").split(':').map(Number);
+        const prevDays = dayPart ? parseInt(dayPart) : 0;
+        const dateObj = new Date(2000, 0, 1 + prevDays, hour, minute + travelTime);
+        const offsetDays = dateObj.getDate() - 1;
+        currentArrivalTime = isNaN(dateObj.getTime()) ? '--:--' : `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}${offsetDays > 0 ? '+' + offsetDays : ''}`;
       }
 
-      const [hours, minutes] = currentArrivalTime.split(':').map(Number);
-      const startDate = new Date(2000, 0, 1, hours, minutes);
+      const [arrTimePart, arrDayPart] = currentArrivalTime.split('+');
+      const [hours, minutes] = (arrTimePart || "00:00").split(':').map(Number);
+      const arrDays = arrDayPart ? parseInt(arrDayPart) : 0;
+      const startDate = new Date(2000, 0, 1 + arrDays, hours, minutes);
       const endDate = new Date(startDate.getTime() + (item.locationDuration || 0) * 60000);
-      const endTimeString = isNaN(endDate.getTime()) ? '--:--' : `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+      const endOffsetDays = endDate.getDate() - 1;
+      const endTimeString = isNaN(endDate.getTime()) ? '--:--' : `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}${endOffsetDays > 0 ? '+' + endOffsetDays : ''}`;
       
       dayItems.push({ ...item, startTimeString: currentArrivalTime, endTimeString });
     });
 
+    const formatExportTime = (timeStr) => {
+      if (!timeStr) return '--:--+0';
+      if (!timeStr.includes('+')) return timeStr + '+0';
+      return timeStr;
+    };
+
     const csvExportHeaders = ["日期", "序号", "城市/交通", "地点名称/出行方式", "时间（分）", "备注", "费用", "币种", "打卡状态", "开始时间", "结束时间"];
     const csvExportRows = [];
     
-    Object.values(exportTimelineGroups).forEach(group => {
+    Object.values(csvExportTimeline).forEach(group => {
        group.items.forEach((item, dailyTripDataItemIndex) => {
           csvExportRows.push([
-            item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.locationDuration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : "", item.isLocationChecked ? "是" : "否", item.startTimeString, item.endTimeString
+            item.date, item.order, item.city || "", `"${(item.name || "").replace(/"/g, '""')}"`, item.locationDuration || 0, `"${(item.note || "").replace(/"/g, '""')}"`, item.cost || "", item.cost ? (item.currency || "") : "", item.isLocationChecked ? "是" : "否", formatExportTime(item.startTimeString), formatExportTime(item.endTimeString)
           ].join(','));
           if (dailyTripDataItemIndex < group.items.length - 1) {
             const nextItem = group.items[dailyTripDataItemIndex + 1];
             const csvExportTransportMode = TRANSPORT_MODE[item.transportMode || 'walk'].label;
             csvExportRows.push([
-              item.date, 0, "交通", csvExportTransportMode, item.transportDuration || 0, '""', "", "", item.isTransportChecked ? "是" : "否", item.endTimeString, nextItem.startTimeString
+              item.date, 0, "交通", csvExportTransportMode, item.transportDuration || 0, '""', "", "", item.isTransportChecked ? "是" : "否", formatExportTime(item.endTimeString), formatExportTime(nextItem.startTimeString)
             ].join(','));
           }
        });
