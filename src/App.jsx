@@ -173,6 +173,9 @@ const App = () => {
   const [showDateModal, setShowDateModal] = useState(false);
   const [dateFormData, setDateFormData] = useState({ oldDate: '', newDate: '' });
 
+  const [showDateMergeModal, setShowDateMergeModal] = useState(false);
+  const [pendingDateEditData, setPendingDateEditData] = useState(null);
+
   const [showImportModal, setShowImportModal] = useState(false);
   const [pendingImportData, setPendingImportData] = useState(null);
 
@@ -390,7 +393,7 @@ const App = () => {
   useEffect(() => {
     if (typeof document === 'undefined') return;
     
-    const isAnyModalOpen = showLocationModal || showTransportModal || showStartTimeModal || showDateModal || showImportModal || iframePreviewUrl || notePreviewText;
+    const isAnyModalOpen = showLocationModal || showTransportModal || showStartTimeModal || showDateModal || showImportModal || showDateMergeModal || iframePreviewUrl || notePreviewText;
     
     if (isAnyModalOpen) {
       const systemScrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -416,7 +419,7 @@ const App = () => {
         }
       };
     }
-  }, [showLocationModal, showTransportModal, showStartTimeModal, showDateModal, showImportModal, iframePreviewUrl, notePreviewText]);
+  }, [showLocationModal, showTransportModal, showStartTimeModal, showDateModal, showImportModal, showDateMergeModal, iframePreviewUrl, notePreviewText]);
 
   const updateTrip = (newTrips, newActiveTrip = tripName) => {
     setUndoStack(p => [...p, { tripData, tripName }].slice(-20));
@@ -644,13 +647,51 @@ const App = () => {
     if (!pendingImportData) return;
     if (mode === 'overwrite') {
       updateTrip({ ...tripData, [tripName]: pendingImportData.items });
+      setDailyStartTimeMap(prev => ({
+        ...prev,
+        [tripName]: { ...(prev[tripName] || {}), ...pendingImportData.startTimes }
+      }));
     } else {
-      updateTrip({ ...tripData, [tripName]: [...(currentTripData || []), ...pendingImportData.items] });
+      let finalItems = [...(currentTripData || [])];
+      const itemsByDateToAdd = {};
+      pendingImportData.items.forEach(item => {
+        if(!itemsByDateToAdd[item.date]) itemsByDateToAdd[item.date] = [];
+        itemsByDateToAdd[item.date].push(item);
+      });
+
+      Object.keys(itemsByDateToAdd).forEach(date => {
+        const existingForDate = finalItems.filter(i => i.date === date);
+        if (existingForDate.length > 0) {
+          const maxOrder = Math.max(...existingForDate.map(i => parseInt(i.order) || 0));
+          const lastExistingIndex = finalItems.findLastIndex(i => i.date === date);
+          if (lastExistingIndex !== -1) {
+            finalItems[lastExistingIndex] = {
+              ...finalItems[lastExistingIndex],
+              transportMode: 'walk',
+              transportDuration: 10
+            };
+          }
+          itemsByDateToAdd[date].forEach((newItem, idx) => {
+            finalItems.push({
+              ...newItem,
+              order: maxOrder + 1 + idx
+            });
+          });
+        } else {
+          finalItems.push(...itemsByDateToAdd[date]);
+        }
+      });
+      updateTrip({ ...tripData, [tripName]: finalItems });
+
+      setDailyStartTimeMap(prev => {
+        const currentMap = prev[tripName] || {};
+        const newMap = { ...currentMap };
+        Object.entries(pendingImportData.startTimes).forEach(([d, t]) => {
+          if (!newMap[d]) newMap[d] = t;
+        });
+        return { ...prev, [tripName]: newMap };
+      });
     }
-    setDailyStartTimeMap(prev => ({
-      ...prev,
-      [tripName]: { ...(prev[tripName] || {}), ...pendingImportData.startTimes }
-    }));
     setShowImportModal(false);
     setPendingImportData(null);
     showMessage("导入成功", "import");
@@ -982,6 +1023,7 @@ const App = () => {
     }));
     setShowStartTimeModal(false);
     restoreZoom();
+    showMessage("已保存", "edit");
   };
 
   const handleDateEdit = (date) => {
@@ -994,6 +1036,16 @@ const App = () => {
     const { oldDate, newDate } = dateFormData;
     if (oldDate !== newDate && newDate) {
       const formattedNewDate = sanitizeDate(newDate);
+      
+      const itemsToMove = currentTripData.filter(i => i.date === oldDate);
+      const existingItems = currentTripData.filter(i => i.date === formattedNewDate);
+
+      if (existingItems.length > 0 && itemsToMove.length > 0) {
+          setPendingDateEditData({ oldDate, newDate: formattedNewDate, itemsToMove });
+          setShowDateModal(false);
+          setShowDateMergeModal(true);
+          return;
+      }
 
       const updatedTripData = currentTripData.map(item => {
         if (item.date === oldDate) {
@@ -1017,7 +1069,64 @@ const App = () => {
     }
     setShowDateModal(false);
     restoreZoom();
-    showMessage("已修改日期", "edit");
+    showMessage("已保存", "edit");
+  };
+
+  const handleDateMergeConfirm = (mode) => {
+    if (!pendingDateEditData) return;
+    const { oldDate, newDate, itemsToMove } = pendingDateEditData;
+    let finalItems = [...currentTripData].filter(i => i.date !== oldDate);
+
+    if (mode === 'overwrite') {
+        finalItems = finalItems.filter(i => i.date !== newDate);
+        itemsToMove.forEach(item => {
+            finalItems.push({ ...item, date: newDate });
+        });
+        updateTrip({ ...tripData, [tripName]: finalItems });
+
+        setDailyStartTimeMap(prev => {
+            const currentMap = prev[tripName] || {};
+            const newMap = { ...currentMap, [newDate]: currentMap[oldDate] || "08:00" };
+            delete newMap[oldDate];
+            return { ...prev, [tripName]: newMap };
+        });
+    } else if (mode === 'append') {
+        const existingForNewDate = finalItems.filter(i => i.date === newDate);
+        const maxOrder = Math.max(...existingForNewDate.map(i => parseInt(i.order) || 0));
+        
+        const lastExistingIndex = finalItems.findLastIndex(i => i.date === newDate);
+        if (lastExistingIndex !== -1) {
+            finalItems[lastExistingIndex] = {
+                ...finalItems[lastExistingIndex],
+                transportMode: 'walk',
+                transportDuration: 10
+            };
+        }
+
+        const sortedItemsToMove = [...itemsToMove].sort((a,b) => (parseInt(a.order)||0) - (parseInt(b.order)||0));
+        sortedItemsToMove.forEach((item, idx) => {
+            finalItems.push({
+                ...item,
+                date: newDate,
+                order: maxOrder + 1 + idx
+            });
+        });
+
+        updateTrip({ ...tripData, [tripName]: finalItems });
+
+        setDailyStartTimeMap(prev => {
+            const currentMap = prev[tripName] || {};
+            const newMap = { ...currentMap };
+            delete newMap[oldDate];
+            return { ...prev, [tripName]: newMap };
+        });
+    }
+
+    setActiveDateTab(newDate);
+    setShowDateMergeModal(false);
+    setPendingDateEditData(null);
+    restoreZoom();
+    showMessage("已保存", "edit");
   };
 
   const isMobileView = deviceViewMode === 'mobile' || isWindowNarrow;
@@ -1064,7 +1173,7 @@ const App = () => {
                   refresh: { icon: RefreshCw, color: 'text-yellow-500' },
                   error: { icon: MapPinXInside, color: 'text-red-500' }
                 };
-                const config = IconMap[toastState.type] || { icon: Sparkles, color: 'text-yellow-500' };
+                const config = IconMap[toastState.type] || { icon: MapPinXInside, color: 'text-red-500' };
                 const Icon = config.icon;
                 return <Icon className={`w-4 h-4 ${config.color}`} />;
               })()}
@@ -1754,6 +1863,25 @@ const App = () => {
             </div>
           )}
 
+          {showDateMergeModal && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
+              <div className={`fixed -inset-[200px] backdrop-blur-md -z-10 ${isDarkMode ? 'bg-black/80' : 'bg-black/40'}`}></div>
+              <div className={`w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl transition-colors duration-[400ms] ${isDarkMode ? 'bg-[#1a1d23] border border-white/5' : 'bg-white text-black'}`}>
+                <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <SquarePen className="w-8 h-8 text-blue-500" />
+                </div>
+                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>共有 {pendingDateEditData?.itemsToMove?.length || 0} 个地点</h2>
+                <p className="text-[11px] opacity-80 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{pendingDateEditData?.newDate?.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日')}</span></p>
+                
+                <div className="grid gap-3">
+                  <button onClick={() => handleDateMergeConfirm('append')} className="w-full h-12 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition-all active:scale-[0.98] shadow-[0_0_10px_rgb(37,99,235,0.4)] sm:shadow-[0_0_20px_rgb(37,99,235,0.4)]">追加到当前行程末尾</button>
+                  <button onClick={() => handleDateMergeConfirm('overwrite')} className="w-full h-12 rounded-2xl border border-red-500/30 text-red-500 font-black hover:bg-red-500/10 transition-all active:scale-[0.98]">覆盖当前行程</button>
+                  <button onClick={() => { setShowDateMergeModal(false); setPendingDateEditData(null); }} className="mt-2 text-xs font-black opacity-70 uppercase tracking-widest hover:opacity-100 p-2">取消</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {showImportModal && (
             <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
               <div className={`fixed -inset-[200px] backdrop-blur-md -z-10 ${isDarkMode ? 'bg-black/80' : 'bg-black/40'}`}></div>
@@ -1761,7 +1889,7 @@ const App = () => {
                 <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Download className="w-8 h-8 text-blue-500" />
                 </div>
-                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>识别到 {pendingImportData?.items?.length || 0} 个地点</h2>
+                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>共有 {pendingImportData?.items?.length || 0} 个地点</h2>
                 <p className="text-[11px] opacity-80 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{tripName}</span></p>
                 
                 <div className="grid gap-3">
