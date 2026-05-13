@@ -1353,7 +1353,7 @@ const App = () => {
                         <div className={`h-px flex-1 mx-3 transition-colors duration-[400ms] ${isDarkMode ? 'bg-white/5' : 'bg-gray-300'}`} />
                         {weatherDataMap[dailyTripData.date] ? (
                           <div 
-                            className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
+                            className={`flex items-center gap-1 px-2 py-1 rounded-lg cursor-pointer hover:opacity-80 transition-opacity ${isDarkMode ? 'bg-white/10 text-gray-200' : 'bg-black/5 text-gray-800'}`}
                             onClick={() => {
                               if (dailyTripData.items[0]?.city) {
                                 setIframePreviewUrl(`https://www.google.com/search?q=${encodeURIComponent(dailyTripData.items[0].city + ' ' + formattedDateString + ' 天气')}&igu=1&hl=zh-CN&gl=CN`);
