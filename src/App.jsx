@@ -3,24 +3,19 @@ import {
   // 1. 视图与主题
   Sun, Moon, Monitor, Smartphone,
 
-  // 2. 输入与输出
-  Download, Upload,
+  // 2. 编辑与历史
+  NotebookPen, SquarePen, Trash2, 
+  Download, Upload, Undo2, Redo2,
 
-  // 3. 编辑与历史
-  SquarePen, NotebookPen, Trash2, Undo2, Redo2,
+  // 3. 交互与操作
+  CheckCircle, ChevronDown, ChevronUp, Sparkles, 
+  Search, Delete, RefreshCw, Plus, X, ExternalLink,
 
-  // 4. 交互与操作
-  Plus, X, CheckCircle, ChevronDown, ChevronUp, 
-  Search, Delete, RefreshCw, Sparkles, ExternalLink,
+  // 4. 地图与位置
+  Map, MapPin, MapPinCheckInside, MapPinPlusInside, MapPinXInside, 
+  Locate, ZoomIn, Route, Car, Train, Footprints,
 
-  // 5. 地图与位置
-  Map, MapPin, Locate, ZoomIn, 
-  MapPinCheckInside, MapPinPlusInside, MapPinXInside, Route,
-
-  // 6. 出行方式
-  Car, Train, Footprints,
-
-  // 7. 数据属性
+  // 5. 数据属性
   Flag, Calendar, Clock, Wallet
 } from 'lucide-react';
 
