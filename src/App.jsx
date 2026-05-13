@@ -11,7 +11,7 @@ import {
 
   // 4. 交互与操作
   Plus, X, CheckCircle, ChevronDown, ChevronUp, 
-  Search, RefreshCw, Sparkles, ExternalLink,
+  Search, Delete, RefreshCw, Sparkles, ExternalLink,
 
   // 5. 地图与位置
   Map, MapPin, Locate, ZoomIn, 
@@ -1274,7 +1274,7 @@ const App = () => {
 
             <nav className={`${isMobileView ? 'px-3' : 'px-6'} py-4 flex gap-2 overflow-x-auto no-scrollbar items-center shrink-0`}>
               <button 
-                onClick={() => setActiveDateTab('Total')} 
+                onClick={() => { setActiveDateTab('Total'); setExpandedOverviewDateMap({}); }} 
                 className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] w-[72px] rounded-xl text-xs font-black transition-all border border-solid box-border ${
                   activeDateTab === 'Total' 
                     ? (isDarkMode ? 'bg-white text-black shadow-lg border-transparent' : 'bg-gray-800 text-white shadow-lg border-transparent') 
@@ -1287,7 +1287,7 @@ const App = () => {
               {tripDataDates.map(date => (
                 <button 
                   key={date} 
-                  onClick={() => setActiveDateTab(date)} 
+                  onClick={() => { setActiveDateTab(date); setExpandedOverviewDateMap({}); }} 
                   className={`relative flex items-center justify-center whitespace-nowrap shrink-0 h-[40px] w-[72px] rounded-xl text-xs font-black transition-all border border-solid box-border ${
                     activeDateTab === date 
                       ? (isDarkMode ? 'bg-white text-black shadow-lg border-transparent' : 'bg-gray-800 text-white shadow-lg border-transparent') 
@@ -1312,8 +1312,14 @@ const App = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="搜索" 
-                  className={`appearance-none w-full pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold transition-all outline-none border text-opacity-50 group-hover:text-opacity-100 placeholder:opacity-50 group-hover:placeholder:opacity-100 ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-300'}`}
+                  className={`appearance-none w-full pl-11 pr-10 py-3 rounded-2xl text-xs font-semibold transition-all outline-none border text-opacity-50 group-hover:text-opacity-100 placeholder:opacity-50 group-hover:placeholder:opacity-100 ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white focus:bg-white shadow-sm text-gray-900 border-gray-300'}`}
                 />
+                {searchQuery && (
+                  <Delete 
+                    onClick={() => setSearchQuery('')}
+                    className={`absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 cursor-pointer opacity-50 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-white' : 'text-gray-900'}`} 
+                  />
+                )}
               </div>
               <button onClick={handleRefresh} className={`group p-3 rounded-2xl transition-all border ${isDarkMode ? 'bg-white/5 shadow-sm text-white border-white/10' : 'bg-white shadow-sm text-gray-700 border-gray-300'}`}>
                 <RefreshCw className="w-4 h-4 opacity-50 group-hover:opacity-100" />
@@ -1341,6 +1347,7 @@ const App = () => {
                           onClick={() => {
                             if (activeDateTab === 'Total') {
                               setActiveDateTab(dailyTripData.date);
+                              setExpandedOverviewDateMap({});
                               window.scrollTo({ top: 0, behavior: 'smooth' });
                             } else {
                               handleDateEdit(dailyTripData.date);
