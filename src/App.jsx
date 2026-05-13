@@ -1870,7 +1870,7 @@ const App = () => {
                 <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Calendar className="w-8 h-8 text-blue-500" />
                 </div>
-                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>正在操作 {pendingDateMergeData?.itemsToMove?.length || 0} 个地点</h2>
+                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>正在处理 {pendingDateMergeData?.itemsToMove?.length || 0} 个地点</h2>
                 <p className="text-[11px] opacity-80 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{pendingDateMergeData?.newDate?.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日')}</span></p>
                 
                 <div className="grid gap-3">
@@ -1889,7 +1889,7 @@ const App = () => {
                 <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Download className="w-8 h-8 text-blue-500" />
                 </div>
-                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>正在操作 {pendingImportData?.itemsToAdd?.length || 0} 个地点</h2>
+                <h2 className={`text-xl font-black mb-1 transition-colors duration-[400ms] ${isDarkMode ? 'text-white' : 'text-black'}`}>正在处理 {pendingImportData?.itemsToAdd?.length || 0} 个地点</h2>
                 <p className="text-[11px] opacity-80 mb-8">请选择如何将这些地点应用到当前行程：<br/><span className="text-blue-500 font-bold">{tripName}</span></p>
                 
                 <div className="grid gap-3">
