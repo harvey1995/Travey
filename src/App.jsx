@@ -486,20 +486,20 @@ const App = () => {
           order: csvImportHeaders.indexOf("序号"),
           city: csvImportHeaders.indexOf("城市/交通"),
           name: csvImportHeaders.indexOf("地点名称/出行方式"),
+          startTime: csvImportHeaders.indexOf("开始时间"),
+          endTime: csvImportHeaders.indexOf("结束时间"),
           locationDuration: csvImportHeaders.indexOf("时间（分）"),
           note: csvImportHeaders.indexOf("备注"),
           cost: csvImportHeaders.indexOf("费用"),
           currency: csvImportHeaders.indexOf("币种"),
-          status: csvImportHeaders.indexOf("打卡状态"),
-          startTime: csvImportHeaders.indexOf("开始时间"),
-          endTime: csvImportHeaders.indexOf("结束时间")
+          status: csvImportHeaders.indexOf("打卡状态")
         };
 
         const csvImportMissingHeaders = [];
         if (csvImportColumnMap.date === -1) csvImportMissingHeaders.push("日期");
         if (csvImportColumnMap.name === -1) csvImportMissingHeaders.push("地点名称");
         if (csvImportMissingHeaders.length > 0) {
-          showMessage(`缺少${csvImportMissingHeaders.join('、')}`, "error");
+          showMessage(`缺少${csvImportMissingHeaders.join('、')}`, "importError");
           return;
         }
 
@@ -513,13 +513,13 @@ const App = () => {
             order: parseInt(getCsvImportColumnValue(csvImportColumnMap.order)),
             city: getCsvImportColumnValue(csvImportColumnMap.city),
             name: getCsvImportColumnValue(csvImportColumnMap.name),
+            startTime: getCsvImportColumnValue(csvImportColumnMap.startTime),
+            endTime: getCsvImportColumnValue(csvImportColumnMap.endTime),
             locationDuration: getCsvImportColumnValue(csvImportColumnMap.locationDuration) === "" ? null : (parseInt(getCsvImportColumnValue(csvImportColumnMap.locationDuration)) || 0),
             note: getCsvImportColumnValue(csvImportColumnMap.note) || null,
             cost: getCsvImportColumnValue(csvImportColumnMap.cost) === "" ? null : (parseFloat(getCsvImportColumnValue(csvImportColumnMap.cost)) || 0),
             currency: getCsvImportColumnValue(csvImportColumnMap.currency) || null,
-            isLocationChecked: getCsvImportColumnValue(csvImportColumnMap.status) === "是",
-            startTime: getCsvImportColumnValue(csvImportColumnMap.startTime),
-            endTime: getCsvImportColumnValue(csvImportColumnMap.endTime)
+            isLocationChecked: getCsvImportColumnValue(csvImportColumnMap.status) === "是"
           });
         });
 
@@ -628,7 +628,7 @@ const App = () => {
           setPendingImportData({ itemsToAdd: csvImportProcessedItems, startTimes: csvImportDailyStartTimes });
           setShowImportModal(true); 
         } else {
-          showMessage("无有效地点", "emptyImport");
+          showMessage("无有效地点", "importError");
         }
       } catch (err) {
         showMessage("格式解析失败", "importError");
@@ -843,7 +843,7 @@ const App = () => {
       }
     }
 
-    showMessage("已全部打卡", "allDone");
+    showMessage("已全部打卡", "allChecked");
   };
 
   const handleOverviewToggle = (date) => {
@@ -1158,19 +1158,17 @@ const App = () => {
             <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-full bg-black/80 backdrop-blur text-white shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
               {(() => {
                 const IconMap = {
-                  export: { icon: Upload, color: 'text-blue-500' },
                   import: { icon: Download, color: 'text-blue-500' },
+                  export: { icon: Upload, color: 'text-blue-500' },
                   undo: { icon: Undo2, color: 'text-green-500' },
                   redo: { icon: Redo2, color: 'text-green-500' },
-                  allDone: { icon: MapPinCheckInside, color: 'text-yellow-500' },
-                  importError: { icon: MapPinXInside, color: 'text-red-500' },
-                  emptyImport: { icon: MapPinXInside, color: 'text-red-500' },
-                  delete: { icon: Trash2, color: 'text-red-500' },
+                  rename: { icon: NotebookPen, color: 'text-green-500' },
                   add: { icon: MapPinPlusInside, color: 'text-green-500' },
                   edit: { icon: SquarePen, color: 'text-green-500' },
-                  rename: { icon: NotebookPen, color: 'text-green-500' },
+                  delete: { icon: Trash2, color: 'text-red-500' },
                   refresh: { icon: RefreshCw, color: 'text-yellow-500' },
-                  error: { icon: MapPinXInside, color: 'text-red-500' }
+                  allChecked: { icon: MapPinCheckInside, color: 'text-yellow-500' },
+                  importError: { icon: MapPinXInside, color: 'text-red-500' }
                 };
                 const config = IconMap[toastState.type] || { icon: Sparkles, color: 'text-yellow-500' };
                 const Icon = config.icon;
@@ -1312,7 +1310,7 @@ const App = () => {
                 {searchQuery && (
                   <Delete 
                     onClick={() => setSearchQuery('')}
-                    className={`absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 cursor-pointer opacity-50 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-white' : 'text-gray-900'}`} 
+                    className={`absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 cursor-pointer opacity-50 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-white' : 'text-gray-900'}`} 
                   />
                 )}
               </div>
