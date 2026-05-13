@@ -21,7 +21,7 @@ import {
   Car, Train, Footprints,
 
   // 7. 数据属性
-  Calendar, Clock, Wallet
+  Flag, Calendar, Clock, Wallet
 } from 'lucide-react';
 
 const CACHE_KEY_TRIP_DATA = 'travey_trip_data_v1';
@@ -422,7 +422,7 @@ const App = () => {
   }, [showLocationModal, showTransportModal, showStartTimeModal, showDateEditModal, showImportModal, showDateMergeModal, iframePreviewUrl, notePreviewText]);
 
   const updateTrip = (newTrips, newActiveTrip = tripName) => {
-    setUndoStack(p => [...p, { tripData, tripName }].slice(-20));
+    setUndoStack(p => [...p, { tripData, tripName, dailyStartTimeMap }].slice(-20));
     setRedoStack([]);
     setTripData(newTrips);
     if (newActiveTrip !== tripName) {
@@ -773,9 +773,10 @@ const App = () => {
     if (undoStack.length === 0) return;
     const previous = undoStack[undoStack.length - 1];
     setUndoStack(p => p.slice(0, -1));
-    setRedoStack(f => [{ tripData, tripName }, ...f]);
+    setRedoStack(f => [{ tripData, tripName, dailyStartTimeMap }, ...f]);
     setTripData(previous.tripData);
     setTripName(previous.tripName);
+    setDailyStartTimeMap(previous.dailyStartTimeMap);
     showMessage("已撤销", "undo");
   };
 
@@ -783,9 +784,10 @@ const App = () => {
     if (redoStack.length === 0) return;
     const next = redoStack[0];
     setRedoStack(f => f.slice(1));
-    setUndoStack(p => [...p, { tripData, tripName }]);
+    setUndoStack(p => [...p, { tripData, tripName, dailyStartTimeMap }]);
     setTripData(next.tripData);
     setTripName(next.tripName);
+    setDailyStartTimeMap(next.dailyStartTimeMap);
     showMessage("已重做", "redo");
   };
 
@@ -1017,6 +1019,8 @@ const App = () => {
 
   const handleStartTimeSave = (e) => {
     e.preventDefault();
+    setUndoStack(p => [...p, { tripData, tripName, dailyStartTimeMap }].slice(-20));
+    setRedoStack([]);
     setDailyStartTimeMap(prev => ({
       ...prev,
       [tripName]: { ...(prev[tripName] || {}), [startTimeFormData.date]: startTimeFormData.time }
@@ -1370,7 +1374,7 @@ const App = () => {
                            {isOverviewExpanded ? <ChevronUp className="w-4 h-4 opacity-60"/> : <ChevronDown className="w-4 h-4 opacity-60"/>}
                         </button>
                         <button onClick={() => handleStartTimeEdit(dailyTripData.date)} className={`px-3 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed transition-all shrink-0 ${isDarkMode ? 'bg-white/[0.03] border-white/10 hover:bg-white/5' : 'border-gray-300 hover:bg-white bg-white/50'}`}>
-                           <Clock className="w-4 h-4 opacity-60"/>
+                           <Flag className="w-4 h-4 opacity-60"/>
                            <span className="text-xs font-black opacity-80">{dailyStartTimeMap[tripName]?.[dailyTripData.date] || "08:00"}</span>
                         </button>
                       </div>
